@@ -36,6 +36,13 @@ gem "bootsnap", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem "rack-cors"
 
+
+# These gems are added to ensure compatibility with future versions of Ruby (3.4.0 and later),
+# as they will no longer be part of the standard library.
+gem 'base64'
+gem 'bigdecimal'
+gem 'mutex_m'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri mingw x64_mingw ]
