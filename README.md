@@ -49,3 +49,5 @@ Gemfile.lockが生成される
 ```sh
 $ rails server
 ```
+
+※データベースは外部のmysql環境のため、データベースにアクセスするためには[environment](https://github.com/Conovel/environment)でDockerを起動する必要があります。
