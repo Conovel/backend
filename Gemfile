@@ -43,11 +43,21 @@ gem 'base64'
 gem 'bigdecimal'
 gem 'mutex_m'
 
+
+# Use rubocop as a linter/code formatter
+gem 'rubocop', '~> 1.66', require: false
+
+# Use overcommit as a Git hook management
+gem 'overcommit', '~> 0.60.0'
+
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri mingw x64_mingw ]
-end
 
+  # Uses rspec-rails as a test framework
+  gem 'rspec-rails', '~> 7.0.0'
+end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
