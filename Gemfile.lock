@@ -222,6 +222,7 @@ GEM
     websocket-driver (0.7.6)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yard (0.8.7.6)
     zeitwerk (2.6.17)
 
 PLATFORMS
@@ -245,6 +246,7 @@ DEPENDENCIES
   rspec-rails (~> 7.0.0)
   rubocop (~> 1.66)
   tzinfo-data
+  yard (~> 0.8.1)
 
 RUBY VERSION
    ruby 3.3.4p94
