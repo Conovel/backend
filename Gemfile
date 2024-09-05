@@ -51,7 +51,7 @@ gem 'rubocop', '~> 1.66', require: false
 gem 'overcommit', '~> 0.60.0'
 
 # Use YARD as a documentation generation
-gem 'yard', '~> 0.8.1'
+gem 'yard', '~> 0.9.26'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
