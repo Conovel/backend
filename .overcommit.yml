@@ -30,16 +30,6 @@ PreCommit:
       - 'db/schema.rb'
       - 'db/migrate/*'
 
-  Yard:
-    enabled: true
-    command: ['bundle', 'exec', 'yard', 'doc']
-    required_executable: 'yard'
-    description: 'Generating YARD documentation'
-    include: '**/*'
-    exclude:
-      - 'db/schema.rb'
-      - 'db/migrate/*'
-
 #  TrailingWhitespace:
 #    enabled: true
 #    exclude:
