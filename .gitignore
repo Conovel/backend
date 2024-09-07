@@ -6,7 +6,6 @@
 
 # Ignore bundler config.
 /.bundle
-/.yardoc
 
 # Ignore all logfiles and tempfiles.
 /log/*
