@@ -51,3 +51,18 @@ $ rails server
 ```
 
 ※データベースは外部のmysql環境のため、データベースにアクセスするためには[environment](https://github.com/Conovel/environment)でDockerを起動する必要があります。
+
+
+### RuboCop
+
+#### RuboCopの実行
+RuboCopを実行して、コードのスタイルをチェックします。
+```sh
+$ bundle exec rubocop
+```
+
+#### RuboCopの自動修正
+自動修正可能なスタイル違反を修正するには、以下のコマンドを実行します。
+```sh
+$ bundle exec rubocop -A
+```
