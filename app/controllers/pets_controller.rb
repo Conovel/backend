@@ -12,6 +12,6 @@ class PetsController < ApplicationController
     # Your code here
 
     # render json: {"message" => "yes, it worked"}
-    render json: { 'name' => 'コノベル太郎' }
+    render json: [{ 'id' => 1, 'name' => 'コノベル太郎' }]
   end
 end
