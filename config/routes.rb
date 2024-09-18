@@ -9,6 +9,8 @@
 #
 
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   def add_openapi_route(http_method, path, opts = {})
     full_path = path.gsub(/{(.*?)}/, ':\1')
     match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method

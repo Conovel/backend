@@ -50,7 +50,7 @@ gem 'rubocop', '~> 1.66', require: false
 # Use overcommit as a Git hook management
 gem 'overcommit', '~> 0.60.0'
 
-# UUsed as a  CORS settings
+# UUsed as a CORS settings
 gem 'rack-cors'
 
 group :development, :test do
@@ -59,6 +59,9 @@ group :development, :test do
 
   # Uses rspec-rails as a test framework
   gem 'rspec-rails', '~> 7.0.0'
+
+  # Used to integrate rspec and openAPI
+  gem 'rswag'
 end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]

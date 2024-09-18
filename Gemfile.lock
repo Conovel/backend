@@ -66,6 +66,8 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.2)
     base64 (0.2.0)
     bigdecimal (3.1.8)
@@ -91,6 +93,8 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.7.2)
+    json-schema (4.3.1)
+      addressable (>= 2.8)
     language_server-protocol (3.17.0.3)
     loofah (2.22.0)
       crass (~> 1.0.2)
@@ -139,6 +143,7 @@ GEM
       racc
     psych (5.1.2)
       stringio
+    public_suffix (6.0.1)
     puma (5.6.8)
       nio4r (~> 2.0)
     racc (1.8.1)
@@ -200,6 +205,21 @@ GEM
       rspec-mocks (~> 3.13)
       rspec-support (~> 3.13)
     rspec-support (3.13.1)
+    rswag (2.14.0)
+      rswag-api (= 2.14.0)
+      rswag-specs (= 2.14.0)
+      rswag-ui (= 2.14.0)
+    rswag-api (2.14.0)
+      activesupport (>= 5.2, < 8.0)
+      railties (>= 5.2, < 8.0)
+    rswag-specs (2.14.0)
+      activesupport (>= 5.2, < 8.0)
+      json-schema (>= 2.2, < 5.0)
+      railties (>= 5.2, < 8.0)
+      rspec-core (>= 2.14)
+    rswag-ui (2.14.0)
+      actionpack (>= 5.2, < 8.0)
+      railties (>= 5.2, < 8.0)
     rubocop (1.66.1)
       json (~> 2.3)
       language_server-protocol (>= 3.17.0)
@@ -244,6 +264,7 @@ DEPENDENCIES
   rack-cors
   rails (~> 7.0.8, >= 7.0.8.1)
   rspec-rails (~> 7.0.0)
+  rswag
   rubocop (~> 1.66)
   tzinfo-data
 
