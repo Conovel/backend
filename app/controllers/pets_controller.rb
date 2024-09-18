@@ -9,6 +9,9 @@
 #
 class PetsController < ApplicationController
   def index
-    render json: { 'message' => 'yes, it worked' }
+    # Your code here
+
+    # render json: {"message" => "yes, it worked"}
+    render json: { 'name' => 'コノベル太郎' }
   end
 end
