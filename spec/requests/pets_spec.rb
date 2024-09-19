@@ -9,6 +9,8 @@ RSpec.describe 'Pets API', type: :request do
       produces 'application/json'
 
       response '200', 'pets found' do
+        schema type: :array, items: { type: :object, properties: { id: { type: :integer }, name: { type: :string } } }
+
         run_test!
       end
     end
