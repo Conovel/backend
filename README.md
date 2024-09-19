@@ -49,8 +49,7 @@ Gemfile.lockが生成される
 ```sh
 $ rails server
 ```
-
-※データベースは外部のmysql環境のため、データベースにアクセスするためには[environment](https://github.com/Conovel/environment)でDockerを起動する必要があります。
+- データベースは外部のmysql環境のため、データベースにアクセスするためには[environment](https://github.com/Conovel/environment)でDockerを起動する必要があります。
 
 
 ### フォーマット
@@ -75,7 +74,7 @@ rspecによるテスト
 $ bundle exec rspec
 ```
 - コミットプッシュ時にも実行されます（overcommit）
-- backend単体でテストを実行するとDB接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
+- backend単体でテストを実行するとデータベース接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
 
 ### SwaggerUI
 SwaggerUIはopenApiドキュメント
@@ -83,4 +82,4 @@ SwaggerUIはopenApiドキュメント
 $ bundle exec rake rswag:specs:swaggerize
 ```
 - `http://localhost:3001/api-docs/index.html`で開くとドキュメントが確認できる
-- backend単体でテストを実行するとDB接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
+- backend単体でテストを実行するとデータベース接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
