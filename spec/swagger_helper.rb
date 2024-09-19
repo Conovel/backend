@@ -9,9 +9,9 @@ RSpec.configure do |config|
   # Defaults to json. Accepts ':json' and ':yaml'.
   config.openapi_format = :yaml
 
-  config.swagger_root = "#{Rails.root}/swagger"
+  config.openapi_root = "#{Rails.root}/swagger"
 
-  config.swagger_docs = {
+  config.openapi_specs = {
     'v1/swagger.yaml' => {
       openapi: '3.0.1',
       info: {
