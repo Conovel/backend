@@ -60,7 +60,7 @@ RuboCopを実行して、コードのスタイルをチェックします。
 ```sh
 $ bundle exec rubocop
 ```
-※コミットプッシュ時にも実行されます（overcommit）
+ - コミットプッシュ時にも実行されます（overcommit）
 
 #### RuboCopの自動修正
 自動修正可能なスタイル違反を修正するには、以下のコマンドを実行します。
@@ -74,4 +74,13 @@ rspecによるテスト
 ```sh
 $ bundle exec rspec
 ```
-※コミットプッシュ時にも実行されます（overcommit）
+- コミットプッシュ時にも実行されます（overcommit）
+- backend単体でテストを実行するとDB接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
+
+### SwaggerUI
+SwaggerUIはopenApiドキュメント
+```sh
+$ bundle exec rake rswag:specs:swaggerize
+```
+- `http://localhost:3001/api-docs/index.html`で開くとドキュメントが確認できる
+- backend単体でテストを実行するとDB接続エラーになるため、[environment](https://github.com/Conovel/environment)のdocker環境での実行を推奨
