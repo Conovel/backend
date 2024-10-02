@@ -12,6 +12,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 0) do
-  # Define your schema here
+ActiveRecord::Schema[7.0].define(version: 20_241_001_233_348) do
+  create_table 'sentences', charset: 'utf8mb3', force: :cascade do |t|
+    t.text 'sentence'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+  end
 end
