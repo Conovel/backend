@@ -1,0 +1,45 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/v1/sentences/{sentence_id}":
+    get:
+      summary: Retrieves a sentence by ID
+      tags:
+      - Sentences
+      parameters:
+      - name: sentence_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: sentence found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  main:
+                    type: object
+                    properties:
+                      sentence_id:
+                        type: integer
+                      sentence:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                    required:
+                    - sentence_id
+                    - sentence
+                    - created_at
+                    - updated_at
+        '404':
+          description: sentence not found
