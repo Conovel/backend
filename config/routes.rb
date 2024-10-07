@@ -15,4 +15,8 @@ Rails.application.routes.draw do
 
   add_openapi_route 'GET', '/v1/sentences/{sentence_id}', controller_name: 'sentences',
                                                           action_name: 'v1_sentences_sentence_id_get'
+
+  # Swagger UI
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
 end
