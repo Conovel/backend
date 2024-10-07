@@ -57,6 +57,9 @@ module Backend
       config.paths.add 'app/models', eager_load: true
       config.paths.add 'app/models/concerns', eager_load: true
     end
+
+    # Add the path of the service object
+    config.autoload_paths += %W[#{config.root}/app/services]
   end
 end
 
