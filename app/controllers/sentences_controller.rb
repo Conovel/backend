@@ -11,8 +11,17 @@
 # SentencesController
 class SentencesController < ApplicationController
   def v1_sentences_sentence_id_get
-    # render json: { 'message' => 'yes, it worked' }
-    sentence = Sentence.find(params[:sentence_id])
+    result = FindSentenceService.new(params[:sentence_id]).call
+    if result[:success]
+      render_success_response(result[:sentence])
+    else
+      render_error_response(result[:error])
+    end
+  end
+
+  private
+
+  def render_success_response(sentence)
     render json: {
       main: {
         sentence_id: sentence.id,
@@ -21,7 +30,9 @@ class SentencesController < ApplicationController
         updated_at: sentence.updated_at
       }
     }, status: :ok
-    # rescue ActiveRecord::RecordNotFound
-    #   render json: { error: 'Sentence not found' }, status: :not_found
+  end
+
+  def render_error_response(error)
+    render json: { error: }, status: :not_found
   end
 end
