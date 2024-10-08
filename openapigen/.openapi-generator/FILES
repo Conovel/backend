@@ -1,3 +1,4 @@
+.openapi-generator-ignore
 Dockerfile
 Gemfile
 README.md
@@ -8,8 +9,8 @@ app/controllers/application_controller.rb
 app/controllers/sentences_controller.rb
 app/jobs/application_job.rb
 app/mailers/application_mailer.rb
-app/models/_v1_sentences__sentence_id__get_200_response.rb
-app/models/_v1_sentences__sentence_id__get_200_response_main.rb
+app/models/_sentences__sentence_id__get_200_response.rb
+app/models/_sentences__sentence_id__get_200_response_main.rb
 app/models/application_record.rb
 app/views/layouts/mailer.html.erb
 app/views/layouts/mailer.text.erb
