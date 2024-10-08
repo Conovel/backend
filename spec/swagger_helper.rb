@@ -33,5 +33,5 @@ Rails.application.routes.draw do
     match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
   end
 
-  add_openapi_route 'GET', '/v1/pets', controller_name: 'pets', action_name: 'index'
+  add_openapi_route 'GET', '/v1/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
 end
