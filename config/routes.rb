@@ -9,31 +9,9 @@
 
 # sentences API
 Rails.application.routes.draw do
-  def add_openapi_route(http_method, path, opts = {})
-    full_path = path.gsub(/{(.*?)}/, ':\1')
-    match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
-
-    # full_path = path.gsub(/{(.*?)}/, ':\1')
-    # case http_method
-    # when 'GET'
-    #   get full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}"
-    # when 'POST'
-    #   post full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}"
-    # when 'PUT'
-    #   put full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}"
-    # when 'DELETE'
-    #   delete full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}"
-    # else
-    #   raise "Unsupported HTTP method: #{http_method}"
-    # end
+  namespace :v1 do
+    get 'sentences/:sentence_id', to: 'sentences#show'
   end
-
-  add_openapi_route 'GET', '/v1/sentences/{sentence_id}', controller_name: 'sentences',
-                                                          action_name: 'v1_sentences_sentence_id_get'
-
-  # namespace :v1 do
-  #   get 'sentences/:sentence_id', to: 'sentences#v1_sentences_sentence_id_get'
-  # end
 
   # Swagger UI
   mount Rswag::Ui::Engine => '/api-docs'
