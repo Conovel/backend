@@ -9,8 +9,13 @@
 
 # sentences API
 Rails.application.routes.draw do
+  def add_openapi_route(http_method, path, opts = {})
+    full_path = path.gsub(/{(.*?)}/, ':\1')
+    match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
+  end
+
   namespace :v1 do
-    get 'sentences/:sentence_id', to: 'sentences#show'
+    add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
   end
 
   # Swagger UI
