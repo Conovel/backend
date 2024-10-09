@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
   end
 
+  # namespace
   namespace :v1 do
     add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
   end
