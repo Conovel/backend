@@ -1,20 +1,47 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require 'swagger_helper'
 
 RSpec.describe 'Sentences API', type: :request do
   let!(:sentence) { Sentence.create(sentence: '吾輩は猫である。') }
   let(:sentence_id) { sentence.id }
 
-  describe 'GET /v1/sentences/:sentence_id' do
-    before { get "/v1/sentences/#{sentence_id}" }
+  path '/sentences/{sentence_id}' do
+    get 'Retrieves a sentence' do
+      tags 'Sentences'
+      produces 'application/json'
+      parameter name: :sentence_id, in: :path, type: :string
 
-    it 'returns the sentence' do
-      expect(json['main']['sentence']).to eq('吾輩は猫である。')
-    end
+      response '200', 'sentence found' do
+        schema type: :object,
+               properties: {
+                 main: {
+                   type: :object,
+                   properties: {
+                     sentence_id: { type: :integer },
+                     sentence: { type: :string },
+                     created_at: { type: :string, format: 'date-time' },
+                     updated_at: { type: :string, format: 'date-time' }
+                   },
+                   required: %w[sentence_id sentence created_at updated_at],
+                   example: {
+                     sentence_id: 1,
+                     sentence: '吾輩は猫である。',
+                     created_at: '2024-10-02T23:03:57.431Z',
+                     updated_at: '2024-10-02T23:03:57.431Z'
+                   }
+                 }
+               },
+               required: ['main']
 
-    it 'returns status code 200' do
-      expect(response).to have_http_status(200)
+        let(:sentence_id) { sentence.id }
+        run_test!
+      end
+
+      response '404', 'sentence not found' do
+        let(:sentence_id) { 'invalid' }
+        run_test!
+      end
     end
   end
 end
