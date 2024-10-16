@@ -13,12 +13,23 @@ RSpec.configure do |config|
 
   config.openapi_specs = {
     'v1/swagger.yaml' => {
-      openapi: '3.0.1',
+      openapi: '3.0.0',
       info: {
-        title: 'API V1',
-        version: 'v1'
+        title: 'Sentences API',
+        version: '1.0.0',
+        description: 'API documentation for V1'
       },
-      paths: {}
+      paths: {},
+      servers: [
+        {
+          url: 'http://localhost:3001/v1',
+          description: 'Local server'
+        },
+        {
+          url: 'https://conovel.jp/v1',
+          description: 'Production server'
+        }
+      ]
     }
   }
 end
@@ -33,5 +44,7 @@ Rails.application.routes.draw do
     match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
   end
 
-  add_openapi_route 'GET', '/v1/pets', controller_name: 'pets', action_name: 'index'
+  namespace :v1 do
+    add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
+  end
 end

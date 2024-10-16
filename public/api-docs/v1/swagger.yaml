@@ -1,0 +1,58 @@
+---
+openapi: 3.0.0
+info:
+  title: Sentences API
+  version: 1.0.0
+  description: API documentation for V1
+paths:
+  "/sentences/{sentence_id}":
+    get:
+      summary: Retrieves a sentence
+      tags:
+      - Sentences
+      parameters:
+      - name: sentence_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: sentence found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  main:
+                    type: object
+                    properties:
+                      sentence_id:
+                        type: integer
+                      sentence:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                    required:
+                    - sentence_id
+                    - sentence
+                    - created_at
+                    - updated_at
+                    example:
+                      sentence_id: 1
+                      sentence: 吾輩は猫である。
+                      created_at: '2024-10-02T23:03:57.431Z'
+                      updated_at: '2024-10-02T23:03:57.431Z'
+                required:
+                - main
+        '404':
+          description: sentence not found
+servers:
+- url: http://localhost:3001/v1
+  description: Local server
+- url: https://conovel.jp/v1
+  description: Production server

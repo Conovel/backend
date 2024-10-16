@@ -2,3 +2,8 @@ AllCops:
   Exclude:
     - 'openapigen/**/*'
   NewCops: enable
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/requests/sentences_spec.rb'
+  Max: 30
