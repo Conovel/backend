@@ -13,6 +13,11 @@ class InitTables < ActiveRecord::Migration
     create_table "sentence".pluralize.to_sym, id: false do |t|
       t.integer :sentence_id
       t.string :sentence
+      t.integer :sentence_user_id
+      t.string :sentence_user_name
+      t.string :profile_icon_image
+      t.integer :evaluation_good_count
+      t.integer :evaluation_stay_count
       t.datetime :created_at
       t.datetime :updated_at
 
@@ -21,6 +26,9 @@ class InitTables < ActiveRecord::Migration
 
     create_table "view_sentence".pluralize.to_sym, id: false do |t|
       t.string :main
+      t.string :parent
+      t.string :parent_parallel
+      t.string :children
 
       t.timestamps
     end

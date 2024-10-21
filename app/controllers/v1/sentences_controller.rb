@@ -27,6 +27,7 @@ module V1
         main: {
           sentence_id: sentence.id,
           sentence: sentence.sentence,
+          sentence_hierarchy: sentence.sentence_hierarchy,
           created_at: sentence.created_at,
           updated_at: sentence.updated_at
         }
