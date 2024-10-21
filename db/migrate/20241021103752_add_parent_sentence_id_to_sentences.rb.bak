@@ -1,0 +1,9 @@
+class AddParentSentenceIdToSentences < ActiveRecord::Migration[7.0]
+  def change
+    # parent_sentence_idの型がintegerだとマイグレーション実行エラーになった（PKのsentencesは自動でbigintになる）
+    # エラーでschema.rbの更新はされなかったが、mysqlの方にはparent_sentence_idカラムの追加は行われていた（半端な内容で）
+    add_column :sentences, :parent_sentence_id, :bigint, null: false 
+    add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
+    add_index :sentences, :parent_sentence_id
+  end
+end

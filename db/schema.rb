@@ -12,11 +12,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 20_241_020_231_627) do
+ActiveRecord::Schema[7.0].define(version: 20_241_021_110_002) do
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb3', force: :cascade do |t|
     t.text 'sentence'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
     t.integer 'sentence_hierarchy', null: false
+    t.bigint 'parent_sentence_id', null: false
+    t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
   end
+
+  add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
 end
