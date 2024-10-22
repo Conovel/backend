@@ -9,24 +9,28 @@
 #   Character.create(name: "Luke", movie: movies.first)
 
 # 既存のシードデータを削除
+ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0')
 Sentence.delete_all
+ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 1')
 
 # オートインクリメント値をリセット
 ActiveRecord::Base.connection.execute('ALTER TABLE sentences AUTO_INCREMENT = 1')
 
 sentences = [
-  { text: '吾輩は猫である。', sentence_hierarchy: 1 },
-  { text: '名前はまだない。', sentence_hierarchy: 2 },
-  { text: 'どこで生れたかとんと見当がつかぬ。', sentence_hierarchy: 3 },
-  { text: '何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。', sentence_hierarchy: 4 }
+  { sentence: '吾輩は猫である。', sentence_hierarchy: 1, parent_sentence_id: nil, title_id: 1 },
+  { sentence: '名前はまだない。', sentence_hierarchy: 2, parent_sentence_id: 1, title_id: 1 },
+  { sentence: 'どこで生れたかとんと見当がつかぬ。', sentence_hierarchy: 3, parent_sentence_id: 2, title_id: 1 },
+  { sentence: '何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。', sentence_hierarchy: 4, parent_sentence_id: 3, title_id: 1 }
 ]
 
 # 新しいシードデータを挿入（日本時間 & 0.1秒ずらす）
 sentences.each do |sentence|
   japan_time = Time.now.in_time_zone('Asia/Tokyo')
   Sentence.create(
-    sentence: sentence[:text],
+    sentence: sentence[:sentence],
     sentence_hierarchy: sentence[:sentence_hierarchy],
+    parent_sentence_id: sentence[:parent_sentence_id],
+    title_id: sentence[:title_id],
     created_at: japan_time,
     updated_at: japan_time
   )
