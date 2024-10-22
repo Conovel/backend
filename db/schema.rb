@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 20_241_021_224_452) do
+ActiveRecord::Schema[7.0].define(version: 20_241_021_235_005) do
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                             force: :cascade do |t|
     t.text 'sentence', size: :medium, null: false
@@ -20,7 +20,9 @@ ActiveRecord::Schema[7.0].define(version: 20_241_021_224_452) do
     t.datetime 'updated_at', null: false
     t.integer 'sentence_hierarchy', null: false
     t.bigint 'parent_sentence_id', null: false
+    t.bigint 'title_id', null: false
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
+    t.index ['title_id'], name: 'fk_rails_9b081d15fd'
   end
 
   create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
@@ -31,4 +33,5 @@ ActiveRecord::Schema[7.0].define(version: 20_241_021_224_452) do
   end
 
   add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
+  add_foreign_key 'sentences', 'titles', primary_key: 'title_id'
 end
