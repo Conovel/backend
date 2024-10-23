@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 20_241_022_224_939) do
+ActiveRecord::Schema[7.0].define(version: 20_241_023_213_919) do
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                             force: :cascade do |t|
     t.text 'sentence', size: :medium, null: false
@@ -21,8 +21,10 @@ ActiveRecord::Schema[7.0].define(version: 20_241_022_224_939) do
     t.integer 'sentence_hierarchy', null: false
     t.bigint 'parent_sentence_id'
     t.bigint 'title_id', null: false
+    t.bigint 'user_id', null: false
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
     t.index ['title_id'], name: 'fk_rails_9b081d15fd'
+    t.index ['user_id'], name: 'index_sentences_on_user_id'
   end
 
   create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
@@ -32,6 +34,14 @@ ActiveRecord::Schema[7.0].define(version: 20_241_022_224_939) do
     t.datetime 'updated_at', null: false
   end
 
+  create_table 'users', primary_key: 'user_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
+                        force: :cascade do |t|
+    t.string 'pen_name', limit: 32, null: false
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+  end
+
   add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
   add_foreign_key 'sentences', 'titles', primary_key: 'title_id'
+  add_foreign_key 'sentences', 'users', primary_key: 'user_id'
 end
