@@ -62,6 +62,9 @@ group :development, :test do
 
   # Used to integrate rspec and openAPI
   gem 'rswag'
+
+  # Used to Logical deletion
+  gem 'paranoia', '~> 2.4'
 end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]

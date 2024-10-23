@@ -138,6 +138,8 @@ GEM
       iniparse (~> 1.4)
       rexml (~> 3.2)
     parallel (1.26.3)
+    paranoia (2.6.4)
+      activerecord (>= 5.1, < 7.2)
     parser (3.3.5.0)
       ast (~> 2.4.1)
       racc
@@ -260,6 +262,7 @@ DEPENDENCIES
   mutex_m
   mysql2 (~> 0.5)
   overcommit (~> 0.60.0)
+  paranoia (~> 2.4)
   puma (~> 5.0)
   rack-cors
   rails (~> 7.0.8, >= 7.0.8.1)
