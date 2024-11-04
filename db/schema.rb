@@ -12,17 +12,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 20_241_023_230_302) do
+ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                             force: :cascade do |t|
     t.text 'sentence', size: :medium, null: false
-    t.datetime 'created_at', null: false
-    t.datetime 'updated_at', null: false
     t.integer 'sentence_hierarchy', null: false
-    t.bigint 'parent_sentence_id'
     t.bigint 'title_id', null: false
     t.bigint 'sentence_user_id', null: false
+    t.bigint 'parent_sentence_id'
     t.datetime 'deleted_at'
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
     t.index ['deleted_at'], name: 'index_sentences_on_deleted_at'
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
     t.index ['sentence_user_id'], name: 'index_sentences_on_sentence_user_id'
