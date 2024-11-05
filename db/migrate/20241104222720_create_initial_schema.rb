@@ -39,17 +39,25 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   def create_titles_table
     create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                            force: :cascade do |t|
-      t.string 'title', limit: 128, default: '未定', null: false
+      add_titles_columns(t)
       t.timestamps
     end
+  end
+
+  def add_titles_columns(_table)
+    t.string 'title', limit: 128, default: '未定', null: false
   end
 
   def create_users_table
     create_table 'users', primary_key: 'user_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                           force: :cascade do |t|
-      t.string 'pen_name', limit: 32, null: false
+      add_users_columns(t)
       t.timestamps
     end
+  end
+
+  def add_users_columns(_table)
+    t.string 'pen_name', limit: 32, null: false
   end
 
   def add_foreign_keys
