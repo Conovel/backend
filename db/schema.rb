@@ -15,11 +15,11 @@
 ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                             force: :cascade do |t|
-    t.text 'sentence', size: :medium, null: false
-    t.integer 'sentence_hierarchy', null: false
-    t.bigint 'title_id', null: false
     t.bigint 'sentence_user_id', null: false
+    t.text 'sentence', size: :medium, null: false
     t.bigint 'parent_sentence_id'
+    t.bigint 'title_id', null: false
+    t.integer 'sentence_hierarchy', null: false
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
@@ -31,6 +31,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
 
   create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                          force: :cascade do |t|
+    t.bigint 'author_user_id', null: false
     t.string 'title', limit: 128, default: '未定', null: false
     t.boolean 'is_permission_violence', null: false
     t.boolean 'is_permission_adult', null: false
@@ -39,6 +40,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.index ['author_user_id'], name: 'index_titles_on_author_user_id'
   end
 
   create_table 'users', primary_key: 'user_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
@@ -51,4 +53,5 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
   add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
   add_foreign_key 'sentences', 'titles', primary_key: 'title_id'
   add_foreign_key 'sentences', 'users', column: 'sentence_user_id', primary_key: 'user_id'
+  add_foreign_key 'titles', 'users', column: 'author_user_id', primary_key: 'user_id'
 end

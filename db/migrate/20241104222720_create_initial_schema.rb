@@ -7,6 +7,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     create_titles_table
     create_users_table
     add_foreign_keys
+    add_indexes
   end
 
   private
@@ -17,23 +18,15 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
       add_sentence_columns(t)
       t.timestamps
     end
-    add_sentences_indexes
   end
 
   def add_sentence_columns(table)
-    table.mediumtext 'sentence', null: false
-    table.integer 'sentence_hierarchy', null: false
-    table.bigint 'title_id', null: false
     table.bigint 'sentence_user_id', null: false
+    table.mediumtext 'sentence', null: false
     table.bigint 'parent_sentence_id'
+    table.bigint 'title_id', null: false
+    table.integer 'sentence_hierarchy', null: false
     table.datetime 'deleted_at'
-  end
-
-  def add_sentences_indexes
-    add_index :sentences, :deleted_at
-    add_index :sentences, :parent_sentence_id
-    add_index :sentences, :sentence_user_id
-    add_index :sentences, :title_id
   end
 
   def create_titles_table
@@ -45,6 +38,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   end
 
   def add_titles_columns(table)
+    table.bigint 'author_user_id', null: false
     table.string 'title', limit: 128, default: '未定', null: false
     table.boolean 'is_permission_violence', null: false
     table.boolean 'is_permission_adult', null: false
@@ -69,5 +63,14 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
     add_foreign_key :sentences, :titles, column: :title_id, primary_key: :title_id
     add_foreign_key :sentences, :users, column: :sentence_user_id, primary_key: :user_id
+    add_foreign_key :titles, :users, column: :author_user_id, primary_key: :user_id
+  end
+
+  def add_indexes
+    add_index :sentences, :deleted_at
+    add_index :sentences, :parent_sentence_id
+    add_index :sentences, :sentence_user_id
+    add_index :sentences, :title_id, name: 'index_sentences_on_title_id'
+    add_index :titles, :author_user_id, name: 'index_titles_on_author_user_id'
   end
 end
