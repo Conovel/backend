@@ -6,4 +6,5 @@ AllCops:
 Metrics/BlockLength:
   Exclude:
     - 'spec/requests/sentences_spec.rb'
+    - 'db/schema.rb'
   Max: 30

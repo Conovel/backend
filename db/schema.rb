@@ -26,12 +26,17 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.index ['deleted_at'], name: 'index_sentences_on_deleted_at'
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
     t.index ['sentence_user_id'], name: 'index_sentences_on_sentence_user_id'
-    t.index ['title_id'], name: 'fk_rails_9b081d15fd'
+    t.index ['title_id'], name: 'index_sentences_on_title_id'
   end
 
   create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                          force: :cascade do |t|
     t.string 'title', limit: 128, default: '未定', null: false
+    t.boolean 'is_permission_violence', null: false
+    t.boolean 'is_permission_adult', null: false
+    t.text 'main_copy', null: false
+    t.text 'overview'
+    t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
   end

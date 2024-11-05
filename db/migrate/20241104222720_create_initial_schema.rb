@@ -44,8 +44,13 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     end
   end
 
-  def add_titles_columns(_table)
-    t.string 'title', limit: 128, default: '未定', null: false
+  def add_titles_columns(table)
+    table.string 'title', limit: 128, default: '未定', null: false
+    table.boolean 'is_permission_violence', null: false
+    table.boolean 'is_permission_adult', null: false
+    table.text 'main_copy', null: false
+    table.text 'overview'
+    table.datetime 'deleted_at'
   end
 
   def create_users_table
@@ -56,8 +61,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     end
   end
 
-  def add_users_columns(_table)
-    t.string 'pen_name', limit: 32, null: false
+  def add_users_columns(table)
+    table.string 'pen_name', limit: 32, null: false
   end
 
   def add_foreign_keys
