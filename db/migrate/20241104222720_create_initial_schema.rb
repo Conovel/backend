@@ -30,10 +30,10 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   end
 
   def add_sentences_indexes
-    add_index 'sentences', ['deleted_at'], name: 'index_sentences_on_deleted_at'
-    add_index 'sentences', ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
-    add_index 'sentences', ['sentence_user_id'], name: 'index_sentences_on_sentence_user_id'
-    add_index 'sentences', ['title_id'], name: 'fk_rails_9b081d15fd'
+    add_index :sentences, :deleted_at
+    add_index :sentences, :parent_sentence_id
+    add_index :sentences, :sentence_user_id
+    add_index :sentences, :title_id
   end
 
   def create_titles_table
@@ -53,8 +53,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   end
 
   def add_foreign_keys
-    add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
-    add_foreign_key 'sentences', 'titles', primary_key: 'title_id'
-    add_foreign_key 'sentences', 'users', column: 'sentence_user_id', primary_key: 'user_id'
+    add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
+    add_foreign_key :sentences, :titles, column: :title_id, primary_key: :title_id
+    add_foreign_key :sentences, :users, column: :sentence_user_id, primary_key: :user_id
   end
 end
