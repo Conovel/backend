@@ -13,6 +13,17 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
+  create_table 'evaluations', primary_key: %w[sentence_id evaluator_user_id], charset: 'utf8mb4',
+                              collation: 'utf8mb4_general_ci', force: :cascade do |t|
+    t.bigint 'sentence_id', null: false
+    t.bigint 'evaluator_user_id', null: false
+    t.datetime 'created_at', null: false
+    t.datetime 'updated_at', null: false
+    t.index ['evaluator_user_id'], name: 'fk_rails_62490f0cce'
+    t.index %w[sentence_id evaluator_user_id], name: 'index_evaluations_on_sentence_id_and_evaluator_user_id',
+                                               unique: true
+  end
+
   create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                             force: :cascade do |t|
     t.bigint 'sentence_user_id', null: false
@@ -63,6 +74,8 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
   end
 
+  add_foreign_key 'evaluations', 'sentences', primary_key: 'sentence_id'
+  add_foreign_key 'evaluations', 'users', column: 'evaluator_user_id', primary_key: 'user_id'
   add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'
   add_foreign_key 'sentences', 'titles', primary_key: 'title_id'
   add_foreign_key 'sentences', 'users', column: 'sentence_user_id', primary_key: 'user_id'

@@ -6,6 +6,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     create_sentences_table
     create_titles_table
     create_users_table
+    create_evaluations_table
     add_foreign_keys
     add_indexes
   end
@@ -68,11 +69,29 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  def create_evaluations_table
+    create_table 'evaluations', id: false, charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
+                                force: :cascade do |t|
+      add_evaluations_columns(t)
+      t.timestamps
+    end
+
+    # 複合主キーを設定(SQLのALTER TABLE文を実行)
+    execute 'ALTER TABLE evaluations ADD PRIMARY KEY (sentence_id, evaluator_user_id)'
+  end
+
+  def add_evaluations_columns(table)
+    table.bigint 'sentence_id', null: false
+    table.bigint 'evaluator_user_id', null: false
+  end
+
   def add_foreign_keys
     add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
     add_foreign_key :sentences, :titles, column: :title_id, primary_key: :title_id
     add_foreign_key :sentences, :users, column: :sentence_user_id, primary_key: :user_id
     add_foreign_key :titles, :users, column: :author_user_id, primary_key: :user_id
+    add_foreign_key :evaluations, :sentences, column: :sentence_id, primary_key: :sentence_id
+    add_foreign_key :evaluations, :users, column: :evaluator_user_id, primary_key: :user_id
   end
 
   def add_indexes
@@ -85,5 +104,6 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :email, unique: true
     add_index :users, :google_sub, unique: true
     add_index :users, :deleted_at
+    add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
   end
 end
