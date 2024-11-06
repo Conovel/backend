@@ -41,13 +41,26 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
     t.index ['author_user_id'], name: 'index_titles_on_author_user_id'
+    t.index ['deleted_at'], name: 'index_titles_on_deleted_at'
   end
 
   create_table 'users', primary_key: 'user_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                         force: :cascade do |t|
     t.string 'pen_name', limit: 32, null: false
+    t.string 'nick_name', limit: 32, null: false
+    t.string 'birth_ym', limit: 6, null: false
+    t.integer 'agreed_terms_version', null: false, unsigned: true
+    t.boolean 'is_anonymous', null: false
+    t.text 'profile_icon_image', null: false
+    t.string 'email', null: false
+    t.string 'google_sub', limit: 128, null: false
+    t.text 'remarks'
+    t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.index ['deleted_at'], name: 'index_users_on_deleted_at'
+    t.index ['email'], name: 'index_users_on_email', unique: true
+    t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
   end
 
   add_foreign_key 'sentences', 'sentences', column: 'parent_sentence_id', primary_key: 'sentence_id'

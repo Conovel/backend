@@ -57,6 +57,15 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
 
   def add_users_columns(table)
     table.string 'pen_name', limit: 32, null: false
+    table.string 'nick_name', limit: 32, null: false
+    table.string 'birth_ym', limit: 6, null: false # dateだと8桁（YYYYMMDD）になるためstringの6桁（YYYYMM）にする
+    table.integer 'agreed_terms_version', null: false, unsigned: true
+    table.boolean 'is_anonymous', null: false
+    table.text 'profile_icon_image', null: false
+    table.string 'email', limit: 255, null: false # uniqueのindexを設定するために文字数制限が必要
+    table.string 'google_sub', limit: 128, null: false
+    table.text 'remarks'
+    table.datetime 'deleted_at'
   end
 
   def add_foreign_keys
@@ -72,5 +81,9 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :sentences, :sentence_user_id
     add_index :sentences, :title_id, name: 'index_sentences_on_title_id'
     add_index :titles, :author_user_id, name: 'index_titles_on_author_user_id'
+    add_index :titles, :deleted_at
+    add_index :users, :email, unique: true
+    add_index :users, :google_sub, unique: true
+    add_index :users, :deleted_at
   end
 end
