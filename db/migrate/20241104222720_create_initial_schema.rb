@@ -83,6 +83,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   def add_evaluations_columns(table)
     table.bigint 'sentence_id', null: false
     table.bigint 'evaluator_user_id', null: false
+    table.integer 'evaluation', null: false # enem値はモデルで設定：{ good: 0, bad: 1, stay: 2 }
+    table.datetime 'deleted_at'
   end
 
   def add_foreign_keys
@@ -105,5 +107,6 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :google_sub, unique: true
     add_index :users, :deleted_at
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
+    add_index :evaluations, :deleted_at
   end
 end

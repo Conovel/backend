@@ -17,8 +17,11 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
                               collation: 'utf8mb4_general_ci', force: :cascade do |t|
     t.bigint 'sentence_id', null: false
     t.bigint 'evaluator_user_id', null: false
+    t.integer 'evaluation', null: false
+    t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.index ['deleted_at'], name: 'index_evaluations_on_deleted_at'
     t.index ['evaluator_user_id'], name: 'fk_rails_62490f0cce'
     t.index %w[sentence_id evaluator_user_id], name: 'index_evaluations_on_sentence_id_and_evaluator_user_id',
                                                unique: true

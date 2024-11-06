@@ -6,5 +6,14 @@ AllCops:
 Metrics/BlockLength:
   Exclude:
     - 'spec/requests/sentences_spec.rb'
+    - 'db/migrate/20241104222720_create_initial_schema.rb'
     - 'db/schema.rb'
   Max: 30
+
+Metrics/MethodLength:
+  Exclude:
+    - 'db/migrate/20241104222720_create_initial_schema.rb'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'db/migrate/20241104222720_create_initial_schema.rb'
