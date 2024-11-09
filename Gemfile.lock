@@ -75,6 +75,8 @@ GEM
       msgpack (~> 1.2)
     builder (3.3.0)
     childprocess (4.1.0)
+    composite_primary_keys (14.0.9)
+      activerecord (~> 7.0.2)
     concurrent-ruby (1.3.4)
     crass (1.0.6)
     date (3.3.4)
@@ -258,6 +260,7 @@ DEPENDENCIES
   base64
   bigdecimal
   bootsnap
+  composite_primary_keys
   debug
   mutex_m
   mysql2 (~> 0.5)

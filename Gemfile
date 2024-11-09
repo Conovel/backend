@@ -53,6 +53,9 @@ gem 'overcommit', '~> 0.60.0'
 # UUsed as a CORS settings
 gem 'rack-cors'
 
+# Use composite_primary_keys as a composite primary key
+gem 'composite_primary_keys'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mingw x64_mingw]

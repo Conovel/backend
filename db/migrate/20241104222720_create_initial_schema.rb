@@ -13,6 +13,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
 
   private
 
+  # sentencesテーブル
   def create_sentences_table
     create_table 'sentences', primary_key: 'sentence_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                               force: :cascade do |t|
@@ -30,6 +31,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  # titlesテーブル
   def create_titles_table
     create_table 'titles', primary_key: 'title_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                            force: :cascade do |t|
@@ -48,6 +50,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  # usersテーブル
   def create_users_table
     create_table 'users', primary_key: 'user_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                           force: :cascade do |t|
@@ -69,6 +72,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  # evaluationsテーブル
   def create_evaluations_table
     create_table 'evaluations', id: false, charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
                                 force: :cascade do |t|
@@ -87,6 +91,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  # 外部キー制約を追加
   def add_foreign_keys
     add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
     add_foreign_key :sentences, :titles, column: :title_id, primary_key: :title_id
@@ -96,6 +101,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_foreign_key :evaluations, :users, column: :evaluator_user_id, primary_key: :user_id
   end
 
+  # インデックスを追加
   def add_indexes
     add_index :sentences, :deleted_at
     add_index :sentences, :parent_sentence_id
