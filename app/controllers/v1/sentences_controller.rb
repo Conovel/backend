@@ -24,10 +24,13 @@ module V1
       user = find_user(sentence.sentence_user_id)
       evaluation_counts = fetch_evaluation_counts(sentence.id)
       parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
+      parent_parallel_sentences = find_parent_parallel_sentences(parent_sentence&.parent_sentence_id,
+                                                                 parent_sentence&.id)
 
       render json: {
         main: build_sentence_response(sentence, user, evaluation_counts),
-        parent: build_sentence_response(parent_sentence)
+        parent: build_sentence_response(parent_sentence),
+        parent_parallel: build_parent_parallel_responses(parent_parallel_sentences)
       }, status: :ok
     end
 
@@ -50,6 +53,12 @@ module V1
       Sentence.find_by(sentence_id: parent_sentence_id)
     end
 
+    def find_parent_parallel_sentences(grandparent_sentence_id, parent_sentence_id)
+      return [] if grandparent_sentence_id.nil?
+
+      Sentence.where(parent_sentence_id: grandparent_sentence_id).where.not(sentence_id: parent_sentence_id)
+    end
+
     # rubocop:disable Metrics/MethodLength
     def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
       return nil if sentence.nil?
@@ -70,6 +79,12 @@ module V1
       }
     end
     # rubocop:enable Metrics/MethodLength
+
+    def build_parent_parallel_responses(sentences)
+      sentences.map do |sentence|
+        build_sentence_response(sentence)
+      end
+    end
 
     def format_time(time)
       time.in_time_zone('Asia/Tokyo')
