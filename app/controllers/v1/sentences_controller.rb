@@ -21,20 +21,22 @@ module V1
     end
 
     def render_success_response(sentence)
-      user = find_user(sentence.sentence_user_id)
-      evaluation_counts = fetch_evaluation_counts(sentence.id)
-      parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
-      parent_parallel_sentences = find_parent_parallel_sentences(parent_sentence&.parent_sentence_id,
-                                                                 parent_sentence&.id)
-
-      render json: {
-        main: build_sentence_response(sentence, user, evaluation_counts),
-        parent: build_sentence_response(parent_sentence),
-        parent_parallel: build_parent_parallel_responses(parent_parallel_sentences)
-      }, status: :ok
+      response_data = build_response_data(sentence)
+      render json: build_response(response_data), status: :ok
     end
 
     private
+
+    def build_response_data(sentence)
+      {
+        sentence:,
+        user: find_user(sentence.sentence_user_id),
+        evaluation_counts: fetch_evaluation_counts(sentence.id),
+        parent_sentence: find_parent_sentence(sentence.parent_sentence_id),
+        parent_parallel_sentences: find_parent_parallel_sentences(sentence),
+        children_sentences: find_children_sentences(sentence.id)
+      }
+    end
 
     def find_user(user_id)
       User.find(user_id)
@@ -53,10 +55,15 @@ module V1
       Sentence.find_by(sentence_id: parent_sentence_id)
     end
 
-    def find_parent_parallel_sentences(grandparent_sentence_id, parent_sentence_id)
-      return [] if grandparent_sentence_id.nil?
+    def find_parent_parallel_sentences(sentence)
+      parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
+      return [] if parent_sentence.nil?
 
-      Sentence.where(parent_sentence_id: grandparent_sentence_id).where.not(sentence_id: parent_sentence_id)
+      Sentence.where(parent_sentence_id: parent_sentence.parent_sentence_id).where.not(sentence_id: parent_sentence.id)
+    end
+
+    def find_children_sentences(parent_sentence_id)
+      Sentence.where(parent_sentence_id:)
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -84,6 +91,21 @@ module V1
       sentences.map do |sentence|
         build_sentence_response(sentence)
       end
+    end
+
+    def build_children_responses(sentences)
+      sentences.map do |sentence|
+        build_sentence_response(sentence)
+      end
+    end
+
+    def build_response(data)
+      {
+        main: build_sentence_response(data[:sentence], data[:user], data[:evaluation_counts]),
+        parent: build_sentence_response(data[:parent_sentence]),
+        parent_parallel: build_parent_parallel_responses(data[:parent_parallel_sentences]),
+        children: build_children_responses(data[:children_sentences])
+      }
     end
 
     def format_time(time)
