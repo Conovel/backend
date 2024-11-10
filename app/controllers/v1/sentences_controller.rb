@@ -11,6 +11,7 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    # GET /v1/sentences/:sentence_id
     def show
       result = FindSentenceService.new(params[:sentence_id]).call
       if result[:success]
@@ -20,6 +21,7 @@ module V1
       end
     end
 
+    # 成功時のレスポンス
     def render_success_response(sentence)
       response_data = build_response_data(sentence)
       render json: build_response(response_data), status: :ok
@@ -27,6 +29,7 @@ module V1
 
     private
 
+    # レスポンスデータを構築
     def build_response_data(sentence)
       {
         sentence:,
@@ -38,10 +41,12 @@ module V1
       }
     end
 
+    # ユーザーを取得
     def find_user(user_id)
       User.find(user_id)
     end
 
+    # 評価数を取得
     def fetch_evaluation_counts(sentence_id)
       {
         good: Evaluation.where(sentence_id:, evaluation: 'good').count,
@@ -49,12 +54,14 @@ module V1
       }
     end
 
+    # 親投稿を取得
     def find_parent_sentence(parent_sentence_id)
       return nil if parent_sentence_id.nil?
 
       Sentence.find_by(sentence_id: parent_sentence_id)
     end
 
+    # 親投稿の並列投稿を取得
     def find_parent_parallel_sentences(sentence)
       parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
       return [] if parent_sentence.nil?
@@ -62,10 +69,12 @@ module V1
       Sentence.where(parent_sentence_id: parent_sentence.parent_sentence_id).where.not(sentence_id: parent_sentence.id)
     end
 
+    # 子投稿を取得
     def find_children_sentences(parent_sentence_id)
       Sentence.where(parent_sentence_id:)
     end
 
+    # レスポンスデータを構築
     # rubocop:disable Metrics/MethodLength
     def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
       return nil if sentence.nil?
@@ -87,31 +96,29 @@ module V1
     end
     # rubocop:enable Metrics/MethodLength
 
-    def build_parent_parallel_responses(sentences)
+    # 複数のレスポンスを構築
+    def build_sentence_responses(sentences)
       sentences.map do |sentence|
         build_sentence_response(sentence)
       end
     end
 
-    def build_children_responses(sentences)
-      sentences.map do |sentence|
-        build_sentence_response(sentence)
-      end
-    end
-
+    # レスポンスを構築
     def build_response(data)
       {
         main: build_sentence_response(data[:sentence], data[:user], data[:evaluation_counts]),
         parent: build_sentence_response(data[:parent_sentence]),
-        parent_parallel: build_parent_parallel_responses(data[:parent_parallel_sentences]),
-        children: build_children_responses(data[:children_sentences])
+        parent_parallel: build_sentence_responses(data[:parent_parallel_sentences]),
+        children: build_sentence_responses(data[:children_sentences])
       }
     end
 
+    # 時刻をフォーマット（日本時間）
     def format_time(time)
       time.in_time_zone('Asia/Tokyo')
     end
 
+    # エラーレスポンス
     def render_error_response(error)
       render json: { error: }, status: :not_found
     end
