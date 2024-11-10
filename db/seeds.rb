@@ -54,6 +54,16 @@ users = User.create!([
                          profile_icon_image: 'icon3.png',
                          email: 'user3@example.com',
                          google_sub: 'sub3'
+                       },
+                       {
+                         pen_name: 'コノベル四郎',
+                         nick_name: 'シロさん',
+                         birth_ym: '199003',
+                         agreed_terms_version: 1,
+                         is_anonymous: false,
+                         profile_icon_image: 'icon4.png',
+                         email: 'user4@example.com',
+                         google_sub: 'sub4'
                        }
                      ])
 
@@ -109,7 +119,7 @@ sentences = Sentence.create!([
                                {
                                  sentence_user_id: users[1].id,
                                  sentence: 'というのは嘘で、吾輩は犬である。',
-                                 parent_sentence_id: 2,
+                                 parent_sentence_id: 1,
                                  title_id: titles[0].id,
                                  sentence_hierarchy: 2
                                },
@@ -117,6 +127,27 @@ sentences = Sentence.create!([
                                  sentence_user_id: users[1].id,
                                  sentence: '名前はポチと申す。',
                                  parent_sentence_id: 6,
+                                 title_id: titles[0].id,
+                                 sentence_hierarchy: 3
+                               },
+                               {
+                                 sentence_user_id: users[3].id,
+                                 sentence: 'というのは嘘で、吾輩は猿である。',
+                                 parent_sentence_id: 1,
+                                 title_id: titles[0].id,
+                                 sentence_hierarchy: 2
+                               },
+                               {
+                                 sentence_user_id: users[2].id,
+                                 sentence: '鬼ヶ島に行く途中である。',
+                                 parent_sentence_id: 8,
+                                 title_id: titles[0].id,
+                                 sentence_hierarchy: 3
+                               },
+                               {
+                                 sentence_user_id: users[0].id,
+                                 sentence: '名はジロウと申す。',
+                                 parent_sentence_id: 8,
                                  title_id: titles[0].id,
                                  sentence_hierarchy: 3
                                }
@@ -138,6 +169,16 @@ Evaluation.create!([
                        sentence_id: sentences[2].id,
                        evaluator_user_id: users[2].id,
                        evaluation: :stay
+                     },
+                     {
+                       sentence_id: sentences[2].id,
+                       evaluator_user_id: users[3].id,
+                       evaluation: :good
+                     },
+                     {
+                       sentence_id: sentences[2].id,
+                       evaluator_user_id: users[0].id,
+                       evaluation: :good
                      }
                    ])
 
