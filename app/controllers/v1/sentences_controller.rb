@@ -20,18 +20,46 @@ module V1
       end
     end
 
+    def render_success_response(sentence)
+      user = find_user(sentence.sentence_user_id)
+      evaluation_counts = fetch_evaluation_counts(sentence.id)
+
+      render json: {
+        main: build_main_response(sentence, user, evaluation_counts)
+      }, status: :ok
+    end
+
     private
 
-    def render_success_response(sentence)
-      render json: {
-        main: {
-          sentence_id: sentence.id,
-          sentence: sentence.sentence,
-          sentence_hierarchy: sentence.sentence_hierarchy,
-          created_at: sentence.created_at,
-          updated_at: sentence.updated_at
-        }
-      }, status: :ok
+    def find_user(user_id)
+      User.find(user_id)
+    end
+
+    def fetch_evaluation_counts(sentence_id)
+      {
+        good: Evaluation.where(sentence_id:, evaluation: 'good').count,
+        stay: Evaluation.where(sentence_id:, evaluation: 'stay').count
+      }
+    end
+
+    # rubocop:disable Metrics/MethodLength
+    def build_main_response(sentence, user, evaluation_counts)
+      {
+        sentence_id: sentence.id,
+        sentence: sentence.sentence,
+        sentence_user_id: sentence.sentence_user_id,
+        sentence_user_name: user.pen_name,
+        profile_icon_image: user.profile_icon_image,
+        evaluation_good_count: evaluation_counts[:good],
+        evaluation_stay_count: evaluation_counts[:stay],
+        created_at: format_time(sentence.created_at),
+        updated_at: format_time(sentence.updated_at)
+      }
+    end
+    # rubocop:enable Metrics/MethodLength
+
+    def format_time(time)
+      time.in_time_zone('Asia/Tokyo')
     end
 
     def render_error_response(error)
