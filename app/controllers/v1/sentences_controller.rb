@@ -23,9 +23,11 @@ module V1
     def render_success_response(sentence)
       user = find_user(sentence.sentence_user_id)
       evaluation_counts = fetch_evaluation_counts(sentence.id)
+      parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
 
       render json: {
-        main: build_main_response(sentence, user, evaluation_counts)
+        main: build_sentence_response(sentence, user, evaluation_counts),
+        parent: build_sentence_response(parent_sentence)
       }, status: :ok
     end
 
@@ -42,8 +44,19 @@ module V1
       }
     end
 
+    def find_parent_sentence(parent_sentence_id)
+      return nil if parent_sentence_id.nil?
+
+      Sentence.find_by(sentence_id: parent_sentence_id)
+    end
+
     # rubocop:disable Metrics/MethodLength
-    def build_main_response(sentence, user, evaluation_counts)
+    def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
+      return nil if sentence.nil?
+
+      user ||= find_user(sentence.sentence_user_id)
+      evaluation_counts ||= fetch_evaluation_counts(sentence.id)
+
       {
         sentence_id: sentence.id,
         sentence: sentence.sentence,
