@@ -1,49 +1,27 @@
 # frozen_string_literal: true
 
-# require 'swagger_helper'
+require 'rails_helper'
 
-# RSpec.describe 'Sentences API', type: :request do
-#   let!(:sentence) { Sentence.create(sentence: '吾輩は猫である。', sentence_hierarchy: 1) }
-#   let(:sentence_id) { sentence.id }
+RSpec.describe 'Sentences', type: :request do
+  let(:user) { User.find_by(email: 'user1@example.com') }
+  let(:title) { Title.find_by(title: '吾輩は猫である。') }
 
-#   path '/sentences/{sentence_id}' do
-#     get 'Retrieves a sentence' do
-#       tags 'Sentences'
-#       produces 'application/json'
-#       parameter name: :sentence_id, in: :path, type: :string
+  describe 'GET /v1/sentences/:id' do
+    it 'returns the sentence' do
+      # シードデータを使用
+      sentence = Sentence.find_by(sentence: '吾輩は猫である。')
 
-#       response '200', 'sentence found' do
-#         schema type: :object,
-#                properties: {
-#                  main: {
-#                    type: :object,
-#                    properties: {
-#                      sentence_id: { type: :integer },
-#                      sentence: { type: :string },
-#                      sentence_hierarchy: { type: :integer },
-#                      created_at: { type: :string, format: 'date-time' },
-#                      updated_at: { type: :string, format: 'date-time' }
-#                    },
-#                    required: %w[sentence_id sentence sentence_hierarchy created_at updated_at],
-#                    example: {
-#                      sentence_id: 1,
-#                      sentence: '吾輩は猫である。',
-#                      sentence_hierarchy: 1,
-#                      created_at: '2024-10-02T23:03:57.431Z',
-#                      updated_at: '2024-10-02T23:03:57.431Z'
-#                    }
-#                  }
-#                },
-#                required: ['main']
+      get "/v1/sentences/#{sentence.sentence_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
 
-#         let(:sentence_id) { sentence.id }
-#         run_test!
-#       end
+      # JSONレスポンスの内容を出力
+      # puts JSON.pretty_generate(json_response)
 
-#       response '404', 'sentence not found' do
-#         let(:sentence_id) { 'invalid' }
-#         run_test!
-#       end
-#     end
-#   end
-# end
+      expect(json_response['main']['sentence']).to eq('吾輩は猫である。')
+      expect(json_response).to have_key('parent')
+      expect(json_response).to have_key('parent_parallel')
+      expect(json_response).to have_key('children')
+    end
+  end
+end
