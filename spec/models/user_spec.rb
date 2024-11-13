@@ -4,29 +4,27 @@ require 'rails_helper'
 
 RSpec.describe User, type: :model do
   it 'is valid with valid attributes' do
-    user = User.new(
-      pen_name: 'コノベル太郎',
-      nick_name: 'タロさん',
-      birth_ym: '199001',
-      agreed_terms_version: 1,
-      is_anonymous: false,
-      profile_icon_image: 'icon1.png',
-      email: 'user_test@example.com',
-      google_sub: 'sub_test'
-    )
+    user = build(:user)
     expect(user).to be_valid
   end
 
   it 'is not valid without a pen_name' do
-    user = User.new(
-      nick_name: 'タロさん',
-      birth_ym: '199001',
-      agreed_terms_version: 1,
-      is_anonymous: false,
-      profile_icon_image: 'icon1.png',
-      email: 'user_test@example.com',
-      google_sub: 'sub_test'
-    )
+    user = build(:user, pen_name: nil)
+    expect(user).not_to be_valid
+  end
+
+  it 'is not valid without a nick_name' do
+    user = build(:user, nick_name: nil)
+    expect(user).not_to be_valid
+  end
+
+  it 'is not valid without an email' do
+    user = build(:user, email: nil)
+    expect(user).not_to be_valid
+  end
+
+  it 'is not valid without a google_sub' do
+    user = build(:user, google_sub: nil)
     expect(user).not_to be_valid
   end
 end

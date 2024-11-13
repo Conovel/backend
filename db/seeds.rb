@@ -70,7 +70,7 @@ users = User.create!([
 # タイトルのデータを作成
 titles = Title.create!([
                          {
-                           author_user_id: users[0].id,
+                           author_user_id: users[0].user_id,
                            title: '吾輩は猫である',
                            is_permission_violence: false,
                            is_permission_adult: false,
@@ -82,73 +82,73 @@ titles = Title.create!([
 # 投稿のデータを作成
 sentences = Sentence.create!([
                                {
-                                 sentence_user_id: users[0].id,
+                                 sentence_user_id: users[0].user_id,
                                  sentence: '吾輩は猫である。',
                                  parent_sentence_id: nil,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 1
                                },
                                {
-                                 sentence_user_id: users[1].id,
+                                 sentence_user_id: users[1].user_id,
                                  sentence: '名前はまだない。',
                                  parent_sentence_id: 1,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 2
                                },
                                {
-                                 sentence_user_id: users[0].id,
+                                 sentence_user_id: users[0].user_id,
                                  sentence: 'どこで生れたかとんと見当がつかぬ。',
                                  parent_sentence_id: 2,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
                                },
                                {
-                                 sentence_user_id: users[2].id,
+                                 sentence_user_id: users[2].user_id,
                                  sentence: '名前はもうある。',
                                  parent_sentence_id: 1,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 2
                                },
                                {
-                                 sentence_user_id: users[1].id,
+                                 sentence_user_id: users[1].user_id,
                                  sentence: '名はミケと申す。',
                                  parent_sentence_id: 4,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
                                },
                                {
-                                 sentence_user_id: users[1].id,
+                                 sentence_user_id: users[1].user_id,
                                  sentence: 'というのは嘘で、吾輩は犬である。',
                                  parent_sentence_id: 1,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 2
                                },
                                {
-                                 sentence_user_id: users[1].id,
+                                 sentence_user_id: users[1].user_id,
                                  sentence: '名前はポチと申す。',
                                  parent_sentence_id: 6,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
                                },
                                {
-                                 sentence_user_id: users[3].id,
+                                 sentence_user_id: users[3].user_id,
                                  sentence: 'というのは嘘で、吾輩は猿である。',
                                  parent_sentence_id: 1,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 2
                                },
                                {
-                                 sentence_user_id: users[2].id,
+                                 sentence_user_id: users[2].user_id,
                                  sentence: '鬼ヶ島に行く途中である。',
                                  parent_sentence_id: 8,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
                                },
                                {
-                                 sentence_user_id: users[0].id,
+                                 sentence_user_id: users[0].user_id,
                                  sentence: '名はジロウと申す。',
                                  parent_sentence_id: 8,
-                                 title_id: titles[0].id,
+                                 title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
                                }
                              ])
@@ -156,28 +156,28 @@ sentences = Sentence.create!([
 # 評価のデータを作成
 Evaluation.create!([
                      {
-                       sentence_id: sentences[0].id,
-                       evaluator_user_id: users[1].id,
+                       sentence_id: sentences[0].sentence_id,
+                       evaluator_user_id: users[1].user_id,
                        evaluation: :good
                      },
                      {
-                       sentence_id: sentences[1].id,
-                       evaluator_user_id: users[0].id,
+                       sentence_id: sentences[1].sentence_id,
+                       evaluator_user_id: users[0].user_id,
                        evaluation: :bad
                      },
                      {
-                       sentence_id: sentences[2].id,
-                       evaluator_user_id: users[2].id,
+                       sentence_id: sentences[2].sentence_id,
+                       evaluator_user_id: users[2].user_id,
                        evaluation: :stay
                      },
                      {
-                       sentence_id: sentences[2].id,
-                       evaluator_user_id: users[3].id,
+                       sentence_id: sentences[2].sentence_id,
+                       evaluator_user_id: users[3].user_id,
                        evaluation: :good
                      },
                      {
-                       sentence_id: sentences[2].id,
-                       evaluator_user_id: users[0].id,
+                       sentence_id: sentences[2].sentence_id,
+                       evaluator_user_id: users[0].user_id,
                        evaluation: :good
                      }
                    ])

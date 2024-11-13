@@ -34,10 +34,10 @@ module V1
       {
         sentence:,
         user: find_user(sentence.sentence_user_id),
-        evaluation_counts: fetch_evaluation_counts(sentence.id),
+        evaluation_counts: fetch_evaluation_counts(sentence.sentence_id),
         parent_sentence: find_parent_sentence(sentence.parent_sentence_id),
         parent_parallel_sentences: find_parent_parallel_sentences(sentence),
-        children_sentences: find_children_sentences(sentence.id)
+        children_sentences: find_children_sentences(sentence.sentence_id)
       }
     end
 
@@ -66,7 +66,8 @@ module V1
       parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
       return [] if parent_sentence.nil?
 
-      Sentence.where(parent_sentence_id: parent_sentence.parent_sentence_id).where.not(sentence_id: parent_sentence.id)
+      Sentence.where(parent_sentence_id: parent_sentence.parent_sentence_id)
+              .where.not(sentence_id: parent_sentence.sentence_id)
     end
 
     # 子投稿を取得
@@ -80,10 +81,10 @@ module V1
       return nil if sentence.nil?
 
       user ||= find_user(sentence.sentence_user_id)
-      evaluation_counts ||= fetch_evaluation_counts(sentence.id)
+      evaluation_counts ||= fetch_evaluation_counts(sentence.sentence_id)
 
       {
-        sentence_id: sentence.id,
+        sentence_id: sentence.sentence_id,
         sentence: sentence.sentence,
         sentence_user_id: sentence.sentence_user_id,
         sentence_user_name: user.pen_name,
