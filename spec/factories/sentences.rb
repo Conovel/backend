@@ -3,14 +3,14 @@
 FactoryBot.define do
   factory :sentence do
     association :user, factory: :user
-    sequence(:sentence) { |n| "吾輩は猫である#{n}" }
+    sequence(:sentence) { |n| "テストテスト#{n}" }
     parent_sentence_id { nil }
     association :title
     sentence_hierarchy { 1 }
 
     trait :with_specific_content do
       transient do
-        content { '吾輩は猫である。' }
+        content { 'あああああ' }
         parent_sentence { nil }
         hierarchy { 1 }
       end
