@@ -150,6 +150,27 @@ sentences = Sentence.create!([
                                  parent_sentence_id: 8,
                                  title_id: titles[0].title_id,
                                  sentence_hierarchy: 3
+                               },
+                               {
+                                 sentence_user_id: users[1].user_id,
+                                 sentence: '検討している間に3年がすぎた。',
+                                 parent_sentence_id: 3,
+                                 title_id: titles[0].title_id,
+                                 sentence_hierarchy: 4
+                               },
+                               {
+                                 sentence_user_id: users[2].user_id,
+                                 sentence: '検討がつかないから吾輩は旅に出た。',
+                                 parent_sentence_id: 3,
+                                 title_id: titles[0].title_id,
+                                 sentence_hierarchy: 4
+                               },
+                               {
+                                 sentence_user_id: users[3].user_id,
+                                 sentence: '母を訪ねてもう三千里も歩いている。',
+                                 parent_sentence_id: 3,
+                                 title_id: titles[0].title_id,
+                                 sentence_hierarchy: 4
                                }
                              ])
 
