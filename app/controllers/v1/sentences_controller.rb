@@ -13,7 +13,7 @@ module V1
   class SentencesController < ApplicationController
     # GET /v1/sentences/:sentence_id
     def show
-      result = FindSentenceService.new(params[:sentence_id]).call
+      result = find_sentence(params[:sentence_id])
       if result[:success]
         render_success_response(result[:sentence])
       else
@@ -28,6 +28,16 @@ module V1
     end
 
     private
+
+    # Sentenceを検索
+    def find_sentence(sentence_id)
+      sentence = Sentence.find_by_id(sentence_id)
+      if sentence
+        { success: true, sentence: }
+      else
+        { success: false, error: 'Sentence not found' }
+      end
+    end
 
     # レスポンスデータを構築
     def build_response_data(sentence)
