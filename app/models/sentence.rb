@@ -14,8 +14,8 @@ class Sentence < ApplicationRecord
   # アソシエーション
   belongs_to :user, foreign_key: 'sentence_user_id'
   belongs_to :title
-  belongs_to :parent_sentence, class_name: 'Sentence', optional: true, foreign_key: 'parent_sentence_id'
-  has_many :child_sentences, class_name: 'Sentence', foreign_key: 'parent_sentence_id'
+  belongs_to :parent, class_name: 'Sentence', optional: true, foreign_key: 'parent_sentence_id'
+  has_many :children, class_name: 'Sentence', foreign_key: 'parent_sentence_id'
   has_many :evaluations, foreign_key: 'sentence_id'
 
   # バリデーション
