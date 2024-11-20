@@ -43,9 +43,10 @@ module V1
 
     # 評価数を取得
     def fetch_evaluation_counts(sentence)
+      counts = sentence.evaluations.group(:evaluation).count
       {
-        good: sentence.evaluations.where(evaluation: 'good').count,
-        stay: sentence.evaluations.where(evaluation: 'stay').count
+        good: counts['good'] || 0,
+        stay: counts['stay'] || 0
       }
     end
 
