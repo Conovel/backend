@@ -13,11 +13,11 @@ module V1
   class SentencesController < ApplicationController
     # GET /v1/sentences/:sentence_id
     def show
-      result = find_sentence(params[:sentence_id])
-      if result[:success]
-        render_success_response(result[:sentence])
+      @sentence = Sentence.includes(:user, :evaluations, :children, parent: :parent).find_by_id(params[:sentence_id])
+      if @sentence
+        render_success_response(@sentence)
       else
-        render_error_response(result[:error])
+        render_error_response('Sentence not found')
       end
     end
 
@@ -29,60 +29,32 @@ module V1
 
     private
 
-    # Sentenceを検索
-    def find_sentence(sentence_id)
-      sentence = Sentence.find_by_id(sentence_id)
-      if sentence
-        { success: true, sentence: }
-      else
-        { success: false, error: 'Sentence not found' }
-      end
-    end
-
     # レスポンスデータを構築
     def build_response_data(sentence)
       {
         sentence:,
-        user: find_user(sentence.sentence_user_id),
-        evaluation_counts: fetch_evaluation_counts(sentence.sentence_id),
-        parent_sentence: find_parent_sentence(sentence.parent_sentence_id),
+        user: sentence.user,
+        evaluation_counts: fetch_evaluation_counts(sentence),
+        parent_sentence: sentence.parent,
         parent_parallel_sentences: find_parent_parallel_sentences(sentence),
-        children_sentences: find_children_sentences(sentence.sentence_id)
+        children_sentences: sentence.children
       }
-    end
-
-    # ユーザーを取得
-    def find_user(user_id)
-      User.find(user_id)
     end
 
     # 評価数を取得
-    def fetch_evaluation_counts(sentence_id)
+    def fetch_evaluation_counts(sentence)
       {
-        good: Evaluation.where(sentence_id:, evaluation: 'good').count,
-        stay: Evaluation.where(sentence_id:, evaluation: 'stay').count
+        good: sentence.evaluations.where(evaluation: 'good').count,
+        stay: sentence.evaluations.where(evaluation: 'stay').count
       }
-    end
-
-    # 親投稿を取得
-    def find_parent_sentence(parent_sentence_id)
-      return nil if parent_sentence_id.nil?
-
-      Sentence.find_by(sentence_id: parent_sentence_id)
     end
 
     # 親投稿の並列投稿を取得
     def find_parent_parallel_sentences(sentence)
-      parent_sentence = find_parent_sentence(sentence.parent_sentence_id)
-      return [] if parent_sentence.nil?
+      parent_sentence = sentence.parent
+      return [] if parent_sentence.nil? || parent_sentence.parent.nil?
 
-      Sentence.where(parent_sentence_id: parent_sentence.parent_sentence_id)
-              .where.not(sentence_id: parent_sentence.sentence_id)
-    end
-
-    # 子投稿を取得
-    def find_children_sentences(parent_sentence_id)
-      Sentence.where(parent_sentence_id:)
+      parent_sentence.parent.children.where.not(sentence_id: parent_sentence.sentence_id)
     end
 
     # レスポンスデータを構築
@@ -90,8 +62,8 @@ module V1
     def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
       return nil if sentence.nil?
 
-      user ||= find_user(sentence.sentence_user_id)
-      evaluation_counts ||= fetch_evaluation_counts(sentence.sentence_id)
+      user ||= sentence.user
+      evaluation_counts ||= fetch_evaluation_counts(sentence)
 
       {
         sentence_id: sentence.sentence_id,
