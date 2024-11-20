@@ -2,6 +2,9 @@
 
 # Title model handles the titles in the application.
 class Title < ApplicationRecord
+  # 論理削除
+  acts_as_paranoid
+
   # アソシエーション
   belongs_to :author_user, class_name: 'User'
 

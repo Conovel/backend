@@ -2,6 +2,9 @@
 
 # User model handles the users in the application.
 class User < ApplicationRecord
+  # 論理削除
+  acts_as_paranoid
+
   # アソシエーション
   has_many :titles, foreign_key: 'author_user_id'
   has_many :sentences, foreign_key: 'sentence_user_id'
