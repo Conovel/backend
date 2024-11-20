@@ -38,6 +38,13 @@ module Backend
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # original url setting
+    config.origin_url = if Rails.env.production?
+                          ENV.fetch('PRODUCTION_ORIGIN_URL', 'https://conovel.jp')
+                        else
+                          ENV.fetch('DEVELOPMENT_ORIGIN_URL', 'http://localhost:3000')
+                        end
   end
 end
 
