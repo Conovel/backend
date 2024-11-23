@@ -14,5 +14,16 @@ Rails.application.routes.draw do
     match full_path, to: "#{opts.fetch(:controller_name)}##{opts[:action_name]}", via: http_method
   end
 
+  add_openapi_route 'POST', '/v1/auth/logout', controller_name: 'auth', action_name: 'log_out'
+  add_openapi_route 'POST', '/v1/evaluations', controller_name: 'evaluations', action_name: 'create'
+  add_openapi_route 'GET', '/v1/novels/{title_id}', controller_name: 'novels', action_name: 'show'
+  add_openapi_route 'GET', '/v1/novels', controller_name: 'novels', action_name: 'index'
   add_openapi_route 'GET', '/v1/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
+  add_openapi_route 'POST', '/v1/sentences', controller_name: 'sentences', action_name: 'create'
+  add_openapi_route 'POST', '/v1/users/me/delete', controller_name: 'users', action_name: 'delete_user_by_me'
+  add_openapi_route 'GET', '/v1/users/{user_id}/posted_novels', controller_name: 'users', action_name: 'get_novels_by_user_id'
+  add_openapi_route 'GET', '/v1/users/{user_id}', controller_name: 'users', action_name: 'show'
+  add_openapi_route 'GET', '/v1/users/me', controller_name: 'users', action_name: 'get_user_by_me'
+  add_openapi_route 'GET', '/v1/users/me/viewed_novels', controller_name: 'users', action_name: 'get_viewed_novels_by_me'
+  add_openapi_route 'POST', '/v1/users/me/update', controller_name: 'users', action_name: 'update_user_by_me'
 end
