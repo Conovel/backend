@@ -36,7 +36,7 @@ module V1
         user: sentence.user,
         evaluation_counts: fetch_evaluation_counts(sentence),
         parent_sentence: sentence.parent,
-        parent_parallel_sentences: find_parent_parallel_sentences(sentence),
+        parallel_sentences: find_parallel_sentences(sentence),
         children_sentences: sentence.children
       }
     end
@@ -50,12 +50,12 @@ module V1
       }
     end
 
-    # 親投稿の並列投稿を取得
-    def find_parent_parallel_sentences(sentence)
+    # メイン投稿のパラレル投稿を取得
+    def find_parallel_sentences(sentence)
       parent_sentence = sentence.parent
-      return [] if parent_sentence.nil? || parent_sentence.parent.nil?
+      return [] if parent_sentence.nil?
 
-      parent_sentence.parent.children.where.not(sentence_id: parent_sentence.sentence_id)
+      parent_sentence.children.where.not(sentence_id: sentence.sentence_id)
     end
 
     # レスポンスデータを構築
@@ -92,7 +92,7 @@ module V1
       {
         main: build_sentence_response(data[:sentence], data[:user], data[:evaluation_counts]),
         parent: build_sentence_response(data[:parent_sentence]),
-        parent_parallel: build_sentence_responses(data[:parent_parallel_sentences]),
+        parallels: build_sentence_responses(data[:parallel_sentences]),
         children: build_sentence_responses(data[:children_sentences])
       }
     end

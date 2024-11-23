@@ -25,6 +25,14 @@ RSpec.describe 'Sentences', type: :request do
     create(:sentence, :with_specific_content, user: users[0], title:, content: 'おおおおお',
                                               parent_sentence: main_sentence, hierarchy: 3)
   end
+  let!(:parallel_sentence1) do
+    create(:sentence, :with_specific_content, user: users[2], title:, content: 'かかかかか',
+                                              parent_sentence:, hierarchy: 2)
+  end
+  let!(:parallel_sentence2) do
+    create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
+                                              parent_sentence:, hierarchy: 2)
+  end
 
   describe 'GET /v1/sentences/:sentence_id' do
     it 'returns the sentence' do
@@ -41,10 +49,12 @@ RSpec.describe 'Sentences', type: :request do
       expect(json_response).to have_key('parent')
       expect(json_response['parent']).not_to be_nil
       expect(json_response['parent']['sentence']).to eq('あああああ')
-      expect(json_response).to have_key('parent_parallel')
       expect(json_response).to have_key('children')
       expect(json_response['children'][0]).not_to be_nil
       expect(json_response['children'][0]['sentence']).to eq('ううううう')
+      expect(json_response).to have_key('parallels')
+      expect(json_response['parallels'][0]).not_to be_nil
+      expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
     end
   end
 end

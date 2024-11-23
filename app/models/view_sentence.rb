@@ -10,6 +10,6 @@
 
 # 親のパラレル投稿と子投稿（複数件＝配列）
 class ViewSentence < ApplicationRecord
-  serialize :parent_parallel, Array
+  serialize :parallels, Array
   serialize :children, Array
 end
