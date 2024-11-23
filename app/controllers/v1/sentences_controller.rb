@@ -13,9 +13,9 @@ module V1
   class SentencesController < ApplicationController
     # GET /v1/sentences/:sentence_id
     def show
-      @sentence = Sentence.includes(:user, :evaluations, :children, parent: :parent).find_by_id(params[:sentence_id])
-      if @sentence
-        response_data = build_response_data(@sentence)
+      sentence = Sentence.includes(:user, :evaluations, :children, parent: :parent).find_by_id(params[:sentence_id])
+      if sentence
+        response_data = build_response_data(sentence)
         render json: build_response(response_data), status: :ok
       else
         render_error_response('Sentence not found')
