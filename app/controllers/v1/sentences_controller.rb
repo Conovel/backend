@@ -15,16 +15,11 @@ module V1
     def show
       @sentence = Sentence.includes(:user, :evaluations, :children, parent: :parent).find_by_id(params[:sentence_id])
       if @sentence
-        render_success_response(@sentence)
+        response_data = build_response_data(@sentence)
+        render json: build_response(response_data), status: :ok
       else
         render_error_response('Sentence not found')
       end
-    end
-
-    # 成功時のレスポンス
-    def render_success_response(sentence)
-      response_data = build_response_data(sentence)
-      render json: build_response(response_data), status: :ok
     end
 
     private
