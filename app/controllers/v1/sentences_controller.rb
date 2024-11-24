@@ -30,8 +30,8 @@ module V1
         :user,
         :evaluations,
         :children,
-        parent: :parent,
-        parallels: :children
+        :parent,
+        :parallels
       ).find_by_id(sentence_id)
     end
 
