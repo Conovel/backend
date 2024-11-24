@@ -13,7 +13,7 @@ module V1
   class SentencesController < ApplicationController
     # GET /v1/sentences/:sentence_id
     def show
-      sentence = Sentence.includes(:user, :evaluations, :children, parent: :parent).find_by_id(params[:sentence_id])
+      sentence = find_sentence(params[:sentence_id])
       if sentence
         response_data = build_response_data(sentence)
         render json: build_response(response_data), status: :ok
@@ -24,6 +24,17 @@ module V1
 
     private
 
+    # 投稿データを取得
+    def find_sentence(sentence_id)
+      Sentence.includes(
+        :user,
+        :evaluations,
+        :children,
+        parent: :parent,
+        parallels: :children
+      ).find_by_id(sentence_id)
+    end
+
     # レスポンスデータを構築
     def build_response_data(sentence)
       {
@@ -31,7 +42,7 @@ module V1
         user: sentence.user,
         evaluation_counts: fetch_evaluation_counts(sentence),
         parent_sentence: sentence.parent,
-        parallel_sentences: find_parallel_sentences(sentence),
+        parallel_sentences: sentence.parallels,
         children_sentences: sentence.children
       }
     end
@@ -45,15 +56,7 @@ module V1
       }
     end
 
-    # メイン投稿のパラレル投稿を取得
-    def find_parallel_sentences(sentence)
-      parent_sentence = sentence.parent
-      return [] if parent_sentence.nil?
-
-      parent_sentence.children.where.not(sentence_id: sentence.sentence_id)
-    end
-
-    # レスポンスデータを構築
+    # 投稿レスポンスを構築
     # rubocop:disable Metrics/MethodLength
     def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
       return nil if sentence.nil?
@@ -75,7 +78,7 @@ module V1
     end
     # rubocop:enable Metrics/MethodLength
 
-    # 複数のレスポンスを構築
+    # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences)
       sentences.map do |sentence|
         build_sentence_response(sentence)

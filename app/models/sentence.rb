@@ -20,6 +20,9 @@ class Sentence < ApplicationRecord
   belongs_to :parent, class_name: 'Sentence', optional: true, foreign_key: 'parent_sentence_id'
   has_many :children, class_name: 'Sentence', foreign_key: 'parent_sentence_id'
   has_many :evaluations, foreign_key: 'sentence_id'
+  has_many :parallels, lambda { |sentence|
+    where.not(sentence_id: sentence.sentence_id)
+  }, through: :parent, source: :children
 
   # バリデーション
   validates :sentence, presence: true
