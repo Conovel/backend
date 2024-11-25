@@ -184,6 +184,11 @@ Evaluation.create!([
                      {
                        sentence_id: sentences[1].sentence_id,
                        evaluator_user_id: users[0].user_id,
+                       evaluation: :stay
+                     },
+                     {
+                       sentence_id: sentences[1].sentence_id,
+                       evaluator_user_id: users[2].user_id,
                        evaluation: :bad
                      },
                      {

@@ -29,9 +29,9 @@ module V1
       Sentence.includes(
         :user,
         :evaluations,
-        :children,
         :parent,
-        :parallels
+        :parallels,
+        :children
       ).find_by_id(sentence_id)
     end
 
@@ -40,10 +40,10 @@ module V1
       {
         sentence:,
         user: sentence.user,
-        evaluation_counts: fetch_evaluation_counts(sentence),
-        parent_sentence: sentence.parent,
-        parallel_sentences: sentence.parallels,
-        children_sentences: sentence.children
+        evaluations: sentence.evaluations,
+        parent: sentence.parent,
+        parallels: sentence.parallels,
+        children: sentence.children
       }
     end
 
@@ -58,11 +58,11 @@ module V1
 
     # 投稿レスポンスを構築
     # rubocop:disable Metrics/MethodLength
-    def build_sentence_response(sentence, user = nil, evaluation_counts = nil)
+    def build_sentence_response(sentence)
       return nil if sentence.nil?
 
-      user ||= sentence.user
-      evaluation_counts ||= fetch_evaluation_counts(sentence)
+      user = sentence.user
+      evaluation_counts = fetch_evaluation_counts(sentence)
 
       {
         sentence_id: sentence.sentence_id,
@@ -88,10 +88,10 @@ module V1
     # レスポンスを構築
     def build_response(data)
       {
-        main: build_sentence_response(data[:sentence], data[:user], data[:evaluation_counts]),
-        parent: build_sentence_response(data[:parent_sentence]),
-        parallels: build_sentence_responses(data[:parallel_sentences]),
-        children: build_sentence_responses(data[:children_sentences])
+        main: build_sentence_response(data[:sentence]),
+        parent: build_sentence_response(data[:parent]),
+        parallels: build_sentence_responses(data[:parallels]),
+        children: build_sentence_responses(data[:children])
       }
     end
 
