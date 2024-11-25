@@ -74,6 +74,9 @@ GEM
     bootsnap (1.18.4)
       msgpack (~> 1.2)
     builder (3.3.0)
+    bullet (8.0.0)
+      activesupport (>= 3.0.0)
+      uniform_notifier (~> 1.11)
     childprocess (4.1.0)
     composite_primary_keys (14.0.9)
       activerecord (~> 7.0.2)
@@ -252,6 +255,7 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.5.0)
+    uniform_notifier (1.16.0)
     websocket-driver (0.7.6)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -269,6 +273,7 @@ DEPENDENCIES
   base64
   bigdecimal
   bootsnap
+  bullet
   composite_primary_keys
   database_cleaner-active_record
   debug
