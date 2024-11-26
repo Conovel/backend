@@ -28,10 +28,9 @@ module V1
     def find_sentence(sentence_id)
       Sentence.includes(
         :user,
-        :evaluations,
         :parent,
-        :parallels,
-        :children
+        parallels: [:user],
+        children: [:user]
       ).find_by_id(sentence_id)
     end
 
