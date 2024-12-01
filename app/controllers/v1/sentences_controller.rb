@@ -28,9 +28,10 @@ module V1
     def find_sentence(sentence_id)
       Sentence.includes(
         :user,
+        :evaluations,
         :parent,
-        parallels: [:user],
-        children: [:user]
+        parallels: %i[user evaluations],
+        children: %i[user evaluations]
       ).find_by_id(sentence_id)
     end
 
@@ -48,10 +49,13 @@ module V1
 
     # 評価数を取得
     def fetch_evaluation_counts(sentence)
-      counts = sentence.evaluations.group(:evaluation).count
+      counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
+        hash[evaluation.evaluation] += 1
+      end
+
       {
-        good: counts['good'] || 0,
-        stay: counts['stay'] || 0
+        good: counts['good'],
+        stay: counts['stay']
       }
     end
 
