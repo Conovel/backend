@@ -56,6 +56,9 @@ gem 'rack-cors'
 # Use composite_primary_keys as a composite primary key
 gem 'composite_primary_keys'
 
+# Used to Logical deletion
+gem 'paranoia', '~> 2.4'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mingw x64_mingw]
@@ -65,9 +68,6 @@ group :development, :test do
 
   # Used to integrate rspec and openAPI
   gem 'rswag'
-
-  # Used to Logical deletion
-  gem 'paranoia', '~> 2.4'
 
   # Used to create test data
   gem 'factory_bot_rails'
