@@ -13,6 +13,7 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Exclude:
     - 'db/migrate/**/*'
+  Max: 40
 
 Metrics/ClassLength:
   Exclude:

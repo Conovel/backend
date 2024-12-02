@@ -60,7 +60,6 @@ module V1
     end
 
     # 投稿レスポンスを構築
-    # rubocop:disable Metrics/MethodLength
     def build_sentence_response(sentence)
       return nil if sentence.nil?
 
@@ -79,7 +78,6 @@ module V1
         updated_at: format_time(sentence.updated_at)
       }
     end
-    # rubocop:enable Metrics/MethodLength
 
     # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences)
