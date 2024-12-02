@@ -11,6 +11,8 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    include TimeHelper
+
     # GET /v1/sentences/:sentence_id
     def show
       sentence = find_sentence(params[:sentence_id])
@@ -94,11 +96,6 @@ module V1
         parallels: build_sentence_responses(data[:parallels]),
         children: build_sentence_responses(data[:children])
       }
-    end
-
-    # 時刻をフォーマット（日本時間）
-    def format_time(time)
-      time.in_time_zone('Asia/Tokyo')
     end
 
     # エラーレスポンス
