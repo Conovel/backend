@@ -1,47 +1,60 @@
 # frozen_string_literal: true
 
-require 'swagger_helper'
+require 'rails_helper'
 
-RSpec.describe 'Sentences API', type: :request do
-  let!(:sentence) { Sentence.create(sentence: '吾輩は猫である。') }
-  let(:sentence_id) { sentence.id }
+RSpec.describe 'Sentences', type: :request do
+  let!(:users) { create_list(:user, 4) }
+  let!(:title) { create(:title, author_user: users[0]) }
+  let!(:parent_sentence) do
+    create(:sentence, :with_specific_content, user: users[0], title:, content: 'あああああ',
+                                              parent_sentence: nil, hierarchy: 1)
+  end
+  let!(:main_sentence) do
+    create(:sentence, :with_specific_content, user: users[1], title:, content: 'いいいいい',
+                                              parent_sentence:, hierarchy: 2)
+  end
+  let!(:children_sentence1) do
+    create(:sentence, :with_specific_content, user: users[2], title:, content: 'ううううう',
+                                              parent_sentence: main_sentence, hierarchy: 3)
+  end
+  let!(:children_sentence2) do
+    create(:sentence, :with_specific_content, user: users[3], title:, content: 'えええええ',
+                                              parent_sentence: main_sentence, hierarchy: 3)
+  end
+  let!(:children_sentence3) do
+    create(:sentence, :with_specific_content, user: users[0], title:, content: 'おおおおお',
+                                              parent_sentence: main_sentence, hierarchy: 3)
+  end
+  let!(:parallel_sentence1) do
+    create(:sentence, :with_specific_content, user: users[2], title:, content: 'かかかかか',
+                                              parent_sentence:, hierarchy: 2)
+  end
+  let!(:parallel_sentence2) do
+    create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
+                                              parent_sentence:, hierarchy: 2)
+  end
 
-  path '/sentences/{sentence_id}' do
-    get 'Retrieves a sentence' do
-      tags 'Sentences'
-      produces 'application/json'
-      parameter name: :sentence_id, in: :path, type: :string
+  describe 'GET /v1/sentences/:sentence_id' do
+    it 'returns the sentence' do
+      main_sentence
 
-      response '200', 'sentence found' do
-        schema type: :object,
-               properties: {
-                 main: {
-                   type: :object,
-                   properties: {
-                     sentence_id: { type: :integer },
-                     sentence: { type: :string },
-                     created_at: { type: :string, format: 'date-time' },
-                     updated_at: { type: :string, format: 'date-time' }
-                   },
-                   required: %w[sentence_id sentence created_at updated_at],
-                   example: {
-                     sentence_id: 1,
-                     sentence: '吾輩は猫である。',
-                     created_at: '2024-10-02T23:03:57.431Z',
-                     updated_at: '2024-10-02T23:03:57.431Z'
-                   }
-                 }
-               },
-               required: ['main']
+      get "/v1/sentences/#{main_sentence.sentence_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
 
-        let(:sentence_id) { sentence.id }
-        run_test!
-      end
+      # レスポンスを確認
+      # puts json_response
 
-      response '404', 'sentence not found' do
-        let(:sentence_id) { 'invalid' }
-        run_test!
-      end
+      expect(json_response['main']['sentence']).to eq('いいいいい')
+      expect(json_response).to have_key('parent')
+      expect(json_response['parent']).not_to be_nil
+      expect(json_response['parent']['sentence']).to eq('あああああ')
+      expect(json_response).to have_key('children')
+      expect(json_response['children'][0]).not_to be_nil
+      expect(json_response['children'][0]['sentence']).to eq('ううううう')
+      expect(json_response).to have_key('parallels')
+      expect(json_response['parallels'][0]).not_to be_nil
+      expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
     end
   end
 end

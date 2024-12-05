@@ -11,28 +11,94 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    include TimeHelper
+
+    # GET /v1/sentences/:sentence_id
     def show
-      result = FindSentenceService.new(params[:sentence_id]).call
-      if result[:success]
-        render_success_response(result[:sentence])
+      sentence = find_sentence(params[:sentence_id])
+      if sentence
+        response_data = build_response_data(sentence)
+        render json: build_response(response_data), status: :ok
       else
-        render_error_response(result[:error])
+        render_error_response('Sentence not found')
       end
     end
 
     private
 
-    def render_success_response(sentence)
-      render json: {
-        main: {
-          sentence_id: sentence.id,
-          sentence: sentence.sentence,
-          created_at: sentence.created_at,
-          updated_at: sentence.updated_at
-        }
-      }, status: :ok
+    # 投稿データを取得
+    def find_sentence(sentence_id)
+      Sentence.includes(
+        :user,
+        :evaluations,
+        :parent,
+        parallels: %i[user evaluations],
+        children: %i[user evaluations]
+      ).find_by_id(sentence_id)
     end
 
+    # レスポンスデータを構築
+    def build_response_data(sentence)
+      {
+        sentence:,
+        user: sentence.user,
+        evaluations: sentence.evaluations,
+        parent: sentence.parent,
+        parallels: sentence.parallels,
+        children: sentence.children
+      }
+    end
+
+    # 評価数を取得
+    def fetch_evaluation_counts(sentence)
+      counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
+        hash[evaluation.evaluation] += 1
+      end
+
+      {
+        good: counts['good'],
+        stay: counts['stay']
+      }
+    end
+
+    # 投稿レスポンスを構築
+    def build_sentence_response(sentence)
+      return nil if sentence.nil?
+
+      user = sentence.user
+      evaluation_counts = fetch_evaluation_counts(sentence)
+
+      {
+        sentence_id: sentence.sentence_id,
+        sentence: sentence.sentence,
+        sentence_user_id: sentence.sentence_user_id,
+        sentence_user_name: user.pen_name,
+        profile_icon_image: user.profile_icon_image,
+        evaluation_good_count: evaluation_counts[:good],
+        evaluation_stay_count: evaluation_counts[:stay],
+        created_at: format_time(sentence.created_at),
+        updated_at: format_time(sentence.updated_at)
+      }
+    end
+
+    # 複数の投稿レスポンスを構築
+    def build_sentence_responses(sentences)
+      sentences.map do |sentence|
+        build_sentence_response(sentence)
+      end
+    end
+
+    # レスポンスを構築
+    def build_response(data)
+      {
+        main: build_sentence_response(data[:sentence]),
+        parent: build_sentence_response(data[:parent]),
+        parallels: build_sentence_responses(data[:parallels]),
+        children: build_sentence_responses(data[:children])
+      }
+    end
+
+    # エラーレスポンス
     def render_error_response(error)
       render json: { error: }, status: :not_found
     end

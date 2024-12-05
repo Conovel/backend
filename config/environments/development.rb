@@ -66,4 +66,14 @@ Rails.application.configure do
 
   # Set CORS origin URL
   config.origin_url = ENV['DEVELOPMENT_ORIGIN_URL'] || 'http://localhost:3000'
+
+  # Bullet gem configuration
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.alert = true
+    Bullet.bullet_logger = true
+    Bullet.console = true
+    Bullet.rails_logger = true
+    Bullet.add_footer = true
+  end
 end

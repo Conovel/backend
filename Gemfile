@@ -50,8 +50,14 @@ gem 'rubocop', '~> 1.66', require: false
 # Use overcommit as a Git hook management
 gem 'overcommit', '~> 0.60.0'
 
-# UUsed as a CORS settings
+# Used as a CORS settings
 gem 'rack-cors'
+
+# Use composite_primary_keys as a composite primary key
+gem 'composite_primary_keys'
+
+# Used to Logical deletion
+gem 'paranoia', '~> 2.4'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -62,8 +68,17 @@ group :development, :test do
 
   # Used to integrate rspec and openAPI
   gem 'rswag'
+
+  # Used to create test data
+  gem 'factory_bot_rails'
+
+  # Use ActiveRecord database for cleanup
+  gem 'database_cleaner-active_record'
 end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
+
+  # Help to kill N+1 queries and unused eager loading
+  gem 'bullet'
 end

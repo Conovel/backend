@@ -5,5 +5,16 @@ AllCops:
 
 Metrics/BlockLength:
   Exclude:
-    - 'spec/requests/sentences_spec.rb'
+    - 'spec/**/*'
+    - 'db/migrate/**/*'
+    - 'db/schema.rb'
   Max: 30
+
+Metrics/MethodLength:
+  Exclude:
+    - 'db/migrate/**/*'
+  Max: 40
+
+Metrics/ClassLength:
+  Exclude:
+    - 'db/migrate/**/*'

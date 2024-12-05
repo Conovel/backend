@@ -11,8 +11,26 @@
 # Sentence model handles the sentences in the application.
 # It validates the presence of the sentence attribute.
 class Sentence < ApplicationRecord
-  validates :sentence, presence: true
+  # 論理削除
+  acts_as_paranoid
 
+  # アソシエーション
+  belongs_to :user, foreign_key: 'sentence_user_id'
+  belongs_to :title
+  belongs_to :parent, class_name: 'Sentence', optional: true, foreign_key: 'parent_sentence_id'
+  has_many :children, class_name: 'Sentence', foreign_key: 'parent_sentence_id'
+  has_many :evaluations, foreign_key: 'sentence_id'
+  has_many :parallels, lambda { |sentence|
+    where.not(sentence_id: sentence.sentence_id)
+  }, through: :parent, source: :children
+
+  # バリデーション
+  validates :sentence, presence: true
+  validates :sentence_user_id, presence: true
+  validates :title_id, presence: true
+  validates :sentence_hierarchy, presence: true
+
+  # クラスメソッド
   def self.find_by_id(sentence_id)
     find(sentence_id)
   rescue ActiveRecord::RecordNotFound

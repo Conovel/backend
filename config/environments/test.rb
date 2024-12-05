@@ -59,4 +59,7 @@ Rails.application.configure do
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
+
+  # ログレベルをデバッグに設定(デバッグ時のみ有効にする)
+  # config.log_level = :debug
 end
