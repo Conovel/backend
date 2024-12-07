@@ -2,5 +2,5 @@
 
 # ApplicationRecord is the base class for all models in the application.
 class ApplicationRecord < ActiveRecord::Base
-  primary_abstract_class
+  self.abstract_class = true
 end

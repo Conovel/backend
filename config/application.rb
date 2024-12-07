@@ -45,6 +45,18 @@ module Backend
                         else
                           ENV.fetch('DEVELOPMENT_ORIGIN_URL', 'http://localhost:3000')
                         end
+
+    # Configuration before Rails is initialized
+    config.before_initialize do
+      # Add load path (for frozen errors)
+      config.paths.add 'app/channels', eager_load: true
+      config.paths.add 'app/controllers', eager_load: true
+      config.paths.add 'app/controllers/concerns', eager_load: true
+      config.paths.add 'app/jobs', eager_load: true
+      config.paths.add 'app/mailers', eager_load: true
+      config.paths.add 'app/models', eager_load: true
+      config.paths.add 'app/models/concerns', eager_load: true
+    end
   end
 end
 
