@@ -12,6 +12,7 @@ module V1
   # SentencesController
   class SentencesController < ApplicationController
     include TimeHelper
+    include ErrorResponseHelper
 
     # GET /v1/sentences/:sentence_id
     def show
@@ -20,7 +21,7 @@ module V1
         response_data = build_response_data(sentence)
         render json: build_response(response_data), status: :ok
       else
-        render_error_response('Sentence not found')
+        render_error_response(404, '投稿が見つかりません')
       end
     end
 
@@ -96,11 +97,6 @@ module V1
         parallels: build_sentence_responses(data[:parallels]),
         children: build_sentence_responses(data[:children])
       }
-    end
-
-    # エラーレスポンス
-    def render_error_response(error)
-      render json: { error: }, status: :not_found
     end
   end
 end
