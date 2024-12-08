@@ -13,10 +13,13 @@ app/controllers/users_controller.rb
 app/jobs/application_job.rb
 app/mailers/application_mailer.rb
 app/models/application_record.rb
+app/models/error_response.rb
+app/models/error_response_error.rb
 app/models/evaluate_sentence.rb
 app/models/novel_detail.rb
 app/models/novel_list_item.rb
 app/models/post_sentence.rb
+app/models/post_sentence_409_response.rb
 app/models/sentence.rb
 app/models/update_user.rb
 app/models/user.rb
