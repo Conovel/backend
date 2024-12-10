@@ -35,8 +35,11 @@ module V1
       check_parent_sentence_updated(parent_sentence)
       return if performed?
 
+      # 連続投稿の確認
+      check_consecutive_self_post(parent_sentence)
+      return if performed?
+
       # TODO: エラー「投稿文字数の上限を超えています。修正後に再投稿をお願いします。」
-      # TODO:エラー「自分自身の投稿に連続で投稿を追加することはできません。」
 
       sentence = build_sentence(parent_sentence)
       if sentence.save
@@ -137,6 +140,13 @@ module V1
       return unless parent_sentence.updated_at != params[:parent_updated_at]
 
       render_error_response(409, '投稿編集の途中で親投稿が編集されたため、投稿を保留しています', main: build_sentence_response(parent_sentence))
+    end
+
+    # 連続投稿の確認
+    def check_consecutive_self_post(parent_sentence)
+      return unless parent_sentence.sentence_user_id == current_user.id
+
+      render_error_response(409, '自分自身の投稿の後に連続で投稿を追加することはできません。')
     end
 
     # 新規投稿データを作成
