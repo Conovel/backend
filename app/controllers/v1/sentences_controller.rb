@@ -25,6 +25,27 @@ module V1
       end
     end
 
+    # POST /v1/sentences
+    def create
+      # 親投稿の存在を確認
+      parent_sentence = find_parent_sentence
+      return if performed?
+
+      # 親投稿の更新日時を確認
+      check_parent_sentence_updated(parent_sentence)
+      return if performed?
+
+      # TODO: エラー「投稿文字数の上限を超えています。修正後に再投稿をお願いします。」
+      # TODO:エラー「自分自身の投稿に連続で投稿を追加することはできません。」
+
+      sentence = build_sentence(parent_sentence)
+      if sentence.save
+        render json: build_response_data(sentence), status: :created
+      else
+        render_error_response(400, '投稿の追加に失敗しました')
+      end
+    end
+
     private
 
     # 投稿データを取得
@@ -97,6 +118,34 @@ module V1
         parallels: build_sentence_responses(data[:parallels]),
         children: build_sentence_responses(data[:children])
       }
+    end
+
+    # 投稿パラメータ
+    def sentence_params
+      params.permit(:parent_sentence_id, :sentence)
+    end
+
+    # 親投稿の存在を確認
+    def find_parent_sentence
+      parent_sentence = Sentence.find_by(id: params[:parent_sentence_id])
+      render_error_response(422, '親投稿が見つかりません') if parent_sentence.nil?
+      parent_sentence
+    end
+
+    # 親投稿の更新日時を確認
+    def check_parent_sentence_updated(parent_sentence)
+      return unless parent_sentence.updated_at != params[:parent_updated_at]
+
+      render_error_response(409, '投稿編集の途中で親投稿が編集されたため、投稿を保留しています', main: build_sentence_response(parent_sentence))
+    end
+
+    # 新規投稿データを作成
+    def build_sentence(parent_sentence)
+      Sentence.new(sentence_params).tap do |sentence|
+        sentence.sentence_user_id = current_user.id
+        sentence.title_id = parent_sentence.title_id
+        sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
+      end
     end
   end
 end
