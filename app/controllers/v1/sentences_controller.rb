@@ -39,9 +39,13 @@ module V1
       check_consecutive_self_post(parent_sentence)
       return if performed?
 
-      # TODO: エラー「投稿文字数の上限を超えています。修正後に再投稿をお願いします。」
+      # 投稿文字数の確認
+      check_sentence_length
+      return if performed?
 
+      # 新規投稿データを作成
       sentence = build_sentence(parent_sentence)
+
       if sentence.save
         render json: build_response_data(sentence), status: :created
       else
@@ -146,7 +150,27 @@ module V1
     def check_consecutive_self_post(parent_sentence)
       return unless parent_sentence.sentence_user_id == current_user.id
 
-      render_error_response(409, '自分自身の投稿の後に連続で投稿を追加することはできません。')
+      render_error_response(422, '自分自身の投稿の後に連続で投稿を追加することはできません。')
+    end
+
+    # 投稿文字数上限の計算
+    def calculate_max_sentence_length
+      base_length = 100
+      additional_length = 0
+
+      # TODO：基本増加；自分の投稿数に応じた増加（毒）
+      # TODO：寸志: 自分の投稿の後続に自分以外の2名以上が投稿した数（毒）
+      # TODO：ボーナス: 評価に応じた増加（毒）
+
+      base_length + additional_length
+    end
+
+    # 投稿文字数の確認
+    def check_sentence_length
+      max_sentence_length = calculate_max_sentence_length
+      return unless params[:sentence].length > max_sentence_length
+
+      render_error_response(422, '投稿文字数の上限を超えています。修正後に再投稿をお願いします。')
     end
 
     # 新規投稿データを作成
