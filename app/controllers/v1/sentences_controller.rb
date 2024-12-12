@@ -129,7 +129,7 @@ module V1
 
     # 親投稿の存在を確認
     def find_parent_sentence(parent_sentence_id)
-      parent_sentence = Sentence.find_by(id: parent_sentence_id)
+      parent_sentence = Sentence.find_by(sentence_id: parent_sentence_id)
       render_error_response(422, '親投稿が見つかりません') if parent_sentence.nil?
       parent_sentence
     end
