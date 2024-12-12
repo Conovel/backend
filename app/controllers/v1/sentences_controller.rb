@@ -27,25 +27,16 @@ module V1
 
     # POST /v1/sentences
     def create
-      # 親投稿の存在を確認
-      parent_sentence = find_parent_sentence
+      parent_sentence_id, sentence_text = check_required_params
       return if performed?
 
-      # 親投稿の更新日時を確認
-      check_parent_sentence_updated(parent_sentence)
+      parent_sentence = find_parent_sentence(parent_sentence_id)
       return if performed?
 
-      # 連続投稿の確認
-      check_consecutive_self_post(parent_sentence)
+      check_logical_error(parent_sentence, sentence_text)
       return if performed?
 
-      # 投稿文字数の確認
-      check_sentence_length
-      return if performed?
-
-      # 新規投稿データを作成
-      sentence = build_sentence(parent_sentence)
-
+      sentence = build_sentence(parent_sentence, sentence_text)
       if sentence.save
         render json: build_response_data(sentence), status: :created
       else
@@ -127,16 +118,32 @@ module V1
       }
     end
 
-    # 投稿パラメータ
-    def sentence_params
-      params.permit(:parent_sentence_id, :sentence)
+    # 必須パラメータの存在を確認
+    def check_required_params
+      unless params[:parent_sentence_id].blank? || params[:sentence].blank?
+        return params[:parent_sentence_id], params[:sentence]
+      end
+
+      render_error_response(422, '必須項目に空欄があります。')
     end
 
     # 親投稿の存在を確認
-    def find_parent_sentence
-      parent_sentence = Sentence.find_by(id: params[:parent_sentence_id])
+    def find_parent_sentence(parent_sentence_id)
+      parent_sentence = Sentence.find_by(id: parent_sentence_id)
       render_error_response(422, '親投稿が見つかりません') if parent_sentence.nil?
       parent_sentence
+    end
+
+    # 論理エラーの確認
+    def check_logical_error(parent_sentence, sentence_text)
+      check_parent_sentence_updated(parent_sentence)
+      return if performed?
+
+      check_consecutive_self_post(parent_sentence)
+      return if performed?
+
+      check_sentence_length(sentence_text)
+      nil if performed?
     end
 
     # 親投稿の更新日時を確認
@@ -153,32 +160,34 @@ module V1
       render_error_response(422, '自分自身の投稿の後に連続で投稿を追加することはできません。')
     end
 
+    # 投稿文字数の確認
+    def check_sentence_length(sentence_text)
+      max_length = calculate_max_sentence_length
+      return unless sentence_text.length > max_length
+
+      render_error_response(422, '投稿文字数の上限を超えています。修正後に再投稿をお願いします。')
+    end
+
     # 投稿文字数上限の計算
     def calculate_max_sentence_length
       base_length = 100
       additional_length = 0
 
-      # TODO：基本増加；自分の投稿数に応じた増加（毒）
-      # TODO：寸志: 自分の投稿の後続に自分以外の2名以上が投稿した数（毒）
-      # TODO：ボーナス: 評価に応じた増加（毒）
+      # TODO: 基本増加: 自分の投稿数に応じた増加
+      # TODO: 寸志: 自分の投稿の後続に自分以外の2名以上が投稿した数
+      # TODO: ボーナス: 評価に応じた増加
 
       base_length + additional_length
     end
 
-    # 投稿文字数の確認
-    def check_sentence_length
-      max_sentence_length = calculate_max_sentence_length
-      return unless params[:sentence].length > max_sentence_length
-
-      render_error_response(422, '投稿文字数の上限を超えています。修正後に再投稿をお願いします。')
-    end
-
     # 新規投稿データを作成
-    def build_sentence(parent_sentence)
-      Sentence.new(sentence_params).tap do |sentence|
+    def build_sentence(parent_sentence, sentence_text)
+      Sentence.new.tap do |sentence|
         sentence.sentence_user_id = current_user.id
         sentence.title_id = parent_sentence.title_id
         sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
+        sentence.sentence = sentence_text
+        sentence.parent_sentence_id = parent_sentence.id if parent_sentence.present?
       end
     end
   end
