@@ -38,7 +38,9 @@ module V1
 
       sentence = build_sentence(parent_sentence, sentence_text)
       if sentence.save
-        render json: build_response_data(sentence), status: :created
+
+        response_data = build_response_data(sentence)
+        render json: build_response(response_data), status: :created
       else
         render_error_response(400, '投稿の追加に失敗しました')
       end
