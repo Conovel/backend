@@ -46,6 +46,8 @@ module V1
 
     private
 
+    # showの補助メソッド
+
     # 投稿データを取得
     def find_sentence(sentence_id)
       Sentence.includes(
@@ -118,6 +120,8 @@ module V1
       }
     end
 
+    # createの補助メソッド
+
     # 必須パラメータの存在を確認
     def check_required_params
       unless params[:parent_sentence_id].blank? || params[:sentence].blank?
@@ -148,9 +152,12 @@ module V1
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
-      return unless parent_sentence.updated_at != params[:parent_updated_at]
+      parent_updated_at = format_time_from_string_with_strftime(params[:parent_updated_at])
+      parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
+      return if parent_sentence_updated_at == parent_updated_at
 
-      render_error_response(409, '投稿編集の途中で親投稿が編集されたため、投稿を保留しています', main: build_sentence_response(parent_sentence))
+      response_parent_data = build_response_data(parent_sentence)
+      render_error_response(409, '投稿編集の途中で親投稿が編集されたため、投稿を保留しています', build_response(response_parent_data))
     end
 
     # 連続投稿の確認
