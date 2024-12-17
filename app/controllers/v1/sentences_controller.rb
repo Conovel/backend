@@ -26,25 +26,28 @@ module V1
     end
 
     # POST /v1/sentences
+    # rubocop:disable Metrics/AbcSize
     def create
-      parent_sentence_id, sentence_text = check_required_params
-      return if performed?
+      parent_sentence_id = params[:parent_sentence_id]
+      sentence_text = params[:sentence]
 
       parent_sentence = find_parent_sentence(parent_sentence_id)
-      return if performed?
 
-      check_logical_error(parent_sentence, sentence_text)
-      return if performed?
+      check_parent_sentence_updated(parent_sentence)
+      check_consecutive_self_post(parent_sentence)
+      check_sentence_length(sentence_text)
 
       sentence = build_sentence(parent_sentence, sentence_text)
-      if sentence.save
+      raise CustomError.new('投稿の追加に失敗しました', 422) unless sentence.save
 
-        response_data = build_response_data(sentence)
-        render json: build_response(response_data), status: :created
-      else
-        render_error_response(400, '投稿の追加に失敗しました')
-      end
+      response_data = build_response_data(sentence)
+      render json: build_response(response_data), status: :created
+    rescue CustomError => e
+      render_error_response(e.code, e.message, data: e.data)
+    rescue StandardError => e
+      render_error_response(500, "サーバーエラーが発生しました: #{e.message}")
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
@@ -124,49 +127,29 @@ module V1
 
     # createの補助メソッド
 
-    # 必須パラメータの存在を確認
-    def check_required_params
-      unless params[:parent_sentence_id].blank? || params[:sentence].blank?
-        return params[:parent_sentence_id], params[:sentence]
-      end
-
-      render_error_response(422, '必須項目に空欄があります。')
-    end
-
     # 親投稿の存在を確認
     def find_parent_sentence(parent_sentence_id)
       parent_sentence = Sentence.find_by(sentence_id: parent_sentence_id)
-      render_error_response(422, '親投稿が見つかりません') if parent_sentence.nil?
+      raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
+
       parent_sentence
-    end
-
-    # 論理エラーの確認
-    def check_logical_error(parent_sentence, sentence_text)
-      check_parent_sentence_updated(parent_sentence)
-      return if performed?
-
-      check_consecutive_self_post(parent_sentence)
-      return if performed?
-
-      check_sentence_length(sentence_text)
-      nil if performed?
     end
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
       parent_updated_at = format_time_from_string_with_strftime(params[:parent_updated_at])
       parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
-      return if parent_sentence_updated_at == parent_updated_at
+      return unless parent_sentence_updated_at != parent_updated_at
 
       response_parent_data = build_response_data(parent_sentence)
-      render_error_response(409, '投稿編集の途中で親投稿が編集されたため、投稿を保留しています', build_response(response_parent_data))
+      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています', 409, build_response(response_parent_data))
     end
 
     # 連続投稿の確認
     def check_consecutive_self_post(parent_sentence)
       return unless parent_sentence.sentence_user_id == current_user.id
 
-      render_error_response(422, '自分自身の投稿の後に連続で投稿を追加することはできません。')
+      raise CustomError.new('自分自身の投稿の後に連続で投稿を追加することはできません', 422)
     end
 
     # 投稿文字数の確認
@@ -174,7 +157,7 @@ module V1
       max_length = calculate_max_sentence_length
       return unless sentence_text.length > max_length
 
-      render_error_response(422, '投稿文字数の上限を超えています。修正後に再投稿をお願いします。')
+      raise CustomError.new('投稿文字数の上限を超えています。修正後に再投稿をお願いします。', 422)
     end
 
     # 投稿文字数上限の計算

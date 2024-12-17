@@ -86,7 +86,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('必須項目に空欄があります。')
+        expect(json_response['error']['message']).to eq('投稿の追加に失敗しました')
       end
     end
 
@@ -117,7 +117,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('自分自身の投稿の後に連続で投稿を追加することはできません。')
+        expect(json_response['error']['message']).to eq('自分自身の投稿の後に連続で投稿を追加することはできません')
       end
     end
 

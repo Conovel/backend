@@ -9,8 +9,8 @@ module ErrorResponseHelper
         code: error_code,
         message: error_message
       }
-    }.merge(additional_data)
-
+    }
+    error_response[:data] = additional_data[:data] if additional_data[:data]
     render json: error_response, status: error_code
   end
 end
