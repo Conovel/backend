@@ -179,7 +179,7 @@ module V1
         sentence.title_id = parent_sentence.title_id
         sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
         sentence.sentence = sentence_text
-        sentence.parent_sentence_id = parent_sentence.id if parent_sentence.present?
+        sentence.parent_sentence_id = parent_sentence.id
       end
     end
   end
