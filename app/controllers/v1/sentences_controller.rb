@@ -154,22 +154,22 @@ module V1
 
     # 投稿文字数の確認
     def check_sentence_length(sentence_text)
-      max_length = calculate_max_sentence_length
-      return unless sentence_text.length > max_length
+      max_sentence_length = calculate_max_sentence_length
+      return unless sentence_text.length > max_sentence_length
 
       raise CustomError.new('投稿文字数の上限を超えています。修正後に再投稿をお願いします。', 422)
     end
 
     # 投稿文字数上限の計算
     def calculate_max_sentence_length
-      base_length = 100
+      default_max_length = DEFAULT_MAX_SENTENCE_LENGTH
       additional_length = 0
 
       # TODO: 基本増加: 自分の投稿数に応じた増加
       # TODO: 寸志: 自分の投稿の後続に自分以外の2名以上が投稿した数
       # TODO: ボーナス: 評価に応じた増加
 
-      base_length + additional_length
+      default_max_length + additional_length
     end
 
     # 新規投稿データを作成
