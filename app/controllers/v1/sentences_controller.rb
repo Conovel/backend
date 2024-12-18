@@ -39,10 +39,12 @@ module V1
         check_sentence_length(sentence_text)
 
         sentence = build_sentence(parent_sentence, sentence_text)
-        raise CustomError.new('投稿の追加に失敗しました', 422) unless sentence.save
+        sentence.save!
 
         render json: build_response(sentence), status: :created
       end
+    rescue ActiveRecord::RecordInvalid
+      render_error_response(422, '投稿の追加に失敗しました')
     rescue CustomError => e
       render_error_response(e.code, e.message, data: e.data)
     rescue StandardError => e
