@@ -18,8 +18,7 @@ module V1
     def show
       sentence = find_sentence(params[:sentence_id])
       if sentence
-        response_data = build_response_data(sentence)
-        render json: build_response(response_data), status: :ok
+        render json: build_response(sentence), status: :ok
       else
         render_error_response(404, '投稿が見つかりません')
       end
@@ -42,8 +41,7 @@ module V1
         sentence = build_sentence(parent_sentence, sentence_text)
         raise CustomError.new('投稿の追加に失敗しました', 422) unless sentence.save
 
-        response_data = build_response_data(sentence)
-        render json: build_response(response_data), status: :created
+        render json: build_response(sentence), status: :created
       end
     rescue CustomError => e
       render_error_response(e.code, e.message, data: e.data)
@@ -119,7 +117,9 @@ module V1
     end
 
     # レスポンスを構築
-    def build_response(data)
+    def build_response(sentence)
+      data = build_response_data(sentence)
+
       {
         main: build_sentence_response(data[:sentence]),
         parent: build_sentence_response(data[:parent]),
@@ -136,8 +136,7 @@ module V1
       parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
       return unless parent_sentence_updated_at != parent_updated_at
 
-      response_parent_data = build_response_data(parent_sentence)
-      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています', 409, build_response(response_parent_data))
+      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています', 409, build_response(parent_sentence))
     end
 
     # 連続投稿の確認
