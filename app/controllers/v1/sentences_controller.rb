@@ -28,20 +28,23 @@ module V1
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
     def create
-      parent_sentence_id = params[:parent_sentence_id]
-      sentence_text = params[:sentence]
+      ActiveRecord::Base.transaction do
+        parent_sentence_id = params[:parent_sentence_id]
+        sentence_text = params[:sentence]
 
-      parent_sentence = find_parent_sentence(parent_sentence_id)
+        parent_sentence = Sentence.lock.find_by(sentence_id: parent_sentence_id)
+        raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
 
-      check_parent_sentence_updated(parent_sentence)
-      check_consecutive_self_post(parent_sentence)
-      check_sentence_length(sentence_text)
+        check_parent_sentence_updated(parent_sentence)
+        check_consecutive_self_post(parent_sentence)
+        check_sentence_length(sentence_text)
 
-      sentence = build_sentence(parent_sentence, sentence_text)
-      raise CustomError.new('投稿の追加に失敗しました', 422) unless sentence.save
+        sentence = build_sentence(parent_sentence, sentence_text)
+        raise CustomError.new('投稿の追加に失敗しました', 422) unless sentence.save
 
-      response_data = build_response_data(sentence)
-      render json: build_response(response_data), status: :created
+        response_data = build_response_data(sentence)
+        render json: build_response(response_data), status: :created
+      end
     rescue CustomError => e
       render_error_response(e.code, e.message, data: e.data)
     rescue StandardError => e
@@ -126,14 +129,6 @@ module V1
     end
 
     # createの補助メソッド
-
-    # 親投稿の存在を確認
-    def find_parent_sentence(parent_sentence_id)
-      parent_sentence = Sentence.find_by(sentence_id: parent_sentence_id)
-      raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
-
-      parent_sentence
-    end
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
