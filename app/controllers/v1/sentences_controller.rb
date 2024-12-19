@@ -33,10 +33,7 @@ module V1
 
         check_sentence_length(sentence_text)
 
-        parent_sentence = Sentence
-                          .includes(:user, :evaluations)
-                          .lock(true)
-                          .find_by(sentence_id: parent_sentence_id)
+        parent_sentence = Sentence.lock(true).find_by(sentence_id: parent_sentence_id)
         raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
 
         check_parent_sentence_updated(parent_sentence)
@@ -47,8 +44,8 @@ module V1
 
         render json: build_response(sentence), status: :created
       end
-    rescue ActiveRecord::RecordInvalid
-      render_error_response(422, '投稿の追加に失敗しました')
+    rescue ActiveRecord::RecordInvalid => e
+      render_error_response(422, "投稿の追加に失敗しました: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
       render_error_response(e.code, e.message, data: e.data)
     rescue StandardError => e
