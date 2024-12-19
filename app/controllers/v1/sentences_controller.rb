@@ -31,12 +31,16 @@ module V1
         parent_sentence_id = params[:parent_sentence_id]
         sentence_text = params[:sentence]
 
-        parent_sentence = Sentence.lock.find_by(sentence_id: parent_sentence_id)
+        check_sentence_length(sentence_text)
+
+        parent_sentence = Sentence
+                          .includes(:user, :evaluations)
+                          .lock(true)
+                          .find_by(sentence_id: parent_sentence_id)
         raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
 
         check_parent_sentence_updated(parent_sentence)
         check_consecutive_self_post(parent_sentence)
-        check_sentence_length(sentence_text)
 
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!
@@ -74,8 +78,8 @@ module V1
         user: sentence.user,
         evaluations: sentence.evaluations,
         parent: sentence.parent,
-        parallels: sentence.parallels,
-        children: sentence.children
+        parallels: sentence.parallels.includes(:user, :evaluations),
+        children: sentence.children.includes(:user, :evaluations)
       }
     end
 
