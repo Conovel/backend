@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Sentences', type: :request do
-  # showのテスト
+  # showのデータ
   let!(:users) { create_list(:user, 4) }
   let!(:title) { create(:title, author_user: users[0]) }
   let!(:parent_sentence) do
@@ -34,8 +34,13 @@ RSpec.describe 'Sentences', type: :request do
     create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
                                               parent_sentence:, hierarchy: 2)
   end
+  let!(:parallel_sentence2) do
+    create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
+                                              parent_sentence:, hierarchy: 2)
+  end
+  let(:not_exist_sentence_id) { 1000 }
 
-  # createのテスト
+  # createのデータ
   let(:valid_attributes) do
     {
       parent_sentence_id: parent_sentence.sentence_id,
@@ -44,30 +49,43 @@ RSpec.describe 'Sentences', type: :request do
     }
   end
 
+  # showのテスト
   describe 'GET /v1/sentences/:sentence_id' do
-    it 'returns the sentence' do
-      main_sentence
+    context 'when the sentence exists' do
+      it 'returns the sentence' do
+        main_sentence
 
-      get "/v1/sentences/#{main_sentence.sentence_id}"
-      expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
+        get "/v1/sentences/#{main_sentence.sentence_id}"
+        expect(response).to have_http_status(:ok)
+        json_response = JSON.parse(response.body)
 
-      # レスポンスを確認
-      # puts json_response
+        # レスポンスを確認
+        # puts json_response
 
-      expect(json_response['main']['sentence']).to eq('いいいいい')
-      expect(json_response).to have_key('parent')
-      expect(json_response['parent']).not_to be_nil
-      expect(json_response['parent']['sentence']).to eq('あああああ')
-      expect(json_response).to have_key('children')
-      expect(json_response['children'][0]).not_to be_nil
-      expect(json_response['children'][0]['sentence']).to eq('ううううう')
-      expect(json_response).to have_key('parallels')
-      expect(json_response['parallels'][0]).not_to be_nil
-      expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
+        expect(json_response['main']['sentence']).to eq('いいいいい')
+        expect(json_response).to have_key('parent')
+        expect(json_response['parent']).not_to be_nil
+        expect(json_response['parent']['sentence']).to eq('あああああ')
+        expect(json_response).to have_key('children')
+        expect(json_response['children'][0]).not_to be_nil
+        expect(json_response['children'][0]['sentence']).to eq('ううううう')
+        expect(json_response).to have_key('parallels')
+        expect(json_response['parallels'][0]).not_to be_nil
+        expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
+      end
+    end
+
+    context 'when the sentence does not exist' do
+      it 'returns a 404 not found error' do
+        get "/v1/sentences/#{not_exist_sentence_id}"
+        expect(response).to have_http_status(404)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['message']).to eq('投稿が見つかりません。')
+      end
     end
   end
 
+  # createのテスト
   describe 'POST /v1/sentences' do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
@@ -86,7 +104,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('投稿の追加に失敗しました: sentence')
+        expect(json_response['error']['message']).to eq('投稿の追加に失敗しました。: sentence')
       end
     end
 
@@ -96,7 +114,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('親投稿が見つかりません')
+        expect(json_response['error']['message']).to eq('親投稿が見つかりません。')
       end
     end
 
@@ -106,7 +124,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:conflict)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(409)
-        expect(json_response['error']['message']).to eq('投稿編集の途中で親投稿が編集されたため、投稿を保留しています')
+        expect(json_response['error']['message']).to eq('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。')
       end
     end
 
@@ -117,7 +135,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('自分自身の投稿の後に連続で投稿を追加することはできません')
+        expect(json_response['error']['message']).to eq('自分自身の投稿の後に連続で投稿を追加することはできません。')
       end
     end
 

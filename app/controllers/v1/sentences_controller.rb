@@ -20,7 +20,7 @@ module V1
       if sentence
         render json: build_response(sentence), status: :ok
       else
-        render_error_response(404, '投稿が見つかりません')
+        render_error_response(404, '投稿が見つかりません。')
       end
     end
 
@@ -34,7 +34,7 @@ module V1
         check_sentence_length(sentence_text)
 
         parent_sentence = Sentence.lock(true).find_by(sentence_id: parent_sentence_id)
-        raise CustomError.new('親投稿が見つかりません', 422) if parent_sentence.nil?
+        raise CustomError.new('親投稿が見つかりません。', 422) if parent_sentence.nil?
 
         check_parent_sentence_updated(parent_sentence)
         check_consecutive_self_post(parent_sentence)
@@ -45,11 +45,11 @@ module V1
         render json: build_response(sentence), status: :created
       end
     rescue ActiveRecord::RecordInvalid => e
-      render_error_response(422, "投稿の追加に失敗しました: #{e.record.errors.attribute_names.join(', ')}")
+      render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
       render_error_response(e.code, e.message, data: e.data)
     rescue StandardError => e
-      render_error_response(500, "サーバーエラーが発生しました: #{e.message}")
+      render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -139,14 +139,14 @@ module V1
       parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
       return unless parent_sentence_updated_at != parent_updated_at
 
-      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています', 409, build_response(parent_sentence))
+      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
     end
 
     # 連続投稿の確認
     def check_consecutive_self_post(parent_sentence)
       return unless parent_sentence.sentence_user_id == current_user.id
 
-      raise CustomError.new('自分自身の投稿の後に連続で投稿を追加することはできません', 422)
+      raise CustomError.new('自分自身の投稿の後に連続で投稿を追加することはできません。', 422)
     end
 
     # 投稿文字数の確認
