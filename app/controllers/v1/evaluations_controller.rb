@@ -11,6 +11,9 @@
 module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
+    include TimeHelper
+    include ErrorResponseHelper
+
     # POST /v1/evaluations
     def create
       # Your code here
