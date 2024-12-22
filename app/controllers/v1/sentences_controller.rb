@@ -137,7 +137,7 @@ module V1
     def check_parent_sentence_updated(parent_sentence)
       parent_updated_at = format_time_from_string_with_strftime(params[:parent_updated_at])
       parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
-      return unless parent_sentence_updated_at != parent_updated_at
+      return if parent_sentence_updated_at == parent_updated_at
 
       raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
     end
