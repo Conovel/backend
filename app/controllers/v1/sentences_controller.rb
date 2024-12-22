@@ -28,8 +28,8 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def create
       ActiveRecord::Base.transaction do
-        parent_sentence_id = params[:parent_sentence_id]
-        sentence_text = params[:sentence]
+        parent_sentence_id = sentence_params[:parent_sentence_id]
+        sentence_text = sentence_params[:sentence]
 
         check_sentence_length(sentence_text)
 
@@ -133,9 +133,14 @@ module V1
 
     # createの補助メソッド
 
+    # 投稿のパラメータを取得
+    def sentence_params
+      params.permit(:parent_sentence_id, :sentence, :parent_updated_at)
+    end
+
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
-      parent_updated_at = format_time_from_string_with_strftime(params[:parent_updated_at])
+      parent_updated_at = format_time_from_string_with_strftime(sentence_params[:parent_updated_at])
       parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
