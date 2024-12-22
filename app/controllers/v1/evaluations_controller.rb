@@ -15,10 +15,49 @@ module V1
     include ErrorResponseHelper
 
     # POST /v1/evaluations
+    # rubocop:disable Metrics/AbcSize
     def create
-      # Your code here
+      Rails.logger.debug "Evaluation Params: #{evaluation_params.inspect}"
+      if current_user.nil?
+        Rails.logger.debug 'Current User is nil'
+        render json: { error: 'ユーザーが認証されていません。' }, status: :unauthorized
+        return
+      else
+        Rails.logger.debug "Current User ID: #{current_user.id}"
+      end
 
-      render json: { 'message' => 'yes, it worked' }
+      begin
+        evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
+                                                      evaluator_user_id: current_user.id)
+        evaluation.evaluation = evaluation_params[:evaluation]
+
+        if evaluation.new_record?
+          Rails.logger.debug 'Creating new evaluation record'
+          message = '評価が追加されました。'
+        else
+          Rails.logger.debug 'Updating existing evaluation record'
+          message = '評価が更新されました。'
+        end
+
+        if evaluation.save
+          render json: { message: }, status: :created
+        else
+          render json: { errors: evaluation.errors.full_messages }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
+      rescue CustomError => e
+        render_error_response(e.code, e.message, data: e.data)
+      rescue StandardError => e
+        render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    private
+
+    def evaluation_params
+      params.permit(:sentence_id, :evaluation)
     end
   end
 end
