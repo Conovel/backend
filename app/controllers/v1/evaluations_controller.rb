@@ -11,7 +11,6 @@
 module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
-    include TimeHelper
     include ErrorResponseHelper
 
     # POST /v1/evaluations
@@ -31,19 +30,25 @@ module V1
                                                       evaluator_user_id: current_user.id)
         evaluation.evaluation = evaluation_params[:evaluation]
 
-        if evaluation.new_record?
-          Rails.logger.debug 'Creating new evaluation record'
-          message = '評価が追加されました。'
-        else
-          Rails.logger.debug 'Updating existing evaluation record'
-          message = '評価が更新されました。'
-        end
+        raise CustomError.new('投稿の評価に失敗しました。', 422) unless evaluation.save
 
-        if evaluation.save
-          render json: { message: }, status: :created
-        else
-          render json: { errors: evaluation.errors.full_messages }, status: :unprocessable_entity
-        end
+        message = if evaluation.new_record?
+                    '評価が追加されました。'
+                  else
+                    '評価が更新されました。'
+                  end
+        Rails.logger.debug "#{message} created_at: #{evaluation.created_at}, updated_at: #{evaluation.updated_at}"
+
+        evaluation_good_count = Evaluation.where(sentence_id: evaluation_params[:sentence_id],
+                                                 evaluation: 'good').count
+        evaluation_stay_count = Evaluation.where(sentence_id: evaluation_params[:sentence_id],
+                                                 evaluation: 'stay').count
+
+        render json: {
+          sentence_id: evaluation_params[:sentence_id],
+          evaluation_good_count:,
+          evaluation_stay_count:
+        }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
       rescue CustomError => e
