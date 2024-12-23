@@ -13,6 +13,7 @@ module V1
   class SentencesController < ApplicationController
     include TimeHelper
     include ErrorResponseHelper
+    include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
     def show
@@ -81,16 +82,16 @@ module V1
     end
 
     # 評価数を取得
-    def fetch_evaluation_counts(sentence)
-      counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
-        hash[evaluation.evaluation] += 1
-      end
+    # def fetch_evaluation_counts(sentence)
+    #   counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
+    #     hash[evaluation.evaluation] += 1
+    #   end
 
-      {
-        good: counts['good'],
-        stay: counts['stay']
-      }
-    end
+    #   {
+    #     good: counts['good'],
+    #     stay: counts['stay']
+    #   }
+    # end
 
     # 投稿レスポンスを構築
     def build_sentence_response(sentence)
