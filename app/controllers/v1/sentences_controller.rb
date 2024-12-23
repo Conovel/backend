@@ -12,6 +12,7 @@ module V1
   # SentencesController
   class SentencesController < ApplicationController
     include TimeHelper
+    include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
     def show
@@ -46,18 +47,6 @@ module V1
         parent: sentence.parent,
         parallels: sentence.parallels,
         children: sentence.children
-      }
-    end
-
-    # 評価数を取得
-    def fetch_evaluation_counts(sentence)
-      counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
-        hash[evaluation.evaluation] += 1
-      end
-
-      {
-        good: counts['good'],
-        stay: counts['stay']
       }
     end
 
