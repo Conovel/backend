@@ -12,6 +12,7 @@ module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
     include ErrorResponseHelper
+    include EvaluationHelper
 
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
@@ -39,15 +40,12 @@ module V1
                   end
         Rails.logger.debug "#{message} created_at: #{evaluation.created_at}, updated_at: #{evaluation.updated_at}"
 
-        evaluation_good_count = Evaluation.where(sentence_id: evaluation_params[:sentence_id],
-                                                 evaluation: 'good').count
-        evaluation_stay_count = Evaluation.where(sentence_id: evaluation_params[:sentence_id],
-                                                 evaluation: 'stay').count
+        evaluation_counts = fetch_evaluation_counts(evaluation.sentence)
 
         render json: {
           sentence_id: evaluation_params[:sentence_id],
-          evaluation_good_count:,
-          evaluation_stay_count:
+          evaluation_good_count: evaluation_counts[:good],
+          evaluation_stay_count: evaluation_counts[:stay]
         }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
