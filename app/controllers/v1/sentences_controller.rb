@@ -81,18 +81,6 @@ module V1
       }
     end
 
-    # 評価数を取得
-    # def fetch_evaluation_counts(sentence)
-    #   counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
-    #     hash[evaluation.evaluation] += 1
-    #   end
-
-    #   {
-    #     good: counts['good'],
-    #     stay: counts['stay']
-    #   }
-    # end
-
     # 投稿レスポンスを構築
     def build_sentence_response(sentence)
       return nil if sentence.nil?
