@@ -37,11 +37,7 @@ module V1
 
       evaluation_counts = fetch_evaluation_counts(evaluation.sentence)
 
-      render json: {
-        sentence_id: evaluation_params[:sentence_id],
-        evaluation_good_count: evaluation_counts[:good],
-        evaluation_stay_count: evaluation_counts[:stay]
-      }, status: :created
+      render json: build_response(evaluation_params, evaluation_counts), status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -55,6 +51,14 @@ module V1
 
     def evaluation_params
       params.permit(:sentence_id, :evaluation)
+    end
+
+    def build_response(evaluation_params, evaluation_counts)
+      {
+        sentence_id: evaluation_params[:sentence_id],
+        evaluation_good_count: evaluation_counts[:good],
+        evaluation_stay_count: evaluation_counts[:stay]
+      }
     end
   end
 end
