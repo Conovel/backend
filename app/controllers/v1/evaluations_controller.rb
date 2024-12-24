@@ -17,43 +17,37 @@ module V1
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
     def create
-      Rails.logger.debug "Evaluation Params: #{evaluation_params.inspect}"
-      if current_user.nil?
-        Rails.logger.debug 'Current User is nil'
-        render json: { error: 'ユーザーが認証されていません。' }, status: :unauthorized
-        return
-      else
-        Rails.logger.debug "Current User ID: #{current_user.id}"
-      end
+      evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
+                                                    evaluator_user_id: current_user.id)
+      evaluateion_defaults_value = evaluation.evaluation # デバッグ用
+      evaluation.evaluation = evaluation_params[:evaluation]
 
-      begin
-        evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
-                                                      evaluator_user_id: current_user.id)
-        evaluation.evaluation = evaluation_params[:evaluation]
+      raise CustomError.new('投稿の評価に失敗しました。', 422) unless evaluation.save
 
-        raise CustomError.new('投稿の評価に失敗しました。', 422) unless evaluation.save
+      # デバッグ用
+      message = if evaluation.new_record?
+                  '評価が追加されました。'
+                elsif evaluateion_defaults_value == evaluation_params[:evaluation]
+                  '評価は変更されていません。'
+                else
+                  '評価が更新されました。'
+                end
+      Rails.logger.debug "#{message} created_at: #{evaluation.created_at}, updated_at: #{evaluation.updated_at}"
+      # デバッグ用 ここまで
 
-        message = if evaluation.new_record?
-                    '評価が追加されました。'
-                  else
-                    '評価が更新されました。'
-                  end
-        Rails.logger.debug "#{message} created_at: #{evaluation.created_at}, updated_at: #{evaluation.updated_at}"
+      evaluation_counts = fetch_evaluation_counts(evaluation.sentence)
 
-        evaluation_counts = fetch_evaluation_counts(evaluation.sentence)
-
-        render json: {
-          sentence_id: evaluation_params[:sentence_id],
-          evaluation_good_count: evaluation_counts[:good],
-          evaluation_stay_count: evaluation_counts[:stay]
-        }, status: :created
-      rescue ActiveRecord::RecordInvalid => e
-        render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
-      rescue CustomError => e
-        render_error_response(e.code, e.message, data: e.data)
-      rescue StandardError => e
-        render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
-      end
+      render json: {
+        sentence_id: evaluation_params[:sentence_id],
+        evaluation_good_count: evaluation_counts[:good],
+        evaluation_stay_count: evaluation_counts[:stay]
+      }, status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
+    rescue CustomError => e
+      render_error_response(e.code, e.message, data: e.data)
+    rescue StandardError => e
+      render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
     end
     # rubocop:enable Metrics/AbcSize
 
