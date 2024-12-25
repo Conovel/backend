@@ -17,6 +17,11 @@ module V1
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
     def create
+      unless Evaluation.evaluations.keys.include?(evaluation_params[:evaluation])
+        raise CustomError.new('評価の種類が無効です。',
+                              422)
+      end
+
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
                                                     evaluator_user_id: current_user.id)
       evaluateion_defaults_value = evaluation.evaluation # デバッグ用
