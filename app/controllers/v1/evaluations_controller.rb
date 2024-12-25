@@ -25,12 +25,13 @@ module V1
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
                                                     evaluator_user_id: current_user.id)
       evaluateion_defaults_value = evaluation.evaluation # デバッグ用（不要な場合削除予定）
+      is_new_record = evaluation.new_record? # デバッグ用（不要な場合削除予定）
       evaluation.evaluation = evaluation_params[:evaluation]
 
       raise CustomError.new('投稿の評価に失敗しました。', 422) unless evaluation.save
 
       # デバッグ用（不要な場合削除予定）
-      message = if evaluation.new_record?
+      message = if is_new_record
                   '評価が追加されました。'
                 elsif evaluateion_defaults_value == evaluation_params[:evaluation]
                   '評価は変更されていません。'
