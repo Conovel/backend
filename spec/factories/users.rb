@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :user do
+    sequence(:user_id) { |n| n }
     sequence(:pen_name) { |n| "コノベル太郎#{n}" }
     sequence(:nick_name) { |n| "タロさん#{n}" }
     birth_ym { '199001' }

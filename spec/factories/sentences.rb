@@ -7,6 +7,7 @@ FactoryBot.define do
     parent_sentence_id { nil }
     association :title
     sentence_hierarchy { 1 }
+    sequence(:sentence_id) { |n| n }
 
     trait :with_specific_content do
       transient do
