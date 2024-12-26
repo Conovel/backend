@@ -18,4 +18,4 @@ Metrics/MethodLength:
 Metrics/ClassLength:
   Exclude:
     - 'db/migrate/**/*'
-  Max: 300 #仮（デフォルトは100）
+  Max: 300
