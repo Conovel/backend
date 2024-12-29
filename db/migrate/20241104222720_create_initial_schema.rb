@@ -9,6 +9,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     create_evaluations_table
     create_genres_table
     create_title_genres_table
+    create_viewed_sentences_table
     add_foreign_keys
     add_indexes
   end
@@ -124,6 +125,25 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.datetime 'deleted_at'
   end
 
+  # viewed_sentencesテーブル
+  def create_viewed_sentences_table
+    create_table 'viewed_sentences', id: false, charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
+                                     force: :cascade do |t|
+      add_viewed_sentences_columns(t)
+      t.timestamps
+    end
+
+    # 複合主キーを設定(SQLのALTER TABLE文を実行)
+    execute 'ALTER TABLE viewed_sentences ADD PRIMARY KEY (viewed_sentence_id, viewed_user_id)'
+  end
+
+  def add_viewed_sentences_columns(table)
+    table.bigint 'viewed_sentence_id', null: false
+    table.bigint 'viewed_user_id', null: false
+    table.datetime 'viewed_at', null: false
+    table.datetime 'deleted_at'
+  end
+
   # 外部キー制約を追加
   def add_foreign_keys
     add_foreign_key :sentences, :sentences, column: :parent_sentence_id, primary_key: :sentence_id
@@ -134,6 +154,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_foreign_key :evaluations, :users, column: :evaluator_user_id, primary_key: :user_id
     add_foreign_key :title_genres, :titles, column: :title_id, primary_key: :title_id
     add_foreign_key :title_genres, :genres, column: :genre_id, primary_key: :genre_id
+    add_foreign_key :viewed_sentences, :sentences, column: :viewed_sentence_id, primary_key: :sentence_id
+    add_foreign_key :viewed_sentences, :users, column: :viewed_user_id, primary_key: :user_id
   end
 
   # インデックスを追加
@@ -150,5 +172,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
     add_index :title_genres, %i[title_id genre_id], unique: true
+    add_index :viewed_sentences, %i[viewed_sentence_id viewed_user_id], unique: true
+    add_index :viewed_sentences, :deleted_at
   end
 end

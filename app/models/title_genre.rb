@@ -5,6 +5,9 @@ class TitleGenre < ApplicationRecord
   # 論理削除
   acts_as_paranoid
 
+  # 複合主キー
+  self.primary_keys = :title_id, :genre_id
+
   # アソシエーション
   belongs_to :title
   belongs_to :genre
