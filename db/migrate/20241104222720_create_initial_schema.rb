@@ -7,6 +7,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     create_titles_table
     create_users_table
     create_evaluations_table
+    create_genres_table
+    create_title_genres_table
     add_foreign_keys
     add_indexes
   end
@@ -80,7 +82,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
-    # 複合主キーを設定(SQLのALTER TABLE文を実行)
+    # 複合主キーを設定(SQLのALTER TABLE文)
     execute 'ALTER TABLE evaluations ADD PRIMARY KEY (sentence_id, evaluator_user_id)'
   end
 
@@ -88,6 +90,37 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.bigint 'sentence_id', null: false
     table.bigint 'evaluator_user_id', null: false
     table.integer 'evaluation', null: false # enem値はモデルで設定：{ good: 0, bad: 1, stay: 2 }
+    table.datetime 'deleted_at'
+  end
+
+  # genresテーブル
+  def create_genres_table
+    create_table 'genres', primary_key: 'genre_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
+                           force: :cascade do |t|
+      add_genres_columns(t)
+      t.timestamps
+    end
+  end
+
+  def add_genres_columns(table)
+    table.string 'genre_name', limit: 16, null: false
+    table.datetime 'deleted_at'
+  end
+
+  # title_genresテーブル
+  def create_title_genres_table
+    create_table 'title_genres', id: false, charset: 'utf8mb4', collation: 'utf8mb4_general_ci', force: :cascade do |t|
+      add_title_genres_columns(t)
+      t.timestamps
+    end
+
+    # 複合主キーを設定(SQLのALTER TABLE文)
+    execute 'ALTER TABLE title_genres ADD PRIMARY KEY (title_id, genre_id)'
+  end
+
+  def add_title_genres_columns(table)
+    table.bigint 'title_id', null: false
+    table.bigint 'genre_id', null: false
     table.datetime 'deleted_at'
   end
 
@@ -99,6 +132,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_foreign_key :titles, :users, column: :author_user_id, primary_key: :user_id
     add_foreign_key :evaluations, :sentences, column: :sentence_id, primary_key: :sentence_id
     add_foreign_key :evaluations, :users, column: :evaluator_user_id, primary_key: :user_id
+    add_foreign_key :title_genres, :titles, column: :title_id, primary_key: :title_id
+    add_foreign_key :title_genres, :genres, column: :genre_id, primary_key: :genre_id
   end
 
   # インデックスを追加
@@ -114,5 +149,6 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :deleted_at
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
+    add_index :title_genres, %i[title_id genre_id], unique: true
   end
 end

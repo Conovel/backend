@@ -208,5 +208,19 @@ Evaluation.create!([
                      }
                    ])
 
+# ジャンルのデータを作成し、変数に格納
+genres = Genre.create!([
+                         { genre_name: 'ファンタジー' },
+                         { genre_name: 'SF' },
+                         { genre_name: 'ミステリー' },
+                         { genre_name: 'ホラー' }
+                       ])
+
+# タイトルとジャンルの関連データを作成
+TitleGenre.create!([
+                     { title_id: titles[0].title_id, genre_id: genres[0].genre_id },
+                     { title_id: titles[0].title_id, genre_id: genres[1].genre_id }
+                   ])
+
 # 外部キー制約のチェックを再有効化
 ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 1')
