@@ -3,6 +3,8 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
+  include ErrorResponseHelper
+
   # 仮のcurrent_userメソッド
   def current_user
     # 仮のユーザーオブジェクトを返す
@@ -13,4 +15,36 @@ class ApplicationController < ActionController::API
   # def current_user
   #   @current_user ||= User.find(session[:user_id]) if session[:user_id]
   # end
+
+  # 任意の例外を補足
+  rescue_from StandardError, with: :handle_standard_error
+  rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
+  rescue_from CustomError, with: :handle_custom_error
+
+  private
+
+  # 標準的な例外の処理
+  def handle_standard_error(exception)
+    Rails.logger.error "StandardError: #{exception.message}\n#{exception.backtrace.join("\n")}"
+    render_error_response(500, "サーバーエラーが発生しました。: #{exception.message}")
+  end
+
+  # RecordInvalid の場合
+  def handle_record_invalid(exception)
+    render_error_response(422, record_invalid_message(exception))
+  end
+
+  # CustomError の場合
+  def handle_custom_error(exception)
+    render_error_response(exception.code, exception.message, data: exception.data)
+  end
+
+  # コントローラーごとにエラーメッセージを取得
+  def record_invalid_message(exception)
+    if respond_to?(:custom_record_invalid_message, true)
+      custom_record_invalid_message(exception)
+    else
+      "エラーが発生しました。: #{exception.record.errors.full_messages.join(', ')}"
+    end
+  end
 end

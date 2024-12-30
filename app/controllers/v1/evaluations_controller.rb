@@ -11,45 +11,18 @@
 module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
-    include ErrorResponseHelper
-    include EvaluationHelper
-
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
     def create
-      unless Evaluation.evaluations.keys.include?(evaluation_params[:evaluation])
-        raise CustomError.new('評価の種類が無効です。',
-                              422)
-      end
-
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
                                                     evaluator_user_id: current_user.id)
-      # evaluateion_defaults_value = evaluation.evaluation # デバッグ用
-      # is_new_record = evaluation.new_record? # デバッグ用
       evaluation.evaluation = evaluation_params[:evaluation]
+      evaluation.save!
 
-      raise CustomError.new('投稿の評価に失敗しました。', 422) unless evaluation.save
-
-      # デバッグ用
-      # message = if is_new_record
-      #             '評価が追加されました。'
-      #           elsif evaluateion_defaults_value == evaluation_params[:evaluation]
-      #             '評価は変更されていません。'
-      #           else
-      #             '評価が更新されました。'
-      #           end
-      # Rails.logger.debug "#{message} created_at: #{evaluation.created_at}, updated_at: #{evaluation.updated_at}"
-      # デバッグ用 ここまで
-
-      evaluation_counts = fetch_evaluation_counts(evaluation.sentence)
+      evaluation_counts = Evaluation.where(sentence_id: evaluation.sentence_id).group(:evaluation).count
+      evaluation_counts.default = 0
 
       render json: build_response(evaluation_params, evaluation_counts), status: :created
-    rescue ActiveRecord::RecordInvalid => e
-      render_error_response(422, "投稿の評価に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
-    rescue CustomError => e
-      render_error_response(e.code, e.message, data: e.data)
-    rescue StandardError => e
-      render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -64,9 +37,14 @@ module V1
     def build_response(evaluation_params, evaluation_counts)
       {
         sentence_id: evaluation_params[:sentence_id],
-        evaluation_good_count: evaluation_counts[:good],
-        evaluation_stay_count: evaluation_counts[:stay]
+        evaluation_good_count: evaluation_counts['good'],
+        evaluation_stay_count: evaluation_counts['stay']
       }
+    end
+
+    # カスタムエラーメッセージを定義
+    def custom_record_invalid_message(exception)
+      "投稿の評価に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
     end
   end
 end
