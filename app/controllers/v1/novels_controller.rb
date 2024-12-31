@@ -18,9 +18,43 @@ module V1
     # end
 
     def index
-      # Your code here
+      novels = Title.includes(:author_user, title_genres: :genre, sentences: %i[evaluations viewed_sentences]).all
 
-      render json: { 'message' => 'yes, it worked' }
+      render json: novels.map { |novel| build_novel_data(novel) }
+    end
+
+    private
+
+    # rubocop:disable Metrics/AbcSize
+    def build_novel_data(novel)
+      {
+        title_id: novel.title_id,
+        title: novel.title,
+        famous_sentence_text: famous_sentence_text(novel),
+        author_user_id: novel.author_user.user_id,
+        author_user_name: novel.author_user.pen_name,
+        profile_icon_image: novel.author_user.profile_icon_image,
+        title_genres: novel.title_genres.map { |tg| tg.genre.genre_name },
+        is_new: novel.sentences.order(created_at: :desc).first.created_at > 1.month.ago,
+        is_famous: famous_sentence(novel).evaluations.where(evaluation: 'good').count.positive?,
+        view_count: view_count(novel),
+        evaluation_good_count: novel.sentences.sum { |sentence| sentence.evaluations.where(evaluation: 'good').count },
+        created_at: novel.created_at,
+        updated_at: novel.updated_at
+      }
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def famous_sentence_text(novel)
+      famous_sentence(novel)&.sentence
+    end
+
+    def famous_sentence(novel)
+      novel.sentences.max_by { |sentence| sentence.evaluations.where(evaluation: 'good').count }
+    end
+
+    def view_count(novel)
+      novel.sentences.sum { |sentence| sentence.viewed_sentences.size }
     end
   end
 end

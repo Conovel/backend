@@ -7,6 +7,9 @@ class Title < ApplicationRecord
 
   # アソシエーション
   belongs_to :author_user, class_name: 'User'
+  has_many :sentences
+  has_many :title_genres
+  has_many :genres, through: :title_genres
 
   # バリデーション
   validates :author_user_id, presence: true
