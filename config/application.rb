@@ -57,6 +57,9 @@ module Backend
       config.paths.add 'app/models', eager_load: true
       config.paths.add 'app/models/concerns', eager_load: true
     end
+
+    # Add custom error directory to autoload and eager load paths
+    config.paths.add 'app/errors', eager_load: true
   end
 end
 

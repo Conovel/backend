@@ -12,19 +12,51 @@ module V1
   # SentencesController
   class SentencesController < ApplicationController
     include TimeHelper
+    include ErrorResponseHelper
+    include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
     def show
       sentence = find_sentence(params[:sentence_id])
       if sentence
-        response_data = build_response_data(sentence)
-        render json: build_response(response_data), status: :ok
+        render json: build_response(sentence), status: :ok
       else
-        render_error_response('Sentence not found')
+        render_error_response(404, '投稿が見つかりません。')
       end
     end
 
+    # POST /v1/sentences
+    # rubocop:disable Metrics/AbcSize
+    def create
+      ActiveRecord::Base.transaction do
+        parent_sentence_id = sentence_params[:parent_sentence_id]
+        sentence_text = sentence_params[:sentence]
+
+        check_sentence_length(sentence_text)
+
+        parent_sentence = Sentence.lock(true).find_by(sentence_id: parent_sentence_id)
+        raise CustomError.new('親投稿が見つかりません。', 422) if parent_sentence.nil?
+
+        check_parent_sentence_updated(parent_sentence)
+        check_consecutive_self_post(parent_sentence)
+
+        sentence = build_sentence(parent_sentence, sentence_text)
+        sentence.save!
+
+        render json: build_response(sentence), status: :created
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
+    rescue CustomError => e
+      render_error_response(e.code, e.message, data: e.data)
+    rescue StandardError => e
+      render_error_response(500, "サーバーエラーが発生しました。: #{e.message}")
+    end
+    # rubocop:enable Metrics/AbcSize
+
     private
+
+    # showの補助メソッド
 
     # 投稿データを取得
     def find_sentence(sentence_id)
@@ -44,20 +76,8 @@ module V1
         user: sentence.user,
         evaluations: sentence.evaluations,
         parent: sentence.parent,
-        parallels: sentence.parallels,
-        children: sentence.children
-      }
-    end
-
-    # 評価数を取得
-    def fetch_evaluation_counts(sentence)
-      counts = sentence.evaluations.each_with_object(Hash.new(0)) do |evaluation, hash|
-        hash[evaluation.evaluation] += 1
-      end
-
-      {
-        good: counts['good'],
-        stay: counts['stay']
+        parallels: sentence.parallels.includes(:user, :evaluations),
+        children: sentence.children.includes(:user, :evaluations)
       }
     end
 
@@ -89,7 +109,9 @@ module V1
     end
 
     # レスポンスを構築
-    def build_response(data)
+    def build_response(sentence)
+      data = build_response_data(sentence)
+
       {
         main: build_sentence_response(data[:sentence]),
         parent: build_sentence_response(data[:parent]),
@@ -98,9 +120,58 @@ module V1
       }
     end
 
-    # エラーレスポンス
-    def render_error_response(error)
-      render json: { error: }, status: :not_found
+    # createの補助メソッド
+
+    # 投稿のパラメータを取得
+    def sentence_params
+      params.permit(:parent_sentence_id, :sentence, :parent_updated_at)
+    end
+
+    # 親投稿の更新日時を確認
+    def check_parent_sentence_updated(parent_sentence)
+      parent_updated_at = format_time_from_string_with_strftime(sentence_params[:parent_updated_at])
+      parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
+      return if parent_sentence_updated_at == parent_updated_at
+
+      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
+    end
+
+    # 連続投稿の確認
+    def check_consecutive_self_post(parent_sentence)
+      return unless parent_sentence.sentence_user_id == current_user.id
+
+      raise CustomError.new('自分自身の投稿の後に連続で投稿を追加することはできません。', 422)
+    end
+
+    # 投稿文字数の確認
+    def check_sentence_length(sentence_text)
+      max_sentence_length = calculate_max_sentence_length
+      return unless sentence_text.length > max_sentence_length
+
+      raise CustomError.new('投稿文字数の上限を超えています。修正後に再投稿をお願いします。', 422)
+    end
+
+    # 投稿文字数上限の計算
+    def calculate_max_sentence_length
+      default_max_length = DEFAULT_MAX_SENTENCE_LENGTH
+      additional_length = 0
+
+      # TODO: 基本増加: 自分の投稿数に応じた増加
+      # TODO: 寸志: 自分の投稿の後続に自分以外の2名以上が投稿した数
+      # TODO: ボーナス: 評価に応じた増加
+
+      default_max_length + additional_length
+    end
+
+    # 新規投稿データを作成
+    def build_sentence(parent_sentence, sentence_text)
+      Sentence.new.tap do |sentence|
+        sentence.sentence_user_id = current_user.id
+        sentence.title_id = parent_sentence.title_id
+        sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
+        sentence.sentence = sentence_text
+        sentence.parent_sentence_id = parent_sentence.id
+      end
     end
   end
 end
