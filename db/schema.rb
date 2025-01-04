@@ -45,6 +45,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
+    t.integer 'viewed_sentences_count', default: 0, null: false
     t.index ['deleted_at'], name: 'index_sentences_on_deleted_at'
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
     t.index ['sentence_user_id'], name: 'index_sentences_on_sentence_user_id'

@@ -18,7 +18,7 @@ module V1
     # end
 
     def index
-      novels = Title.includes(:author_user, title_genres: :genre, sentences: %i[evaluations viewed_sentences]).all
+      novels = Title.includes(:author_user, title_genres: :genre).all
 
       render json: novels.map { |novel| build_novel_data(novel) }
     end
@@ -35,10 +35,10 @@ module V1
         author_user_name: novel.author_user.pen_name,
         profile_icon_image: novel.author_user.profile_icon_image,
         title_genres: novel.title_genres.map { |tg| tg.genre.genre_name },
-        is_new: novel.sentences.order(created_at: :desc).first.created_at > 1.month.ago,
-        is_famous: famous_sentence(novel).evaluations.where(evaluation: 'good').count.positive?,
+        is_new: novel.sentences.order(created_at: :desc).first.created_at > 5.days.ago,
+        is_famous: famous_sentence(novel).evaluations.where(evaluation: 'good').count >= 10,
         view_count: view_count(novel),
-        evaluation_good_count: novel.sentences.sum { |sentence| sentence.evaluations.where(evaluation: 'good').count },
+        evaluation_good_count: evaluation_good_count(novel),
         created_at: novel.created_at,
         updated_at: novel.updated_at
       }
@@ -50,11 +50,19 @@ module V1
     end
 
     def famous_sentence(novel)
-      novel.sentences.max_by { |sentence| sentence.evaluations.where(evaluation: 'good').count }
+      novel.sentences
+           .joins(:evaluations)
+           .group('sentences.sentence_id')
+           .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
+           .first
     end
 
     def view_count(novel)
-      novel.sentences.sum { |sentence| sentence.viewed_sentences.size }
+      novel.sentences.sum(:viewed_sentences_count)
+    end
+
+    def evaluation_good_count(novel)
+      novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
     end
   end
 end

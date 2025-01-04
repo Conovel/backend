@@ -227,6 +227,12 @@ ViewedSentence.create!([
                          { viewed_sentence_id: sentences[0].sentence_id, viewed_user_id: users[0].user_id,
                            viewed_at: Time.now },
                          { viewed_sentence_id: sentences[1].sentence_id, viewed_user_id: users[1].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[2].sentence_id, viewed_user_id: users[2].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[3].sentence_id, viewed_user_id: users[3].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[4].sentence_id, viewed_user_id: users[1].user_id,
                            viewed_at: Time.now }
                        ])
 

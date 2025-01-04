@@ -3,6 +3,7 @@
 # データベースの初期スキーマを定義するマイグレーションファイル
 class CreateInitialSchema < ActiveRecord::Migration[7.0]
   def change
+    # テーブルを作成
     create_sentences_table
     create_titles_table
     create_users_table
@@ -10,6 +11,11 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     create_genres_table
     create_title_genres_table
     create_viewed_sentences_table
+
+    # カラムを追加（counter_cache）
+    add_column :sentences, :viewed_sentences_count, :integer, default: 0, null: false
+
+    # 外部キー制約やインデックスの追加
     add_foreign_keys
     add_indexes
   end
