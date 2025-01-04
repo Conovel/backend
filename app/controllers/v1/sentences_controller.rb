@@ -12,6 +12,7 @@ module V1
   # SentencesController
   class SentencesController < ApplicationController
     include TimeHelper
+    include ErrorResponseHelper
     include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
