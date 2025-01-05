@@ -17,6 +17,7 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # GET /v1/novels
     def index
       novels = Title.includes(:author_user, title_genres: :genre).all
 
@@ -27,18 +28,21 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def build_novel_data(novel)
+      author_user = novel.author_user
+      total_good_count = evaluation_good_count(novel)
+
       {
         title_id: novel.title_id,
         title: novel.title,
         famous_sentence_text: famous_sentence_text(novel),
-        author_user_id: novel.author_user.user_id,
-        author_user_name: novel.author_user.pen_name,
-        profile_icon_image: novel.author_user.profile_icon_image,
-        title_genres: novel.title_genres.map { |tg| tg.genre.genre_name },
-        is_new: novel.sentences.order(created_at: :desc).first.created_at > 5.days.ago,
-        is_famous: famous_sentence(novel).evaluations.where(evaluation: 'good').count >= 10,
+        author_user_id: author_user.user_id,
+        author_user_name: author_user.pen_name,
+        profile_icon_image: author_user.profile_icon_image,
+        title_genres: novel.title_genres.map { |title_genre| title_genre.genre.genre_name },
+        is_new: novel.sentences.order(created_at: :desc).first.created_at > NEW_PERIOD_DAYS.days.ago,
+        is_famous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
         view_count: view_count(novel),
-        evaluation_good_count: evaluation_good_count(novel),
+        evaluation_good_count: total_good_count,
         created_at: novel.created_at,
         updated_at: novel.updated_at
       }
@@ -63,6 +67,11 @@ module V1
 
     def evaluation_good_count(novel)
       novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
+    end
+
+    # カスタムエラーメッセージを定義
+    def custom_record_invalid_message(exception)
+      "小説リストの取得に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
     end
   end
 end

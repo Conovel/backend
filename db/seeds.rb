@@ -12,16 +12,20 @@
 ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0')
 
 # 既存のシードデータを削除
-Evaluation.delete_all
-Sentence.delete_all
-Title.delete_all
 User.delete_all
+Title.delete_all
+Sentence.delete_all
+Evaluation.delete_all
+Genre.delete_all
+TitleGenre.delete_all
+ViewedSentence.delete_all
 
 # オートインクリメント値をリセット
 ActiveRecord::Base.connection.execute('ALTER TABLE sentences AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE titles AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE users AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE evaluations AUTO_INCREMENT = 1')
+ActiveRecord::Base.connection.execute('ALTER TABLE genres AUTO_INCREMENT = 1')
 
 # ユーザーのデータを作成
 users = User.create!([
@@ -231,8 +235,6 @@ ViewedSentence.create!([
                          { viewed_sentence_id: sentences[2].sentence_id, viewed_user_id: users[2].user_id,
                            viewed_at: Time.now },
                          { viewed_sentence_id: sentences[3].sentence_id, viewed_user_id: users[3].user_id,
-                           viewed_at: Time.now },
-                         { viewed_sentence_id: sentences[4].sentence_id, viewed_user_id: users[1].user_id,
                            viewed_at: Time.now }
                        ])
 
