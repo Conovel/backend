@@ -52,7 +52,7 @@ RSpec.describe 'V1::Novels', type: :request do
       it 'returns the correct error message' do
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to eq('小説リストの取得に失敗しました。: ')
+        expect(json_response['error']['message']).to eq('小説リストの取得に失敗しました。')
       end
     end
   end

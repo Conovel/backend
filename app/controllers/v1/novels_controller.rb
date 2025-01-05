@@ -16,6 +16,8 @@ module V1
       novels = Title.includes(:author_user, title_genres: :genre).all
 
       render json: novels.map { |novel| build_novel_data(novel) }
+    rescue StandardError
+      render_error_response(422, '小説リストの取得に失敗しました。')
     end
 
     # GET /v1/novels/{title_id}
@@ -23,8 +25,8 @@ module V1
       novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
 
       render json: build_novel_detail_data(novel)
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: 'Novel not found' }, status: :not_found
+    rescue StandardError
+      render_error_response(422, '小説の概要の取得に失敗しました。')
     end
 
     private
@@ -81,11 +83,6 @@ module V1
 
     def evaluation_good_count(novel)
       novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
-    end
-
-    # カスタムエラーメッセージを定義
-    def custom_record_invalid_message(exception)
-      "小説リストの取得に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
     end
   end
 end
