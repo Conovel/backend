@@ -11,17 +11,20 @@
 module V1
   # NovelsController
   class NovelsController < ApplicationController
-    # def show # 別チケットで実装予定
-    #   # Your code here
-
-    #   render json: {"message" => "yes, it worked"}
-    # end
-
     # GET /v1/novels
     def index
       novels = Title.includes(:author_user, title_genres: :genre).all
 
       render json: novels.map { |novel| build_novel_data(novel) }
+    end
+
+    # GET /v1/novels/{title_id}
+    def show
+      novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
+
+      render json: build_novel_detail_data(novel)
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: 'Novel not found' }, status: :not_found
     end
 
     private
@@ -48,6 +51,17 @@ module V1
       }
     end
     # rubocop:enable Metrics/AbcSize
+
+    def build_novel_detail_data(novel)
+      data = build_novel_data(novel)
+      data.merge(
+        main_copy: novel.main_copy,
+        sentence_user_count: novel.sentences.count,
+        sentence_hierarchy_count: novel.sentences.maximum(:sentence_hierarchy),
+        reader_count: novel.sentences.joins(:viewed_sentences).distinct.count(:viewed_user_id),
+        overview: novel.overview
+      )
+    end
 
     def famous_sentence_text(novel)
       famous_sentence(novel)&.sentence
