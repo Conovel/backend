@@ -18,6 +18,7 @@ class ApplicationController < ActionController::API
 
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
+  rescue_from ArgumentError, with: :handle_argument_error
   rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
   rescue_from CustomError, with: :handle_custom_error
 
@@ -27,6 +28,11 @@ class ApplicationController < ActionController::API
   def handle_standard_error(exception)
     Rails.logger.error "StandardError: #{exception.message}\n#{exception.backtrace.join("\n")}"
     render_error_response(500, "サーバーエラーが発生しました。: #{exception.message}")
+  end
+
+  # ArgumentError の場合
+  def handle_argument_error(exception)
+    render_error_response(422, "無効な値が含まれていました。: #{exception.message}")
   end
 
   # RecordInvalid の場合
