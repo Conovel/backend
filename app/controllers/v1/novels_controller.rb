@@ -62,6 +62,7 @@ module V1
     def famous_sentence(novel)
       novel.sentences
            .joins(:evaluations)
+           .where(evaluations: { evaluation: 'good' })
            .group('sentences.sentence_id')
            .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
            .first
@@ -72,7 +73,10 @@ module V1
     end
 
     def evaluation_good_count(novel)
-      novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
+      novel.sentences
+           .joins(:evaluations)
+           .where(evaluations: { evaluation: 'good' })
+           .count
     end
 
     # カスタムエラーメッセージを定義
