@@ -19,16 +19,23 @@ module V1
 
     # GET /v1/novels
     def index
-      novels = Title.includes(:author_user, title_genres: :genre).all
+      novels = Title.eager_load(:author_user, title_genres: :genre, sentences: :evaluations).all
 
-      render json: novels.map { |novel| build_novel_data(novel) }
+      novel_data = novels.map do |novel|
+        author_user = novel.author_user
+        title_genres = novel.title_genres.map(&:genre)
+        sentences = novel.sentences
+        evaluations = sentences.flat_map(&:evaluations)
+
+        build_novel_data(novel, author_user, title_genres, sentences, evaluations)
+      end
+
+      render json: novel_data
     end
 
     private
 
-    # rubocop:disable Metrics/AbcSize
-    def build_novel_data(novel)
-      author_user = novel.author_user
+    def build_novel_data(novel, author_user, title_genres, sentences, _evaluations)
       total_good_count = evaluation_good_count(novel)
 
       {
@@ -38,16 +45,15 @@ module V1
         author_user_id: author_user.user_id,
         author_user_name: author_user.pen_name,
         profile_icon_image: author_user.profile_icon_image,
-        title_genres: novel.title_genres.map { |title_genre| title_genre.genre.genre_name },
-        is_new: novel.sentences.order(created_at: :desc).first.created_at > NEW_PERIOD_DAYS.days.ago,
+        title_genres: title_genres.map(&:genre_name),
+        is_new: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
         is_famous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
-        view_count: view_count(novel),
+        view_count: sentences.sum(&:viewed_sentences_count),
         evaluation_good_count: total_good_count,
         created_at: novel.created_at,
         updated_at: novel.updated_at
       }
     end
-    # rubocop:enable Metrics/AbcSize
 
     def famous_sentence_text(novel)
       famous_sentence(novel)&.sentence
