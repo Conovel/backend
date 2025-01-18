@@ -21,27 +21,22 @@ module V1
     def index
       novels = Title.eager_load(:author_user, title_genres: :genre, sentences: :evaluations).all
 
-      novel_data = novels.map do |novel|
-        author_user = novel.author_user
-        title_genres = novel.title_genres.map(&:genre)
-        sentences = novel.sentences
-        evaluations = sentences.flat_map(&:evaluations)
-
-        build_novel_data(novel, author_user, title_genres, sentences, evaluations)
-      end
-
-      render json: novel_data
+      render json: novels.map { |novel| build_novel_data(novel) }
     end
 
     private
 
-    def build_novel_data(novel, author_user, title_genres, sentences, _evaluations)
+    # rubocop:disable Metrics/AbcSize
+    def build_novel_data(novel)
+      author_user = novel.author_user
+      title_genres = novel.title_genres.map(&:genre)
+      sentences = novel.sentences
       total_good_count = evaluation_good_count(novel)
 
       {
         title_id: novel.title_id,
         title: novel.title,
-        famous_sentence_text: famous_sentence_text(novel),
+        famous_sentence_text: famous_sentence(novel)&.sentence,
         author_user_id: author_user.user_id,
         author_user_name: author_user.pen_name,
         profile_icon_image: author_user.profile_icon_image,
@@ -54,10 +49,7 @@ module V1
         updated_at: novel.updated_at
       }
     end
-
-    def famous_sentence_text(novel)
-      famous_sentence(novel)&.sentence
-    end
+    # rubocop:enable Metrics/AbcSize
 
     def famous_sentence(novel)
       novel.sentences
@@ -66,10 +58,6 @@ module V1
            .group('sentences.sentence_id')
            .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
            .first
-    end
-
-    def view_count(novel)
-      novel.sentences.sum(:viewed_sentences_count)
     end
 
     def evaluation_good_count(novel)
