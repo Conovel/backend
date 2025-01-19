@@ -50,10 +50,11 @@ class ApplicationController < ActionController::API
 
   # コントローラーごとにエラーメッセージを取得
   def record_invalid_message(exception)
-    if respond_to?(:custom_record_invalid_message, true)
-      custom_record_invalid_message(exception)
-    else
-      "エラーが発生しました。: #{exception.record.errors.full_messages.join(', ')}"
-    end
+    custom_record_invalid_message(exception)
+  end
+
+  # コントローラーごとにカスタムエラーメッセージを定義（抽象メソッド）
+  def custom_record_invalid_message(exception)
+    raise NotImplementedError, 'custom_record_invalid_messageメソッドが実装されていません'
   end
 end
