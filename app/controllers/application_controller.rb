@@ -39,18 +39,13 @@ class ApplicationController < ActionController::API
   # RecordInvalid の場合
   def handle_record_invalid(exception)
     Rails.logger.error "RecordInvalid: #{exception.message}\n#{exception.backtrace.join("\n")}"
-    render_error_response(422, record_invalid_message(exception))
+    render_error_response(422, custom_record_invalid_message(exception))
   end
 
   # CustomError の場合
   def handle_custom_error(exception)
     Rails.logger.error "CustomError: #{exception.message}\n#{exception.backtrace.join("\n")}"
     render_error_response(exception.code, exception.message, data: exception.data)
-  end
-
-  # コントローラーごとにエラーメッセージを取得
-  def record_invalid_message(exception)
-    custom_record_invalid_message(exception)
   end
 
   # コントローラーごとにカスタムエラーメッセージを定義（抽象メソッド）
