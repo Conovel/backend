@@ -16,14 +16,35 @@ module V1
     include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
+    # rubocop:disable Metrics/AbcSize, Layout/LineLength
+    # Todo: メソッドボリュームのを減らす（AbcSizeは暫定コメント）
     def show
       sentence = find_sentence(params[:sentence_id])
       if sentence
-        render json: build_response(sentence), status: :ok
+        begin
+          viewed_sentence = ViewedSentence.find_or_initialize_by(
+            viewed_sentence_id: sentence.id,
+            viewed_user_id: current_user.id
+          )
+          if viewed_sentence.new_record?
+            viewed_sentence.viewed_at = Time.current
+            Rails.logger.info("New viewed_sentence record created for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
+          else
+            viewed_sentence.created_at = Time.current
+            viewed_sentence.viewed_at = Time.current
+            Rails.logger.info("Existing viewed_sentence record updated for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
+          end
+          viewed_sentence.save!
+          render json: build_response(sentence), status: :ok
+        rescue StandardError => e
+          Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
+          render_error_response(420, '投稿の取得に失敗しました。')
+        end
       else
         render_error_response(404, '投稿が見つかりません。')
       end
     end
+    # rubocop:enable Metrics/AbcSize, Layout/LineLength
 
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
