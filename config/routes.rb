@@ -17,6 +17,7 @@ Rails.application.routes.draw do
 
   # namespace
   namespace :v1 do
+    add_openapi_route 'POST', '/evaluations', controller_name: 'evaluations', action_name: 'create'
     add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
     add_openapi_route 'POST', '/sentences', controller_name: 'sentences', action_name: 'create'
   end
