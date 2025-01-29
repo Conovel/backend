@@ -28,10 +28,14 @@ module V1
         )
         if viewed_sentence.new_record?
           viewed_sentence.viewed_at = Time.current
+
+          # デバッグ用ログ（削除予定）
           Rails.logger.info("New viewed_sentence record created for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
         else
           viewed_sentence.created_at = Time.current
           viewed_sentence.viewed_at = Time.current
+
+          # デバッグ用ログ（削除予定）
           Rails.logger.info("Existing viewed_sentence record updated for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
         end
         viewed_sentence.save!
