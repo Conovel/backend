@@ -39,7 +39,7 @@ module V1
           Rails.logger.info("Existing viewed_sentence record updated for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
         end
         viewed_sentence.save!
-        render json: build_response(sentence), status: :ok
+        render json: build_response(sentence), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
         raise CustomError.new('投稿の取得に失敗しました。', 420)
@@ -67,7 +67,10 @@ module V1
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!
 
-        render json: build_response(sentence), status: :created
+        # 新規投稿のsentence_idを使用してshowメソッドを内部的に呼び出す
+        params[:sentence_id] = sentence.id
+        params[:status] = :created
+        show
       end
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
