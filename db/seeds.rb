@@ -12,16 +12,20 @@
 ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0')
 
 # 既存のシードデータを削除
-Evaluation.delete_all
-Sentence.delete_all
-Title.delete_all
 User.delete_all
+Title.delete_all
+Sentence.delete_all
+Evaluation.delete_all
+Genre.delete_all
+TitleGenre.delete_all
+ViewedSentence.delete_all
 
 # オートインクリメント値をリセット
 ActiveRecord::Base.connection.execute('ALTER TABLE sentences AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE titles AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE users AUTO_INCREMENT = 1')
 ActiveRecord::Base.connection.execute('ALTER TABLE evaluations AUTO_INCREMENT = 1')
+ActiveRecord::Base.connection.execute('ALTER TABLE genres AUTO_INCREMENT = 1')
 
 # ユーザーのデータを作成
 users = User.create!([
@@ -207,6 +211,32 @@ Evaluation.create!([
                        evaluation: :good
                      }
                    ])
+
+# ジャンルidに対応するジャンル名のデータを作成
+genres = Genre.create!([
+                         { genre_name: 'ファンタジー' },
+                         { genre_name: 'SF' },
+                         { genre_name: 'ミステリー' },
+                         { genre_name: 'ホラー' }
+                       ])
+
+# 小説に対する登録ジャンルのデータを作成
+TitleGenre.create!([
+                     { title_id: titles[0].title_id, genre_id: genres[0].genre_id },
+                     { title_id: titles[0].title_id, genre_id: genres[1].genre_id }
+                   ])
+
+# 閲覧履歴のデータを作成
+ViewedSentence.create!([
+                         { viewed_sentence_id: sentences[0].sentence_id, viewed_user_id: users[0].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[1].sentence_id, viewed_user_id: users[1].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[2].sentence_id, viewed_user_id: users[2].user_id,
+                           viewed_at: Time.now },
+                         { viewed_sentence_id: sentences[3].sentence_id, viewed_user_id: users[3].user_id,
+                           viewed_at: Time.now }
+                       ])
 
 # 外部キー制約のチェックを再有効化
 ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 1')

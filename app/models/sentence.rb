@@ -23,6 +23,7 @@ class Sentence < ApplicationRecord
   has_many :parallels, lambda { |sentence|
     where.not(sentence_id: sentence.sentence_id)
   }, through: :parent, source: :children
+  has_many :viewed_sentences, foreign_key: 'viewed_sentence_id'
 
   # バリデーション
   validates :sentence, presence: true
