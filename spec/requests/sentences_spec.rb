@@ -76,9 +76,11 @@ RSpec.describe 'Sentences', type: :request do
 
       it 'returns a 420 error when viewed_sentence save fails' do
         main_sentence
-        viewed_sentence_double = instance_double('ViewedSentence', save!: nil, new_record?: true)
+        viewed_sentence_double = instance_double('ViewedSentence', save!: nil, new_record?: true,
+                                                                   viewed_at: Time.current)
         allow(viewed_sentence_double).to receive(:viewed_at=)
-        allow(viewed_sentence_double).to receive(:created_at=)
+        allow(viewed_sentence_double).to receive(:created_at)
+        allow(viewed_sentence_double).to receive(:updated_at)
         allow(ViewedSentence).to receive(:find_or_initialize_by).and_return(viewed_sentence_double)
         allow(viewed_sentence_double).to receive(:save!).and_raise(StandardError.new('DB error'))
 

@@ -26,19 +26,18 @@ module V1
           viewed_sentence_id: sentence.id,
           viewed_user_id: current_user.id
         )
+        viewed_sentence.viewed_at = Time.current
+
+        # 新規・更新判定デバッグ用ログ（削除予定）
         if viewed_sentence.new_record?
-          viewed_sentence.viewed_at = Time.current
-
-          # デバッグ用ログ（削除予定）
-          Rails.logger.info("New viewed_sentence record created for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
+          # 新規ログ
+          Rails.logger.info("viewed_sentence(新規) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
         else
-          viewed_sentence.created_at = Time.current
-          viewed_sentence.viewed_at = Time.current
-
-          # デバッグ用ログ（削除予定）
-          Rails.logger.info("Existing viewed_sentence record updated for sentence_id: #{sentence.id}, user_id: #{current_user.id}")
+          # 更新ログ
+          Rails.logger.info("viewed_sentence(更新) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
         end
-        viewed_sentence.save!
+
+        viewed_sentence.save! # 新規・更新共通処理
         render json: build_response(sentence), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
