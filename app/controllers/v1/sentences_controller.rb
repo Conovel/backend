@@ -18,7 +18,7 @@ module V1
     # GET /v1/sentences/:sentence_id
     # rubocop:disable Metrics/AbcSize, Layout/LineLength
     def show
-      sentence = find_sentence(params[:sentence_id])
+      sentence = Sentence.includes(:user, :evaluations).find_by_id(params[:sentence_id])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
 
       begin
@@ -83,11 +83,6 @@ module V1
     private
 
     # showの補助メソッド
-
-    # 投稿データを取得
-    def find_sentence(sentence_id)
-      Sentence.includes(:user, :evaluations).find_by_id(sentence_id)
-    end
 
     # レスポンスデータを構築
     def build_response_data(sentence)
