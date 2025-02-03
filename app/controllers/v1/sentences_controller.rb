@@ -16,28 +16,13 @@ module V1
     include EvaluationHelper
 
     # GET /v1/sentences/:sentence_id
-    # rubocop:disable Metrics/AbcSize, Layout/LineLength
+    # rubocop:disable Metrics/AbcSize
     def show
       sentence = Sentence.includes(:user, :evaluations).find_by_id(params[:sentence_id])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
 
       begin
-        viewed_sentence = ViewedSentence.find_or_initialize_by(
-          viewed_sentence_id: sentence.id,
-          viewed_user_id: current_user.id
-        )
-        viewed_sentence.viewed_at = Time.current
-
-        # 新規・更新判定デバッグ用ログ（削除予定）
-        if viewed_sentence.new_record?
-          # 新規ログ
-          Rails.logger.info("viewed_sentence(新規) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
-        else
-          # 更新ログ
-          Rails.logger.info("viewed_sentence(更新) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
-        end
-
-        viewed_sentence.save! # 新規・更新共通処理
+        process_viewed_sentence(sentence)
         render json: build_response(sentence), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
@@ -46,11 +31,12 @@ module V1
     rescue CustomError => e
       render_error_response(e.code, e.message)
     end
-    # rubocop:enable Metrics/AbcSize, Layout/LineLength
+    # rubocop:enable Metrics/AbcSize
 
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
     def create
+      sentence = nil
       ActiveRecord::Base.transaction do
         parent_sentence_id = sentence_params[:parent_sentence_id]
         sentence_text = sentence_params[:sentence]
@@ -65,12 +51,12 @@ module V1
 
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!
-
-        # 新規投稿のsentence_idを使用してshowメソッドを内部的に呼び出す
-        params[:sentence_id] = sentence.id
-        params[:status] = :created
-        show
       end
+
+      params[:sentence_id] = sentence.id
+      params[:status] = :created
+      process_viewed_sentence(sentence)
+      render json: build_response(sentence), status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -188,5 +174,27 @@ module V1
         sentence.parent_sentence_id = parent_sentence.id
       end
     end
+
+    # viewed_sentenceの新規・更新処理
+    # rubocop:disable Metrics/AbcSize, Layout/LineLength
+    def process_viewed_sentence(sentence)
+      viewed_sentence = ViewedSentence.find_or_initialize_by(
+        viewed_sentence_id: sentence.id,
+        viewed_user_id: current_user.id
+      )
+      viewed_sentence.viewed_at = Time.current
+
+      # 新規・更新判定デバッグ用ログ（削除予定）
+      if viewed_sentence.new_record?
+        # 新規ログ
+        Rails.logger.info("viewed_sentence(新規) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+      else
+        # 更新ログ
+        Rails.logger.info("viewed_sentence(更新) sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+      end
+
+      viewed_sentence.save! # 新規・更新共通処理
+    end
+    # rubocop:enable Metrics/AbcSize, Layout/LineLength
   end
 end
