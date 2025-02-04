@@ -80,16 +80,15 @@ RSpec.describe 'Evaluations', type: :request do
       end
     end
 
-    # rspecは422エラーを期待しているが500エラーになるためコメントアウト
-    # context 'When evaluation is disabled' do
-    #   it 'returns a validation failure message' do
-    #     post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'aaa')
-    #     json_response = JSON.parse(response.body)
-    #     expect(response).to have_http_status(:unprocessable_entity)
-    #     expect(json_response['error']['code']).to eq(500)
-    #     expect(json_response['error']['message']).to include('サーバーエラーが発生しました。')
-    #   end
-    # end
+    context 'When evaluation is disabled' do
+      it 'returns a validation failure message' do
+        post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'aaa')
+        json_response = JSON.parse(response.body)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']['code']).to eq(422)
+        expect(json_response['error']['message']).to include('無効な値が含まれていました。')
+      end
+    end
 
     context 'When evaluation is blank' do
       it 'returns a validation failure message' do

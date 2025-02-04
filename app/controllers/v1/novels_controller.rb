@@ -13,7 +13,7 @@ module V1
   class NovelsController < ApplicationController
     # GET /v1/novels
     def index
-      novels = Title.includes(:author_user, title_genres: :genre).all
+      novels = Title.eager_load(:author_user, title_genres: :genre, sentences: :evaluations).all
 
       render json: novels.map { |novel| build_novel_data(novel) }
     rescue StandardError
@@ -34,19 +34,21 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def build_novel_data(novel)
       author_user = novel.author_user
+      title_genres = novel.title_genres.map(&:genre)
+      sentences = novel.sentences
       total_good_count = evaluation_good_count(novel)
 
       {
         title_id: novel.title_id,
         title: novel.title,
-        famous_sentence_text: famous_sentence_text(novel),
+        famous_sentence_text: famous_sentence(novel)&.sentence,
         author_user_id: author_user.user_id,
         author_user_name: author_user.pen_name,
         profile_icon_image: author_user.profile_icon_image,
-        title_genres: novel.title_genres.map { |title_genre| title_genre.genre.genre_name },
-        is_new: novel.sentences.order(created_at: :desc).first.created_at > NEW_PERIOD_DAYS.days.ago,
+        title_genres: title_genres.map(&:genre_name),
+        is_new: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
         is_famous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
-        view_count: view_count(novel),
+        view_count: sentences.sum(&:viewed_sentences_count),
         evaluation_good_count: total_good_count,
         created_at: novel.created_at,
         updated_at: novel.updated_at
@@ -72,17 +74,17 @@ module V1
     def famous_sentence(novel)
       novel.sentences
            .joins(:evaluations)
+           .where(evaluations: { evaluation: 'good' })
            .group('sentences.sentence_id')
            .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
            .first
     end
 
-    def view_count(novel)
-      novel.sentences.sum(:viewed_sentences_count)
-    end
-
     def evaluation_good_count(novel)
-      novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
+      novel.sentences
+           .joins(:evaluations)
+           .where(evaluations: { evaluation: 'good' })
+           .count
     end
   end
 end
