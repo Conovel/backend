@@ -53,7 +53,6 @@ module V1
         sentence.save!
       end
 
-      params[:sentence_id] = sentence.id
       params[:status] = :created
       process_viewed_sentence(sentence)
       render json: build_response(sentence), status: :created
