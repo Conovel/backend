@@ -53,7 +53,6 @@ module V1
         sentence.save!
       end
 
-      params[:status] = :created
       process_viewed_sentence(sentence)
       render json: build_response(sentence), status: :created
     rescue ActiveRecord::RecordInvalid => e
