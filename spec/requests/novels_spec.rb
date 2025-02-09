@@ -100,7 +100,7 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['view_count']).to eq(3) # 投稿閲覧数は3
       expect(json_response['evaluation_good_count']).to eq(FAMOUS_EVALUATION_THRESHOLD)
       expect(json_response['main_copy']).to eq(title.main_copy)
-      expect(json_response['sentence_user_count']).to eq(3) # 要確認:今は投稿閲覧数になっている（投稿者数だと2）
+      expect(json_response['sentence_user_count']).to eq(2) # 投稿者数は2
       expect(json_response['sentence_hierarchy_count']).to eq(3)
       expect(json_response['reader_count']).to eq(1) # 読者数は1
       expect(json_response['overview']).to eq(title.overview)

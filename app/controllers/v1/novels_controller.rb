@@ -60,7 +60,7 @@ module V1
       data = build_novel_data(novel)
       data.merge(
         main_copy: novel.main_copy,
-        sentence_user_count: novel.sentences.count,
+        sentence_user_count: novel.sentences.select(:sentence_user_id).distinct.count,
         sentence_hierarchy_count: novel.sentences.maximum(:sentence_hierarchy),
         reader_count: novel.sentences.joins(:viewed_sentences).distinct.count(:viewed_user_id),
         overview: novel.overview
