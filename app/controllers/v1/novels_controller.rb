@@ -58,10 +58,10 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def build_novel_detail_data(novel)
-      title_ids = [novel.title_id]
+      title_id = novel.title_id
 
       sentence_group = Sentence
-                       .where(title_id: title_ids)
+                       .where(title_id:)
                        .group(:title_id)
 
       sentence_hierarchy_counts = sentence_group
@@ -73,7 +73,7 @@ module V1
 
       reader_counts = ViewedSentence
                       .joins(sentence: :title)
-                      .where(sentences: { title_id: title_ids })
+                      .where(sentences: { title_id: })
                       .group('sentences.title_id')
                       .distinct
                       .count(:viewed_user_id)
@@ -81,9 +81,9 @@ module V1
       data = build_novel_data(novel)
       data.merge(
         main_copy: novel.main_copy,
-        sentence_user_count: sentence_user_counts[novel.title_id] || 0,
-        sentence_hierarchy_count: sentence_hierarchy_counts[novel.title_id] || 0,
-        reader_count: reader_counts[novel.title_id] || 0,
+        sentence_user_count: sentence_user_counts[title_id] || 0,
+        sentence_hierarchy_count: sentence_hierarchy_counts[title_id] || 0,
+        reader_count: reader_counts[title_id] || 0,
         overview: novel.overview
       )
     end
