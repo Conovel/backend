@@ -56,16 +56,38 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/AbcSize
     def build_novel_detail_data(novel)
+      title_ids = [novel.title_id]
+
+      sentence_group = Sentence
+                       .where(title_id: title_ids)
+                       .group(:title_id)
+
+      sentence_hierarchy_counts = sentence_group
+                                  .maximum(:sentence_hierarchy)
+
+      sentence_user_counts = sentence_group
+                             .distinct
+                             .count(:sentence_user_id)
+
+      reader_counts = ViewedSentence
+                      .joins(sentence: :title)
+                      .where(sentences: { title_id: title_ids })
+                      .group('sentences.title_id')
+                      .distinct
+                      .count(:viewed_user_id)
+
       data = build_novel_data(novel)
       data.merge(
         main_copy: novel.main_copy,
-        sentence_user_count: novel.sentences.select(:sentence_user_id).distinct.count,
-        sentence_hierarchy_count: novel.sentences.maximum(:sentence_hierarchy),
-        reader_count: novel.sentences.joins(:viewed_sentences).distinct.count(:viewed_user_id),
+        sentence_user_count: sentence_user_counts[novel.title_id] || 0,
+        sentence_hierarchy_count: sentence_hierarchy_counts[novel.title_id] || 0,
+        reader_count: reader_counts[novel.title_id] || 0,
         overview: novel.overview
       )
     end
+    # rubocop:enable Metrics/AbcSize
 
     def famous_sentence_text(novel)
       famous_sentence(novel)&.sentence
