@@ -83,10 +83,6 @@ module V1
       )
     end
 
-    def famous_sentence_text(novel)
-      famous_sentence(novel)&.sentence
-    end
-
     def famous_sentence(novel)
       novel.sentences
            .joins(:evaluations)
