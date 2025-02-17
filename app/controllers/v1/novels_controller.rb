@@ -24,7 +24,22 @@ module V1
     def show
       novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
 
-      render json: build_novel_detail_data(novel)
+      sentence_hierarchy_counts = Sentence
+                                  .group(:title_id)
+                                  .maximum(:sentence_hierarchy)
+
+      sentence_user_counts = Sentence
+                             .group(:title_id)
+                             .distinct
+                             .count(:sentence_user_id)
+
+      reader_counts = ViewedSentence
+                      .joins(sentence: :title)
+                      .group('sentences.title_id')
+                      .distinct
+                      .count(:viewed_user_id)
+
+      render json: build_novel_detail_data(novel, sentence_hierarchy_counts, sentence_user_counts, reader_counts)
     rescue StandardError
       render_error_response(422, '小説の概要の取得に失敗しました。')
     end
@@ -56,28 +71,8 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
-    def build_novel_detail_data(novel)
+    def build_novel_detail_data(novel, sentence_hierarchy_counts, sentence_user_counts, reader_counts)
       title_id = novel.title_id
-
-      sentence_group = Sentence
-                       .where(title_id:)
-                       .group(:title_id)
-
-      sentence_hierarchy_counts = sentence_group
-                                  .maximum(:sentence_hierarchy)
-
-      sentence_user_counts = sentence_group
-                             .distinct
-                             .count(:sentence_user_id)
-
-      reader_counts = ViewedSentence
-                      .joins(sentence: :title)
-                      .where(sentences: { title_id: })
-                      .group('sentences.title_id')
-                      .distinct
-                      .count(:viewed_user_id)
-
       data = build_novel_data(novel)
       data.merge(
         main_copy: novel.main_copy,
@@ -87,7 +82,6 @@ module V1
         overview: novel.overview
       )
     end
-    # rubocop:enable Metrics/AbcSize
 
     def famous_sentence_text(novel)
       famous_sentence(novel)&.sentence
