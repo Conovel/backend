@@ -12,77 +12,122 @@ module V1
   # NovelsController
   class NovelsController < ApplicationController
     # GET /v1/novels
+    # rubocop:disable Metrics/AbcSize
     def index
-      novels = Title.includes(:author_user, title_genres: :genre).all
+      novels = Title.eager_load(:author_user, title_genres: :genre, sentences: :evaluations).all
 
-      render json: novels.map { |novel| build_novel_data(novel) }
+      famous_sentences = Sentence
+                         .joins(:evaluations)
+                         .where(evaluations: { evaluation: 'good' })
+                         .group('sentences.sentence_id')
+                         .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
+                         .pluck('sentences.title_id', 'sentences.sentence_id', 'sentences.sentence')
+                         .group_by { |title_id, _, _| title_id }
+                         .transform_values { |values| values.first[2] }
+
+      total_good_counts = Sentence
+                          .joins(:evaluations)
+                          .where(evaluations: { evaluation: 'good' })
+                          .group('sentences.title_id')
+                          .count
+
+      novel_data = novels.map do |novel|
+        build_novel_data(novel,
+                         famous_sentences[novel.title_id],
+                         total_good_counts[novel.title_id])
+      end
+
+      render json: novel_data
     rescue StandardError
       render_error_response(422, '小説リストの取得に失敗しました。')
     end
+    # rubocop:enable Metrics/AbcSize
 
     # GET /v1/novels/{title_id}
+    # rubocop:disable Metrics/AbcSize
     def show
       novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
 
-      render json: build_novel_detail_data(novel)
+      # 小説の基本情報を取得
+      famous_sentence =   Sentence
+                          .joins(:evaluations)
+                          .where(evaluations: { evaluation: 'good' })
+                          .where(sentences: { title_id: novel.title_id })
+                          .group('sentences.sentence_id')
+                          .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
+                          .first
+                          .sentence
+
+      evaluation_good_count =   Sentence
+                                .joins(:evaluations)
+                                .where(evaluations: { evaluation: 'good' })
+                                .where(sentences: { title_id: novel.title_id })
+                                .count
+
+      data = build_novel_data(novel, famous_sentence, evaluation_good_count)
+
+      # 小説の概要情報を取得
+      sentence_hierarchy_counts = Sentence
+                                  .group(:title_id)
+                                  .maximum(:sentence_hierarchy)
+
+      sentence_user_counts = Sentence
+                             .group(:title_id)
+                             .distinct
+                             .count(:sentence_user_id)
+
+      reader_counts = ViewedSentence
+                      .joins(sentence: :title)
+                      .group('sentences.title_id')
+                      .distinct
+                      .count(:viewed_user_id)
+
+      detail_data = build_novel_detail_data(novel,
+                                            sentence_hierarchy_counts[novel.title_id],
+                                            sentence_user_counts[novel.title_id],
+                                            reader_counts[novel.title_id])
+
+      # 小説の基本情報と概要情報を結合して返却
+      render json: data.merge(detail_data)
     rescue StandardError
       render_error_response(422, '小説の概要の取得に失敗しました。')
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
     # rubocop:disable Metrics/AbcSize
-    def build_novel_data(novel)
+    def build_novel_data(novel, famous_sentence_text, total_good_count)
       author_user = novel.author_user
-      total_good_count = evaluation_good_count(novel)
+      title_genres = novel.title_genres.map(&:genre)
+      sentences = novel.sentences
 
       {
         title_id: novel.title_id,
         title: novel.title,
-        famous_sentence_text: famous_sentence_text(novel),
+        famous_sentence_text: famous_sentence_text || '',
         author_user_id: author_user.user_id,
         author_user_name: author_user.pen_name,
         profile_icon_image: author_user.profile_icon_image,
-        title_genres: novel.title_genres.map { |title_genre| title_genre.genre.genre_name },
-        is_new: novel.sentences.order(created_at: :desc).first.created_at > NEW_PERIOD_DAYS.days.ago,
+        title_genres: title_genres.map(&:genre_name),
+        is_new: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
         is_famous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
-        view_count: view_count(novel),
-        evaluation_good_count: total_good_count,
+        view_count: sentences.sum(&:viewed_sentences_count),
+        evaluation_good_count: total_good_count || 0,
         created_at: novel.created_at,
         updated_at: novel.updated_at
       }
     end
     # rubocop:enable Metrics/AbcSize
 
-    def build_novel_detail_data(novel)
-      data = build_novel_data(novel)
-      data.merge(
+    def build_novel_detail_data(novel, sentence_hierarchy_count, sentence_user_count, reader_count)
+      {
         main_copy: novel.main_copy,
-        sentence_user_count: novel.sentences.count,
-        sentence_hierarchy_count: novel.sentences.maximum(:sentence_hierarchy),
-        reader_count: novel.sentences.joins(:viewed_sentences).distinct.count(:viewed_user_id),
+        sentence_user_count: sentence_user_count || 0,
+        sentence_hierarchy_count: sentence_hierarchy_count || 0,
+        reader_count: reader_count || 0,
         overview: novel.overview
-      )
-    end
-
-    def famous_sentence_text(novel)
-      famous_sentence(novel)&.sentence
-    end
-
-    def famous_sentence(novel)
-      novel.sentences
-           .joins(:evaluations)
-           .group('sentences.sentence_id')
-           .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
-           .first
-    end
-
-    def view_count(novel)
-      novel.sentences.sum(:viewed_sentences_count)
-    end
-
-    def evaluation_good_count(novel)
-      novel.sentences.joins(:evaluations).where(evaluations: { evaluation: 'good' }).count
+      }
     end
   end
 end

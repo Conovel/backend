@@ -18,6 +18,7 @@ class ApplicationController < ActionController::API
 
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
+  rescue_from ArgumentError, with: :handle_argument_error
   rescue_from ActiveRecord::RecordInvalid, with: :handle_record_invalid
   rescue_from CustomError, with: :handle_custom_error
 
@@ -29,22 +30,26 @@ class ApplicationController < ActionController::API
     render_error_response(500, "サーバーエラーが発生しました。: #{exception.message}")
   end
 
+  # ArgumentError の場合
+  def handle_argument_error(exception)
+    Rails.logger.error "ArgumentError: #{exception.message}\n#{exception.backtrace.join("\n")}"
+    render_error_response(422, "無効な値が含まれていました。: #{exception.message}")
+  end
+
   # RecordInvalid の場合
   def handle_record_invalid(exception)
-    render_error_response(422, record_invalid_message(exception))
+    Rails.logger.error "RecordInvalid: #{exception.message}\n#{exception.backtrace.join("\n")}"
+    render_error_response(422, custom_record_invalid_message(exception))
   end
 
   # CustomError の場合
   def handle_custom_error(exception)
+    Rails.logger.error "CustomError: #{exception.message}\n#{exception.backtrace.join("\n")}"
     render_error_response(exception.code, exception.message, data: exception.data)
   end
 
-  # コントローラーごとにエラーメッセージを取得
-  def record_invalid_message(exception)
-    if respond_to?(:custom_record_invalid_message, true)
-      custom_record_invalid_message(exception)
-    else
-      "エラーが発生しました。: #{exception.record.errors.full_messages.join(', ')}"
-    end
+  # コントローラーごとにカスタムエラーメッセージを定義（抽象メソッド）
+  def custom_record_invalid_message(exception)
+    raise NotImplementedError, 'custom_record_invalid_messageメソッドが実装されていません'
   end
 end
