@@ -122,4 +122,47 @@ RSpec.describe 'V1::Novels', type: :request do
       end
     end
   end
+
+  # 投稿(sentences)が閲覧された時のshowのテスト
+  context 'when sentences are viewed' do
+    let!(:user1) { create(:user) }
+    let!(:user2) { create(:user) }
+    let!(:user3) { create(:user) }
+    # ユーザー1が小説を作成
+    let!(:title) { create(:title, author_user: user1) }
+    # ユーザー1が投稿1と投稿3を作成、ユーザー2が投稿2を作成
+    let!(:sentence1) { create(:sentence, user: user1, title:, sentence_hierarchy: 1) }
+
+    before do
+      # ユーザー1でログイン
+      allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user1)
+    end
+
+    # 投稿が閲覧された時のreader_countの更新のテスト
+    it 'creates a ViewedSentence record and updates reader_count' do
+      # 投稿の閲覧をシミュレート
+      get "/v1/sentences/#{sentence1.sentence_id}"
+      expect(response).to have_http_status(:ok)
+
+      # ViewedSentenceレコードが作成されたかどうかを確認
+      viewed_sentence = ViewedSentence.find_by(viewed_sentence_id: sentence1.sentence_id, viewed_user_id: user1.id)
+      expect(viewed_sentence).not_to be_nil
+
+      # novels_controller で reader_count が更新されているかどうかを確認
+      get "/v1/novels/#{title.title_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['reader_count']).to eq(1)
+
+      # 投稿の再閲覧をシミュレート
+      get "/v1/sentences/#{sentence1.sentence_id}"
+      expect(response).to have_http_status(:ok)
+
+      # novels_controller で reader_count が再度更新されているかどうかを確認
+      get "/v1/novels/#{title.title_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['reader_count']).to eq(1) # 同じユーザーが閲覧したため、1のままであるはず
+    end
+  end
 end

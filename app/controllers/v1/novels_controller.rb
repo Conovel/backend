@@ -24,12 +24,14 @@ module V1
                          .pluck('sentences.title_id', 'sentences.sentence_id', 'sentences.sentence')
                          .group_by { |title_id, _, _| title_id }
                          .transform_values { |values| values.first[2] }
+      Rails.logger.debug("index - famous_sentences: #{famous_sentences}")
 
       total_good_counts = Sentence
                           .joins(:evaluations)
                           .where(evaluations: { evaluation: 'good' })
                           .group('sentences.title_id')
                           .count
+      Rails.logger.debug("index - total_good_counts: #{total_good_counts}")
 
       novel_data = novels.map do |novel|
         build_novel_data(novel,
@@ -49,20 +51,23 @@ module V1
       novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
 
       # 小説の基本情報を取得
-      famous_sentence =   Sentence
-                          .joins(:evaluations)
-                          .where(evaluations: { evaluation: 'good' })
-                          .where(sentences: { title_id: novel.title_id })
-                          .group('sentences.sentence_id')
-                          .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
-                          .first
-                          .sentence
+      famous_sentence_record = Sentence
+                               .joins(:evaluations)
+                               .where(evaluations: { evaluation: 'good' })
+                               .where(sentences: { title_id: novel.title_id })
+                               .group('sentences.sentence_id')
+                               .order(Arel.sql('COUNT(evaluations.sentence_id) DESC'))
+                               .first
+
+      famous_sentence = famous_sentence_record ? famous_sentence_record.sentence : ''
+      Rails.logger.debug("show-data - famous_sentence-1: #{famous_sentence}")
 
       evaluation_good_count =   Sentence
                                 .joins(:evaluations)
                                 .where(evaluations: { evaluation: 'good' })
                                 .where(sentences: { title_id: novel.title_id })
                                 .count
+      Rails.logger.debug("show-data - evaluation_good_count-1: #{evaluation_good_count}")
 
       data = build_novel_data(novel, famous_sentence, evaluation_good_count)
 
@@ -70,17 +75,20 @@ module V1
       sentence_hierarchy_counts = Sentence
                                   .group(:title_id)
                                   .maximum(:sentence_hierarchy)
+      Rails.logger.debug("show-detail_data - sentence_hierarchy_counts-1: #{sentence_hierarchy_counts}")
 
       sentence_user_counts = Sentence
                              .group(:title_id)
                              .distinct
                              .count(:sentence_user_id)
+      Rails.logger.debug("show-detail_data - sentence_user_counts-1: #{sentence_user_counts}")
 
       reader_counts = ViewedSentence
                       .joins(sentence: :title)
                       .group('sentences.title_id')
                       .distinct
                       .count(:viewed_user_id)
+      Rails.logger.debug("show-detail_data - reader_counts-1: #{reader_counts}")
 
       detail_data = build_novel_detail_data(novel,
                                             sentence_hierarchy_counts[novel.title_id],
