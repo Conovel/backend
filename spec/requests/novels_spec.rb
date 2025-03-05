@@ -123,7 +123,7 @@ RSpec.describe 'V1::Novels', type: :request do
     end
   end
 
-  # 投稿(sentences)が閲覧された時のshowのテスト
+  # 投稿(sentences)が閲覧された時のテスト
   context 'when sentences are viewed' do
     let!(:user1) { create(:user) }
     let!(:user2) { create(:user) }
@@ -150,6 +150,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(viewed_sentence).not_to be_nil
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -161,6 +167,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-2
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(1) # 同じユーザーが閲覧したため、投稿閲覧数は1のまま
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -172,6 +184,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-3
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -186,6 +204,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -200,6 +224,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-2
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(2) # 異なるユーザーが閲覧したため、投稿閲覧数は2になる
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -211,6 +241,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-3
+      # indexのテスト
+      get "/v1/novels/#{title.id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
+      # showのテスト
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
