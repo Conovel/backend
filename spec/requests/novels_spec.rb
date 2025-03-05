@@ -152,7 +152,8 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      expect(json_response['reader_count']).to eq(1)
+      expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
+      expect(json_response['reader_count']).to eq(1) # 読者数も1
 
       # 投稿の再閲覧をシミュレート
       get "/v1/sentences/#{sentence1.sentence_id}"
@@ -162,7 +163,8 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      expect(json_response['reader_count']).to eq(1) # 同じユーザーが閲覧したため、1のまま
+      expect(json_response['view_count']).to eq(1) # 同じユーザーが閲覧したため、投稿閲覧数は1のまま
+      expect(json_response['reader_count']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
     end
 
     # 別のユーザーが閲覧した時のreader_countの更新のテスト
@@ -175,7 +177,8 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      expect(json_response['reader_count']).to eq(1)
+      expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
+      expect(json_response['reader_count']).to eq(1) # 読者数も1
 
       # ユーザー2でログイン
       allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user2)
@@ -188,7 +191,8 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      expect(json_response['reader_count']).to eq(2) # 異なるユーザーが閲覧したため、2になる
+      expect(json_response['view_count']).to eq(2) # 異なるユーザーが閲覧したため、投稿閲覧数は2になる
+      expect(json_response['reader_count']).to eq(2) # 異なるユーザーが閲覧したため、読者数は2になる
     end
   end
 end
