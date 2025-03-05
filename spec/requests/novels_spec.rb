@@ -171,6 +171,12 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
+      # novels_controller で reader_count が更新されているかどうかを確認
+      get "/v1/novels/#{title.title_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['reader_count']).to eq(1)
+
       # ユーザー2でログイン
       allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user2)
 
@@ -178,7 +184,7 @@ RSpec.describe 'V1::Novels', type: :request do
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
-      # novels_controller で reader_count が更新されているかどうかを確認
+      # novels_controller で reader_count が再度更新されているかどうかを確認
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
