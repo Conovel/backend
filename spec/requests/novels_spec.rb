@@ -130,50 +130,62 @@ RSpec.describe 'V1::Novels', type: :request do
     let!(:user3) { create(:user) }
     # ユーザー1が小説を作成
     let!(:title) { create(:title, author_user: user1) }
-    # ユーザー1が投稿1と投稿3を作成、ユーザー2が投稿2を作成
+    # ユーザー1が投稿1、ユーザー2が投稿2を作成
     let!(:sentence1) { create(:sentence, user: user1, title:, sentence_hierarchy: 1) }
+    let!(:sentence2) { create(:sentence, user: user2, title:, sentence_hierarchy: 2) }
 
     before do
       # ユーザー1でログイン
       allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user1)
     end
 
-    # 投稿が閲覧された時のreader_countの更新のテスト
+    # 投稿が閲覧された時のview_countとreader_countの更新のテスト
     it 'creates a ViewedSentence record and updates reader_count' do
-      # 投稿の閲覧をシミュレート
+      # 投稿1を閲覧
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
-      # ViewedSentenceレコードが作成されたかどうかを確認
+      # ViewedSentenceレコードが作成されたか確認
       viewed_sentence = ViewedSentence.find_by(viewed_sentence_id: sentence1.sentence_id, viewed_user_id: user1.id)
       expect(viewed_sentence).not_to be_nil
 
-      # novels_controller で reader_count が更新されているかどうかを確認
+      # novels_controllerでview_countとreader_countが更新されているか確認-1
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
       expect(json_response['reader_count']).to eq(1) # 読者数も1
 
-      # 投稿の再閲覧をシミュレート
+      # 投稿1を再閲覧
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
-      # novels_controller で reader_count が再度更新されているかどうかを確認
+      # novels_controllerでview_countとreader_countが更新されているか確認-2
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(1) # 同じユーザーが閲覧したため、投稿閲覧数は1のまま
       expect(json_response['reader_count']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
+
+      # 投稿2を閲覧
+      get "/v1/sentences/#{sentence2.sentence_id}"
+      expect(response).to have_http_status(:ok)
+
+      # novels_controllerでview_countとreader_countが更新されているか確認-3
+      get "/v1/novels/#{title.title_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
+      expect(json_response['reader_count']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
     end
 
-    # 別のユーザーが閲覧した時のreader_countの更新のテスト
+    # 別のユーザーが閲覧した時のview_countとreader_countの更新のテスト
     it 'updates reader_count when viewed by different users' do
-      # ユーザー1でログインして閲覧
+      # ユーザー1が投稿1を閲覧
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
-      # novels_controller で reader_count が更新されているかどうかを確認
+      # novels_controllerでview_countとreader_countが更新されているか確認-1
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -183,16 +195,27 @@ RSpec.describe 'V1::Novels', type: :request do
       # ユーザー2でログイン
       allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user2)
 
-      # ユーザー2で閲覧
+      # ユーザー2が投稿1を閲覧
       get "/v1/sentences/#{sentence1.sentence_id}"
       expect(response).to have_http_status(:ok)
 
-      # novels_controller で reader_count が再度更新されているかどうかを確認
+      # novels_controllerでview_countとreader_countが更新されているか確認-2
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(2) # 異なるユーザーが閲覧したため、投稿閲覧数は2になる
       expect(json_response['reader_count']).to eq(2) # 異なるユーザーが閲覧したため、読者数は2になる
+
+      # ユーザー2が投稿2を閲覧
+      get "/v1/sentences/#{sentence2.sentence_id}"
+      expect(response).to have_http_status(:ok)
+
+      # novels_controllerでview_countとreader_countが更新されているか確認-3
+      get "/v1/novels/#{title.title_id}"
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['view_count']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
+      expect(json_response['reader_count']).to eq(2) # 同じユーザーが閲覧したため、読者数は2のまま
     end
   end
 end
