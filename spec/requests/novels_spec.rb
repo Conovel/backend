@@ -29,9 +29,9 @@ RSpec.describe 'V1::Novels', type: :request do
 
     it 'returns the correct novel data' do
       json_response = JSON.parse(response.body).first
-      expect(json_response['title_id']).to eq(title.id)
+      expect(json_response['title_id']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
-      expect(json_response['author_user_id']).to eq(user.id)
+      expect(json_response['author_user_id']).to eq(user.user_id)
       expect(json_response['author_user_name']).to eq(user.pen_name)
       expect(json_response['profile_icon_image']).to eq(user.profile_icon_image)
       expect(json_response['is_new']).to be_truthy
@@ -81,7 +81,7 @@ RSpec.describe 'V1::Novels', type: :request do
     end
 
     before do
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
     end
 
     it 'returns a successful response' do
@@ -90,7 +90,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
     it 'returns the correct novel detail data' do
       json_response = JSON.parse(response.body)
-      expect(json_response['title_id']).to eq(title.id)
+      expect(json_response['title_id']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
       expect(json_response['author_user_id']).to eq(user1.user_id)
       expect(json_response['author_user_name']).to eq(user1.pen_name)
@@ -146,12 +146,12 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # ViewedSentenceレコードが作成されたか確認
-      viewed_sentence = ViewedSentence.find_by(viewed_sentence_id: sentence1.sentence_id, viewed_user_id: user1.id)
+      viewed_sentence = ViewedSentence.find_by(viewed_sentence_id: sentence1.sentence_id, viewed_user_id: user1.user_id)
       expect(viewed_sentence).not_to be_nil
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
@@ -168,7 +168,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-2
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(1) # 同じユーザーが閲覧したため、投稿閲覧数は1のまま
@@ -185,7 +185,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-3
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
@@ -205,7 +205,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(1) # 投稿閲覧数は1
@@ -225,7 +225,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-2
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(2) # 異なるユーザーが閲覧したため、投稿閲覧数は2になる
@@ -242,7 +242,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-3
       # indexのテスト
-      get "/v1/novels/#{title.id}"
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       expect(json_response['view_count']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
