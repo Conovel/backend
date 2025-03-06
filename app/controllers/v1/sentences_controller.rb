@@ -169,7 +169,7 @@ module V1
         sentence.title_id = parent_sentence.title_id
         sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
         sentence.sentence = sentence_text
-        sentence.parent_sentence_id = parent_sentence.id
+        sentence.parent_sentence_id = parent_sentence.sentence_id
       end
     end
 
@@ -177,7 +177,7 @@ module V1
     # rubocop:disable Metrics/AbcSize, Layout/LineLength
     def process_viewed_sentence(sentence)
       viewed_sentence = ViewedSentence.find_or_initialize_by(
-        viewed_sentence_id: sentence.id,
+        viewed_sentence_id: sentence.sentence_id,
         viewed_user_id: current_user.id
       )
       viewed_sentence.viewed_at = Time.current
@@ -185,10 +185,10 @@ module V1
       # 新規・更新判定デバッグ用ログ
       if viewed_sentence.new_record?
         # 新規ログ
-        Rails.logger.info("[INFO]viewed_sentence(新規) - sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+        Rails.logger.info("[INFO]viewed_sentence(新規) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
       else
         # 更新ログ
-        Rails.logger.info("[INFO]viewed_sentence(更新) - sentence.id: #{sentence.id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+        Rails.logger.info("[INFO]viewed_sentence(更新) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
       end
 
       viewed_sentence.save! # 新規・更新共通処理
