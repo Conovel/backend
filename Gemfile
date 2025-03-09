@@ -74,6 +74,21 @@ group :development, :test do
 
   # Use ActiveRecord database for cleanup
   gem 'database_cleaner-active_record'
+
+  # Use dotenv-rails to manage environment variables
+  gem 'dotenv-rails'
+
+  # Supports OAuth authentication through multiple providers
+  gem 'omniauth'
+
+  # Protecting against CSRF attacks when using OmniAuth in Rails applications
+  gem 'omniauth-rails_csrf_protection'
+
+  # An OmniAuth strategy for authentication using Google's OAuth 2.0 service.
+  gem 'omniauth-google-oauth2'
+
+  # Encode and decode JSON Web Tokens (JWT)
+  gem 'jwt'
 end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
