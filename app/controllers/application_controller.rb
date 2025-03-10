@@ -3,9 +3,11 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
+  # before_action :authenticate_request # 最終的にアクティブ化
   include ErrorResponseHelper
 
   # 仮のcurrent_userメソッド
+  # 最終的に削除
   def current_user
     # 仮のユーザーオブジェクトを返す
     Struct.new(:id).new(2) # 仮のユーザーIDを2とする
@@ -23,6 +25,28 @@ class ApplicationController < ActionController::API
   rescue_from CustomError, with: :handle_custom_error
 
   private
+
+  # リクエストの認証
+  # 最終的にアクティブ化
+  # def authenticate_request
+  #   header = request.headers['Authorization']
+  #   header = header.split.last if header
+  #   begin
+  #     @decoded = JwtService.decode(header)
+  #     if @decoded['provider'] == 'guest'
+  #       @current_user = User.find(@decoded['user_id'])
+  #     else
+  #       user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
+  #       @current_user = user_auth.user if user_auth
+  #     end
+  #     Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
+  #     raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
+  #   rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
+  #     Rails.logger.error("[ERROR]認証エラー - e.message: #{e.message}")
+  #     render json: { errors: e.message }, status: :unauthorized
+  #   end
+  # end
+  # 最終的にアクティブ化（ここまで）
 
   # 標準的な例外の処理
   def handle_standard_error(exception)
