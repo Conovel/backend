@@ -60,6 +60,10 @@ module Backend
 
     # Add custom error directory to autoload and eager load paths
     config.paths.add 'app/errors', eager_load: true
+
+    # Add session middleware
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil)
   end
 end
 
