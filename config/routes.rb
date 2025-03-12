@@ -24,6 +24,17 @@ Rails.application.routes.draw do
     add_openapi_route 'POST', '/sentences', controller_name: 'sentences', action_name: 'create'
   end
 
+  # google認証にアクセス
+  get '/auth/:provider/callback', to: 'sessions#create'
+
+  # ユーザー登録のルート(API)
+  namespace :api do
+    namespace :v1 do
+      # カレントユーザーの呼び出し
+      get 'users/current', to: 'users#current'
+    end
+  end
+
   # Swagger UI
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
