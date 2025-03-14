@@ -73,6 +73,22 @@ RSpec.describe 'Sentences', type: :request do
         expect(json_response['parallels'][0]).not_to be_nil
         expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
       end
+
+      it 'returns a 420 error when viewed_sentence save fails' do
+        main_sentence
+        viewed_sentence_double = instance_double('ViewedSentence', save!: nil, new_record?: true,
+                                                                   viewed_at: Time.current)
+        allow(viewed_sentence_double).to receive(:viewed_at=)
+        allow(viewed_sentence_double).to receive(:created_at)
+        allow(viewed_sentence_double).to receive(:updated_at)
+        allow(ViewedSentence).to receive(:find_or_initialize_by).and_return(viewed_sentence_double)
+        allow(viewed_sentence_double).to receive(:save!).and_raise(StandardError.new('DB error'))
+
+        get "/v1/sentences/#{main_sentence.sentence_id}"
+        expect(response).to have_http_status(420)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['message']).to eq('投稿の取得に失敗しました。')
+      end
     end
 
     context 'when the sentence does not exist' do
