@@ -6,11 +6,12 @@ class ApplicationController < ActionController::API
   # before_action :authenticate_request # 最終的にアクティブ化
   include ErrorResponseHelper
 
-  # 仮のcurrent_userメソッド
-  # 最終的に削除
+  # カレントユーザーを返す
   def current_user
     # 仮のユーザーオブジェクトを返す
-    Struct.new(:id).new(2) # 仮のユーザーIDを2とする
+    Struct.new(:id).new(2) # 仮のユーザーIDを2とする（最終的には削除）
+
+    # @current_user # 最終的にアクティブ化
   end
 
   # Google認証実装後のcurrent_userメソッド
@@ -33,15 +34,18 @@ class ApplicationController < ActionController::API
   #   token = token.split.last if token
   #   begin
   #     @decoded = JwtService.decode(token)
-  #     Rails.logger.info("token: #{token}")
-  #     Rails.logger.info("decorded: #{@decoded}")
+  #     Rails.logger.info("[INFO]トークン - token: #{token}")
+  #     Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
 
-  #     # ここの内容をコノベルに合わせる
-  #     if @decoded['provider'] == 'guest'
-  #       @current_user = User.find(@decoded['user_id'])
+  #     if @decoded['user_id'] === '2' # 仮の条件
+
+  #       @current_user = User.find(@decoded['user_id']) # TODO：ここを作り込みたい
   #     else
-  #       user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
-  #       @current_user = user_auth.user if user_auth
+  #       # user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
+  #       # @current_user = user_auth.user if user_auth
+
+  #       # 仮のユーザーオブジェクトを返す
+  #       @current_user = Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
   #     end
   #     Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
   #     raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
