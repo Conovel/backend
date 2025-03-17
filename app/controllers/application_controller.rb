@@ -32,15 +32,9 @@ class ApplicationController < ActionController::API
   #   token = request.headers['Authorization']
   #   token = token.split.last if token
   #   begin
-  #     # @decoded = JwtService.decode(token)
-  #     hmac_secret = ENV.fetch('JWT_SECRET_KEY', nil)
-  #     Rails.logger.info("hmac_secret: #{hmac_secret}")
-
-  #     @decoded = JWT.decode(token, hmac_secret, true, { algorithm: 'HS256' }).first
-
+  #     @decoded = JwtService.decode(token)
+  #     Rails.logger.info("token: #{token}")
   #     Rails.logger.info("decorded: #{@decoded}")
-  #     # Rails.logger.info("decorded sub: #{@decoded['sub']}")
-  #     # Rails.logger.info("decorded name: #{@decoded['name']}")
 
   #     # ここの内容をコノベルに合わせる
   #     if @decoded['provider'] == 'guest'
