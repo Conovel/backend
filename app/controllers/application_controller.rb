@@ -3,16 +3,16 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
-  # before_action :authenticate_request # 最終的にアクティブ化
+  before_action :authenticate_request
   include ErrorResponseHelper
 
   # カレントユーザーを返す
-  def current_user
-    # 仮のユーザーオブジェクトを返す
-    Struct.new(:id).new(2) # 仮のユーザーIDを2とする（最終的には削除）
+  attr_reader :current_user
 
-    # @current_user # 最終的にアクティブ化
-  end
+  # 仮のユーザーオブジェクトを返す（最終的には削除）
+  # def current_user
+  #   Struct.new(:id).new(2) # 仮のユーザーIDを2とする
+  # end
 
   # Google認証実装後のcurrent_userメソッド
   # def current_user
@@ -28,33 +28,33 @@ class ApplicationController < ActionController::API
   private
 
   # リクエストの認証
-  # 最終的にアクティブ化
-  # def authenticate_request
-  #   token = request.headers['Authorization']
-  #   token = token.split.last if token
-  #   begin
-  #     @decoded = JwtService.decode(token)
-  #     Rails.logger.info("[INFO]トークン - token: #{token}")
-  #     Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
+  # rubocop:disable Metrics/AbcSize
+  def authenticate_request
+    token = request.headers['Authorization']
+    token = token.split.last if token
+    begin
+      @decoded = JwtService.decode(token)
+      Rails.logger.info("[INFO]トークン - token: #{token}")
+      Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
 
-  #     if @decoded['user_id'] === '2' # 仮の条件
+      if @decoded['user_id'] == '2' # 仮の条件
 
-  #       @current_user = User.find(@decoded['user_id']) # TODO：ここを作り込みたい
-  #     else
-  #       # user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
-  #       # @current_user = user_auth.user if user_auth
+        @current_user = User.find(@decoded['user_id']) # TODO：ここを作り込みたい
+      else
+        # user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
+        # @current_user = user_auth.user if user_auth
 
-  #       # 仮のユーザーオブジェクトを返す
-  #       @current_user = Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
-  #     end
-  #     Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
-  #     raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
-  #   rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
-  #     Rails.logger.error("[ERROR]認証エラー - e.message: #{e.message}")
-  #     render json: { errors: e.message }, status: :unauthorized
-  #   end
-  # end
-  # 最終的にアクティブ化（ここまで）
+        # 仮のユーザーオブジェクトを返す
+        @current_user = Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
+      end
+      Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
+      raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
+    rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
+      Rails.logger.error("[ERROR]認証エラー - e.message: #{e.message}")
+      render json: { errors: e.message }, status: :unauthorized
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
 
   # 標準的な例外の処理
   def handle_standard_error(exception)

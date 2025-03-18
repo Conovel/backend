@@ -7,11 +7,12 @@ RSpec.describe 'Evaluations', type: :request do
   let!(:sentence) { create(:sentence) }
 
   describe 'POST /v1/evaluations' do
+    let(:headers) { auth_headers } # ヘッダーにAuthorizationを追加
     let(:valid_attributes) { { sentence_id: sentence.sentence_id, evaluation: 'good' } }
 
     context 'when the request is valid (good)' do
       it 'creates a new evaluation' do
-        post '/v1/evaluations', params: valid_attributes
+        post('/v1/evaluations', params: valid_attributes, headers:)
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(1)
@@ -21,7 +22,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'when the request is valid (stay)' do
       it 'creates a new evaluation' do
-        post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'stay')
+        post('/v1/evaluations', params: valid_attributes.merge(evaluation: 'stay'), headers:)
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(0)
@@ -31,7 +32,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'when the request is valid (bad)' do
       it 'creates a new evaluation' do
-        post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'bad')
+        post('/v1/evaluations', params: valid_attributes.merge(evaluation: 'bad'), headers:)
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(0)
@@ -41,8 +42,8 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'when updating an existing evaluation (from good to stay)' do
       it 'updates the evaluation' do
-        post '/v1/evaluations', params: valid_attributes
-        post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'stay')
+        post('/v1/evaluations', params: valid_attributes, headers:)
+        post('/v1/evaluations', params: valid_attributes.merge(evaluation: 'stay'), headers:)
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(0)
@@ -52,7 +53,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'When sentence_id does not exist' do
       it 'returns a validation failure message' do
-        post '/v1/evaluations', params: valid_attributes.merge(sentence_id: 1000)
+        post('/v1/evaluations', params: valid_attributes.merge(sentence_id: 1000), headers:)
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
@@ -62,7 +63,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'When sentence_id is invalid' do
       it 'returns a validation failure message' do
-        post '/v1/evaluations', params: valid_attributes.merge(sentence_id: 'aaa')
+        post('/v1/evaluations', params: valid_attributes.merge(sentence_id: 'aaa'), headers:)
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
@@ -72,7 +73,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'When sentence_id is blank' do
       it 'returns a validation failure message' do
-        post '/v1/evaluations', params: valid_attributes.merge(sentence_id: nil)
+        post('/v1/evaluations', params: valid_attributes.merge(sentence_id: nil), headers:)
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
@@ -82,7 +83,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'When evaluation is disabled' do
       it 'returns a validation failure message' do
-        post '/v1/evaluations', params: valid_attributes.merge(evaluation: 'aaa')
+        post('/v1/evaluations', params: valid_attributes.merge(evaluation: 'aaa'), headers:)
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
@@ -92,7 +93,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'When evaluation is blank' do
       it 'returns a validation failure message' do
-        post '/v1/evaluations', params: valid_attributes.merge(evaluation: '')
+        post('/v1/evaluations', params: valid_attributes.merge(evaluation: ''), headers:)
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
