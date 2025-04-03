@@ -16,23 +16,49 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def create
-      frontend_url = ENV.fetch('REACT_APP_API_URL', nil)
+      Rails.logger.info("[INfO] Request params: #{params.inspect}")
+      Rails.logger.info("[INfO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
+
+      # フロントエンドのURLを取得
+      frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
+      Rails.logger.info("[INfO] Frontend URL: #{frontend_url}")
+
+      # OmniAuth から認証情報を取得
       user_info = request.env['omniauth.auth']
+      if user_info.nil?
+        Rails.logger.error('[ERROR] omniauth.auth が存在しません')
+        Rails.logger.info("[INfO] omniauth.auth: #{omniauth.auth}")
+        render json: { error: { code: 500, message: 'omniauth.auth が存在しません' } }, status: :internal_server_error
+        return
+      end
+
+      # ユーザー情報を取得
       google_user_id = user_info['uid']
       provider = user_info['provider']
+      Rails.logger.info("[INfO] Google User ID: #{google_user_id}, Provider: #{provider}")
+
+      # JWT トークンを生成
       token = generate_token_with_google_user_id(google_user_id, provider)
 
+      # ユーザー認証情報を確認または作成
       user_authentication = UserAuthentication.find_by(uid: google_user_id, provider:)
-
       if user_authentication
-        Rails.logger.info('アプリユーザー登録されている')
+        Rails.logger.info('[INfO] 既存のユーザーが見つかりました。')
       else
-        Rails.logger.info('まだアプリユーザー登録されていない')
-        # ユーザーを作成(カラムはアプリの内容によって変更する)
-        user = User.create(nickname: '新規ユーザー', achievement: 0, current_avatar_url: '/default/default_player.png')
-        UserAuthentication.create(user_id: user.id, uid: google_user_id, provider:)
+        Rails.logger.info('[INfO] 新規ユーザーを作成します。')
+        user = User.create!(
+          nickname: '新規ユーザー',
+          achievement: 0,
+          current_avatar_url: '/default/default_player.png'
+        )
+        UserAuthentication.create!(user_id: user.id, uid: google_user_id, provider:)
       end
+
+      # フロントエンドにリダイレクト
       redirect_to "#{frontend_url}/MyPage?token=#{token}", allow_other_host: true
+    rescue StandardError => e
+      Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
+      render json: { error: { code: 500, message: 'サーバーエラーが発生しました。' } }, status: :internal_server_error
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -55,9 +81,9 @@ module V1
     private
 
     def generate_token_with_google_user_id(google_user_id, provider)
-      exp = Time.now.to_i + (24 * 3600)
+      exp = Time.now.to_i + (24 * 3600) # トークンの有効期限: 24時間
       payload = { google_user_id:, provider:, exp: }
-      hmac_secret = ENV.fetch('JWT_SECRET_KEY', nil)
+      hmac_secret = ENV.fetch('JWT_SECRET_KEY') { raise 'JWT_SECRET_KEY is not set in environment variables' }
       JWT.encode(payload, hmac_secret, 'HS256')
     end
   end
