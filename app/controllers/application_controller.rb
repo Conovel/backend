@@ -37,16 +37,16 @@ class ApplicationController < ActionController::API
       Rails.logger.info("[INFO]トークン - token: #{token}")
       Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
 
-      if @decoded['user_id'] == '2' # 仮の条件
+      @current_user = if @decoded['user_id'] == '2' # 仮の条件
 
-        @current_user = User.find(@decoded['user_id']) # TODO：ここを作り込みたい
-      else
-        # user_auth = UserAuthentication.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
-        # @current_user = user_auth.user if user_auth
+                        User.find(@decoded['user_id']) # TODO：ここを作り込みたい
+                      else
+                        # user_auth = User.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
+                        # @current_user = user_auth.user if user_auth
 
-        # 仮のユーザーオブジェクトを返す
-        @current_user = Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
-      end
+                        # 仮のユーザーオブジェクトを返す
+                        Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
+                      end
       Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
       raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
     rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e

@@ -16,18 +16,17 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def create
-      Rails.logger.info("[INfO] Request params: #{params.inspect}")
-      Rails.logger.info("[INfO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
+      Rails.logger.info("[INFO] Request params: #{params.inspect}")
+      Rails.logger.info("[INFO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
 
       # フロントエンドのURLを取得
       frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-      Rails.logger.info("[INfO] Frontend URL: #{frontend_url}")
+      Rails.logger.info("[INFO] Frontend URL: #{frontend_url}")
 
       # OmniAuth から認証情報を取得
       user_info = request.env['omniauth.auth']
       if user_info.nil?
         Rails.logger.error('[ERROR] omniauth.auth が存在しません')
-        Rails.logger.info("[INfO] omniauth.auth: #{omniauth.auth}")
         render json: { error: { code: 500, message: 'omniauth.auth が存在しません' } }, status: :internal_server_error
         return
       end
@@ -35,27 +34,42 @@ module V1
       # ユーザー情報を取得
       google_user_id = user_info['uid']
       provider = user_info['provider']
-      Rails.logger.info("[INfO] Google User ID: #{google_user_id}, Provider: #{provider}")
+      google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
+      Rails.logger.info("[INFO] Google User ID: #{google_user_id}")
+      Rails.logger.info("[INFO] provider: #{provider}")
+      Rails.logger.info("[INFO] google_sub: #{google_sub}")
 
-      # JWT トークンを生成
-      token = generate_token_with_google_user_id(google_user_id, provider)
+      # ユーザー認証情報を確認
+      user = User.find_by(google_sub:)
+      if user.nil?
+        Rails.logger.info('新規ユーザーが見つかりません。')
 
-      # ユーザー認証情報を確認または作成
-      user_authentication = UserAuthentication.find_by(uid: google_user_id, provider:)
-      if user_authentication
-        Rails.logger.info('[INfO] 既存のユーザーが見つかりました。')
+        # セッションに必要な情報を保存
+        session[:google_sub] = google_sub # Googleのsub
+        session[:google_user_info] = {
+          email: user_info['info']['email'] # メールアドレス
+        }
       else
-        Rails.logger.info('[INfO] 新規ユーザーを作成します。')
-        user = User.create!(
-          nickname: '新規ユーザー',
-          achievement: 0,
-          current_avatar_url: '/default/default_player.png'
-        )
-        UserAuthentication.create!(user_id: user.id, uid: google_user_id, provider:)
+        Rails.logger.info('既存のユーザーが見つかりました。')
+        Rails.logger.info("[INFO] ユーザー情報 - user: #{user}")
+
+        # JWTトークンを生成
+        token = generate_token_with_google_user_id(google_user_id, provider)
+        Rails.logger.info("[INFO] JWTトークン - token: #{token}")
+
+        # セッションにトークンを保存
+        session[:jwt_token] = token
+
+        # クッキーにトークンを保存
+        cookies[:jwt_token] = {
+          value: token,
+          httponly: true, # JavaScriptからアクセス不可
+          secure: Rails.env.production? # HTTPSのみで送信（本番環境で有効）
+        }
       end
 
-      # フロントエンドにリダイレクト
-      redirect_to "#{frontend_url}/MyPage?token=#{token}", allow_other_host: true
+      # アカウント画面にリダイレクト
+      redirect_to "#{frontend_url}/account", allow_other_host: true
     rescue StandardError => e
       Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
       render json: { error: { code: 500, message: 'サーバーエラーが発生しました。' } }, status: :internal_server_error
