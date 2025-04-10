@@ -5,6 +5,7 @@
 class ApplicationController < ActionController::API
   before_action :authenticate_request
   include ErrorResponseHelper
+  include ActionController::Cookies
 
   # カレントユーザーを返す
   attr_reader :current_user

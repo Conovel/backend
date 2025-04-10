@@ -14,7 +14,7 @@ module V1
     # ApplicationControllerのauthenticate_requestをスキップ
     skip_before_action :authenticate_request, only: [:create]
 
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
       Rails.logger.info("[INFO] Request params: #{params.inspect}")
       Rails.logger.info("[INFO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
@@ -27,7 +27,8 @@ module V1
       user_info = request.env['omniauth.auth']
       if user_info.nil?
         Rails.logger.error('[ERROR] omniauth.auth が存在しません')
-        render json: { error: { code: 500, message: 'omniauth.auth が存在しません' } }, status: :internal_server_error
+        # ログイン画面にリダイレクト
+        redirect_to "#{frontend_url}/login", allow_other_host: true
         return
       end
 
@@ -40,41 +41,64 @@ module V1
       Rails.logger.info("[INFO] google_sub: #{google_sub}")
 
       # ユーザー認証情報を確認
-      user = User.find_by(google_sub:)
-      if user.nil?
+      existing_user = User.find_by(google_sub:)
+      if existing_user.nil?
         Rails.logger.info('新規ユーザーが見つかりません。')
 
-        # セッションに必要な情報を保存
-        session[:google_sub] = google_sub # Googleのsub
-        session[:google_user_info] = {
-          email: user_info['info']['email'] # メールアドレス
-        }
+        # ユーザー情報を取得
+        id_info = user_info['extra']['id_info']
+        email = id_info['email']
+        account_name = email.split('@').first
+        birth_ym = Date.today.strftime('%Y%m') # 仮の誕生年月(ユーザー登録年月)
+        picture = id_info['picture']
+        google_sub = id_info['sub']
+        Rails.logger.info(
+          "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{picture}, " \
+          "email: #{email}, google_sub: #{google_sub}"
+        )
+        # 新しいユーザーを作成
+        user = User.new(
+          pen_name: account_name,
+          nick_name: account_name,
+          birth_ym:,
+          agreed_terms_version: false,
+          is_anonymous: true,
+          profile_icon_image: picture,
+          email:,
+          google_sub:
+        )
+        Rails.logger.info("[INFO] 新しいユーザー情報 - user: #{user.inspect}")
+
+        # 保存処理
+        begin
+          user.save!
+          Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+          # ログイン画面にリダイレクト
+          redirect_to "#{frontend_url}/login", allow_other_host: true
+          return
+        end
       else
         Rails.logger.info('既存のユーザーが見つかりました。')
         Rails.logger.info("[INFO] ユーザー情報 - user: #{user}")
-
-        # JWTトークンを生成
-        token = generate_token_with_google_user_id(google_user_id, provider)
-        Rails.logger.info("[INFO] JWTトークン - token: #{token}")
-
-        # セッションにトークンを保存
-        session[:jwt_token] = token
-
-        # クッキーにトークンを保存
-        cookies[:jwt_token] = {
-          value: token,
-          httponly: true, # JavaScriptからアクセス不可
-          secure: Rails.env.production? # HTTPSのみで送信（本番環境で有効）
-        }
       end
+
+      # JWTトークンを生成
+      token = generate_token_with_google_user_id(google_user_id, provider)
+      Rails.logger.info("[INFO] JWTトークン - token: #{token}")
+
+      # セッションにトークンを保存
+      session[:jwt_token] = token
 
       # アカウント画面にリダイレクト
       redirect_to "#{frontend_url}/account", allow_other_host: true
     rescue StandardError => e
       Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
-      render json: { error: { code: 500, message: 'サーバーエラーが発生しました。' } }, status: :internal_server_error
+      # ログイン画面にリダイレクト
+      redirect_to "#{frontend_url}/login", allow_other_host: true
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     # カレントユーザーを返す
     def current
