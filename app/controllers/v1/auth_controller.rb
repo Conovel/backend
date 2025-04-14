@@ -81,7 +81,8 @@ module V1
       end
 
       # JWTトークンを生成
-      token = generate_token_with_google_user_id(google_user_id, provider)
+      payload = { google_user_id:, provider: }
+      token = JwtService.encode(payload)
       Rails.logger.info("[INFO] JWTトークン - token: #{token}")
 
       # セッションにトークンを保存
@@ -111,13 +112,6 @@ module V1
     # end
 
     private
-
-    def generate_token_with_google_user_id(google_user_id, provider)
-      exp = Time.now.to_i + (24 * 3600) # トークンの有効期限: 24時間
-      payload = { google_user_id:, provider:, exp: }
-      hmac_secret = ENV.fetch('JWT_SECRET_KEY') { raise 'JWT_SECRET_KEY is not set in environment variables' }
-      JWT.encode(payload, hmac_secret, 'HS256')
-    end
 
     def handle_error(message, frontend_url)
       Rails.logger.error(message)
