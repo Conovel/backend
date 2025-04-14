@@ -27,8 +27,8 @@ module V1
       user_info = request.env['omniauth.auth']
       if user_info.nil?
         Rails.logger.error('[ERROR] omniauth.auth が存在しません')
-        # ログイン画面にリダイレクト
-        redirect_to "#{frontend_url}/login", allow_other_host: true
+        # アカウント画面にリダイレクト
+        redirect_to "#{frontend_url}/account", allow_other_host: true
         return
       end
 
@@ -58,12 +58,12 @@ module V1
         )
         # 新しいユーザーを作成
         user = User.new(
-          pen_name: account_name,
-          nick_name: account_name,
-          birth_ym:,
-          agreed_terms_version: false,
-          is_anonymous: true,
-          profile_icon_image: picture,
+          pen_name: account_name, # Googleのアカウント名（仮）
+          nick_name: account_name, # Googleのアカウント名（仮）
+          birth_ym:, # ユーザー登録年月（仮の誕生年月)
+          agreed_terms_version: 0, # 0は同意の未確認を意味する
+          is_anonymous: true, # 匿名ユーザー（初期状態）
+          profile_icon_image: picture, # Googleのアイコン画像URL（仮）
           email:,
           google_sub:
         )
@@ -75,13 +75,13 @@ module V1
           Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
-          # ログイン画面にリダイレクト
-          redirect_to "#{frontend_url}/login", allow_other_host: true
+          # アカウント画面にリダイレクト
+          redirect_to "#{frontend_url}/account", allow_other_host: true
           return
         end
       else
         Rails.logger.info('既存のユーザーが見つかりました。')
-        Rails.logger.info("[INFO] ユーザー情報 - user: #{user}")
+        Rails.logger.info("[INFO] ユーザー情報 - user: #{existing_user}")
       end
 
       # JWTトークンを生成
@@ -95,8 +95,8 @@ module V1
       redirect_to "#{frontend_url}/account", allow_other_host: true
     rescue StandardError => e
       Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
-      # ログイン画面にリダイレクト
-      redirect_to "#{frontend_url}/login", allow_other_host: true
+      # アカウント画面にリダイレクト
+      redirect_to "#{frontend_url}/account", allow_other_host: true
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
