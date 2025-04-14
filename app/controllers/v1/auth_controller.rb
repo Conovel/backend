@@ -46,9 +46,9 @@ module V1
         # ユーザー情報を取得
         id_info = user_info['extra']['id_info']
         email = id_info['email']
-        account_name = email.split('@').first
-        birth_ym = Date.today.strftime('%Y%m') # 仮の誕生年月(ユーザー登録年月)
-        picture = id_info['picture']
+        account_name = email.split('@').first # Googleのアカウント名
+        birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
+        profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
         google_sub = id_info['sub']
         Rails.logger.info(
           "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{picture}, " \
@@ -56,12 +56,12 @@ module V1
         )
         # 新しいユーザーを作成
         user = User.new(
-          pen_name: account_name, # Googleのアカウント名（仮）
-          nick_name: account_name, # Googleのアカウント名（仮）
-          birth_ym:, # ユーザー登録年月（仮の誕生年月)
-          agreed_terms_version: 0, # 0は同意の未確認を意味する
+          pen_name: account_name, # 仮のペンネーム
+          nick_name: account_name, # 仮のニックネーム
+          birth_ym:, # 仮の誕生年月
+          agreed_terms_version: 0, # 未同意状態
           is_anonymous: true, # 匿名ユーザー（初期状態）
-          profile_icon_image: picture, # Googleのアイコン画像URL（仮）
+          profile_icon_image:, # 仮のアイコン画像URL
           email:,
           google_sub:
         )
