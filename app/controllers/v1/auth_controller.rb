@@ -26,9 +26,7 @@ module V1
       # OmniAuth から認証情報を取得
       user_info = request.env['omniauth.auth']
       if user_info.nil?
-        Rails.logger.error('[ERROR] omniauth.auth が存在しません')
-        # アカウント画面にリダイレクト
-        redirect_to "#{frontend_url}/account", allow_other_host: true
+        handle_error('[ERROR] omniauth.auth が存在しません', frontend_url)
         return
       end
 
@@ -74,9 +72,7 @@ module V1
           user.save!
           Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
         rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
-          # アカウント画面にリダイレクト
-          redirect_to "#{frontend_url}/account", allow_other_host: true
+          handle_error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}", frontend_url)
           return
         end
       else
@@ -94,9 +90,7 @@ module V1
       # アカウント画面にリダイレクト
       redirect_to "#{frontend_url}/account", allow_other_host: true
     rescue StandardError => e
-      Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
-      # アカウント画面にリダイレクト
-      redirect_to "#{frontend_url}/account", allow_other_host: true
+      handle_error("[ERROR] サーバーエラーが発生しました: #{e.message}", frontend_url)
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
@@ -123,6 +117,11 @@ module V1
       payload = { google_user_id:, provider:, exp: }
       hmac_secret = ENV.fetch('JWT_SECRET_KEY') { raise 'JWT_SECRET_KEY is not set in environment variables' }
       JWT.encode(payload, hmac_secret, 'HS256')
+    end
+
+    def handle_error(message, frontend_url)
+      Rails.logger.error(message)
+      redirect_to "#{frontend_url}/account", allow_other_host: true
     end
   end
 end
