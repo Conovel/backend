@@ -23,75 +23,87 @@ module V1
       frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
       Rails.logger.info("[INFO] Frontend URL: #{frontend_url}")
 
-      # OmniAuth から認証情報を取得
-      user_info = request.env['omniauth.auth']
-      if user_info.nil?
-        handle_error('[ERROR] omniauth.auth が存在しません', frontend_url)
-        return
-      end
-
-      # ユーザー情報を取得
-      google_user_id = user_info['uid']
-      provider = user_info['provider']
-      google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
-      Rails.logger.info("[INFO] Google User ID: #{google_user_id}")
-      Rails.logger.info("[INFO] provider: #{provider}")
-      Rails.logger.info("[INFO] google_sub: #{google_sub}")
-
-      # ユーザー認証情報を確認
-      existing_user = User.find_by(google_sub:)
-      if existing_user.nil?
-        Rails.logger.info('新規ユーザーが見つかりません。')
-
-        # ユーザー情報を取得
-        id_info = user_info['extra']['id_info']
-        email = id_info['email']
-        account_name = email.split('@').first # Googleのアカウント名
-        birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
-        profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
-        google_sub = id_info['sub']
-        Rails.logger.info(
-          "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{picture}, " \
-          "email: #{email}, google_sub: #{google_sub}"
-        )
-        # 新しいユーザーを作成
-        user = User.new(
-          pen_name: account_name, # 仮のペンネーム
-          nick_name: account_name, # 仮のニックネーム
-          birth_ym:, # 仮の誕生年月
-          agreed_terms_version: 0, # 未同意状態
-          is_anonymous: true, # 匿名ユーザー（初期状態）
-          profile_icon_image:, # 仮のアイコン画像URL
-          email:,
-          google_sub:
-        )
-        Rails.logger.info("[INFO] 新しいユーザー情報 - user: #{user.inspect}")
-
-        # 保存処理
-        begin
-          user.save!
-          Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
-        rescue ActiveRecord::RecordInvalid => e
-          handle_error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}", frontend_url)
+      begin
+        # OmniAuth から認証情報を取得
+        user_info = request.env['omniauth.auth']
+        if user_info.nil?
+          handle_error_and_redirect('[ERROR] omniauth.auth が存在しません', frontend_url)
           return
         end
-      else
-        Rails.logger.info('既存のユーザーが見つかりました。')
-        Rails.logger.info("[INFO] ユーザー情報 - user: #{existing_user}")
+
+        # ユーザー情報を取得
+        google_user_id = user_info['uid']
+        provider = user_info['provider']
+        google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
+        Rails.logger.info("[INFO] Google User ID: #{google_user_id}")
+        Rails.logger.info("[INFO] provider: #{provider}")
+        Rails.logger.info("[INFO] google_sub: #{google_sub}")
+
+        # ユーザー認証情報を確認
+        existing_user = User.find_by(google_sub:)
+        if existing_user.nil?
+          Rails.logger.info('新規ユーザーが見つかりません。')
+
+          # ユーザー情報を取得
+          id_info = user_info['extra']['id_info']
+          email = id_info['email']
+          account_name = email.split('@').first # Googleのアカウント名
+          birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
+          profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
+          google_sub = id_info['sub']
+          Rails.logger.info(
+            "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{profile_icon_image}, " \
+            "email: #{email}, google_sub: #{google_sub}"
+          )
+
+          # 新しいユーザーを作成
+          user = User.new(
+            pen_name: account_name, # 仮のペンネーム
+            nick_name: account_name, # 仮のニックネーム
+            birth_ym:, # 仮の誕生年月
+            agreed_terms_version: 0, # 未同意状態
+            is_anonymous: true, # 匿名ユーザー（初期状態）
+            profile_icon_image:, # 仮のアイコン画像URL
+            email:,
+            google_sub:
+          )
+          Rails.logger.info("[INFO] 新しいユーザー情報 - user: #{user.inspect}")
+
+          # 保存処理
+          begin
+            user.save!
+            Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
+          rescue ActiveRecord::RecordInvalid => e
+            handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}",
+                                      frontend_url)
+            return
+          end
+        else
+          Rails.logger.info('既存のユーザーが見つかりました。')
+          Rails.logger.info("[INFO] ユーザー情報 - user: #{existing_user}")
+        end
+
+        # JWTトークンを生成
+        payload = { google_user_id:, provider: }
+        token = JwtService.encode(payload)
+        Rails.logger.info("[INFO] JWTトークン - token: #{token}")
+
+        # セッションにトークンを保存
+        session[:jwt_token] = token
+
+        # アカウント画面にリダイレクト
+        redirect_to "#{frontend_url}/account", allow_other_host: true
+      # rescue OmniAuth::Strategies::OAuth2::CallbackError => e
+      #   # TODO: ログイン→ブラウザバック→再ログイン→CSRFエラー（create内では解決できず）
+      #   # OmniAuth の CSRF エラー処理
+      #   handle_error_and_redirect("[ERROR] OmniAuth CSRF エラーが発生しました: #{e.message}", frontend_url)
+      rescue ActiveRecord::RecordInvalid => e
+        # 保存に失敗した場合の処理
+        handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}", frontend_url)
+      rescue StandardError => e
+        # その他のエラー処理
+        handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}", frontend_url)
       end
-
-      # JWTトークンを生成
-      payload = { google_user_id:, provider: }
-      token = JwtService.encode(payload)
-      Rails.logger.info("[INFO] JWTトークン - token: #{token}")
-
-      # セッションにトークンを保存
-      session[:jwt_token] = token
-
-      # アカウント画面にリダイレクト
-      redirect_to "#{frontend_url}/account", allow_other_host: true
-    rescue StandardError => e
-      handle_error("[ERROR] サーバーエラーが発生しました: #{e.message}", frontend_url)
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
@@ -113,7 +125,8 @@ module V1
 
     private
 
-    def handle_error(message, frontend_url)
+    # エラーメッセージをフロントエンドにリダイレクト
+    def handle_error_and_redirect(message, frontend_url)
       Rails.logger.error(message)
       redirect_to "#{frontend_url}/account", allow_other_host: true
     end
