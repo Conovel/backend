@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
-# Add an OmniAuth builder to Rails application's middleware stack
+# RailsアプリケーションのミドルウェアスタックにOmniAuthビルダーを追加する
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :google_oauth2, ENV.fetch('GOOGLE_CLIENT_ID', nil), ENV.fetch('GOOGLE_CLIENT_SECRET', nil)
   OmniAuth.config.allowed_request_methods = %i[post get]
+end
+
+# OmniAuth のエラー処理をカスタマイズ
+OmniAuth.config.on_failure = proc do |env|
+  V1::AuthController.action(:auth_failure).call(env)
 end

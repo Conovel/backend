@@ -11,23 +11,36 @@
 module V1
   # AuthController
   class AuthController < ApplicationController
+    include ActionController::RequestForgeryProtection
+
     # ApplicationControllerのauthenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: [:create]
+    skip_before_action :authenticate_request, only: %i[create auth_failure]
+
+    # フロントエンドのURLを定数として定義
+    FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
+    Rails.logger.info("[INFO] Frontend URL: #{FRONTEND_URL}")
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
       Rails.logger.info("[INFO] Request params: #{params.inspect}")
       Rails.logger.info("[INFO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
+      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
 
-      # フロントエンドのURLを取得
-      frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-      Rails.logger.info("[INFO] Frontend URL: #{frontend_url}")
+      # セッションをリセット
+      reset_session
+      Rails.logger.info('[INFO] セッションがリセットされました')
+      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+
+      # CSRFトークンを再生成
+      new_token = form_authenticity_token
+      Rails.logger.info("[INFO] 新しいCSRFトークンが生成されました: #{new_token}")
+      Rails.logger.info("[INFO] セッション内のCSRFトークン: #{session[:_csrf_token]}")
 
       begin
         # OmniAuth から認証情報を取得
         user_info = request.env['omniauth.auth']
         if user_info.nil?
-          handle_error_and_redirect('[ERROR] omniauth.auth が存在しません', frontend_url)
+          handle_error_and_redirect('[ERROR] omniauth.auth が存在しません')
           return
         end
 
@@ -74,8 +87,7 @@ module V1
             user.save!
             Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
           rescue ActiveRecord::RecordInvalid => e
-            handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}",
-                                      frontend_url)
+            handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return
           end
         else
@@ -92,20 +104,35 @@ module V1
         session[:jwt_token] = token
 
         # アカウント画面にリダイレクト
-        redirect_to "#{frontend_url}/account", allow_other_host: true
-      # rescue OmniAuth::Strategies::OAuth2::CallbackError => e
-      #   # TODO: ログイン→ブラウザバック→再ログイン→CSRFエラー（create内では解決できず）
-      #   # OmniAuth の CSRF エラー処理
-      #   handle_error_and_redirect("[ERROR] OmniAuth CSRF エラーが発生しました: #{e.message}", frontend_url)
+        redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
       rescue ActiveRecord::RecordInvalid => e
         # 保存に失敗した場合の処理
-        handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}", frontend_url)
+        handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
       rescue StandardError => e
         # その他のエラー処理
-        handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}", frontend_url)
+        handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}")
       end
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    # OmniAuthのエラー処理
+    # rubocop:disable Metrics/AbcSize
+    def auth_failure
+      # セッションの内容（リセット前）
+      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
+
+      # セッションをリセット
+      reset_session
+      Rails.logger.info('[INFO] セッションがリセットされました')
+      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+
+      error_message = request.env['omniauth.error.type'] || 'Unknown error'
+      Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
+
+      # アカウント画面にリダイレクト
+      handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
+    end
+    # rubocop:enable Metrics/AbcSize
 
     # カレントユーザーを返す
     def current
@@ -126,9 +153,9 @@ module V1
     private
 
     # エラーメッセージをフロントエンドにリダイレクト
-    def handle_error_and_redirect(message, frontend_url)
+    def handle_error_and_redirect(message)
       Rails.logger.error(message)
-      redirect_to "#{frontend_url}/account", allow_other_host: true
+      redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
     end
   end
 end

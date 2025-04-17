@@ -29,6 +29,7 @@ Rails.application.routes.draw do
 
   # google認証にアクセス
   get '/auth/:provider/callback', to: 'v1/auth#create'
+  get '/auth/failure', to: 'v1/auth#auth_failure'
 
   # ユーザー登録のルート(API)
   namespace :api do
