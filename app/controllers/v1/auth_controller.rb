@@ -155,7 +155,7 @@ module V1
     # エラーメッセージをフロントエンドにリダイレクト
     def handle_error_and_redirect(message)
       Rails.logger.error(message)
-      redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
+      redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
     end
   end
 end
