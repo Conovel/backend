@@ -44,9 +44,42 @@ module V1
     # end
 
     def update_user_by_me
-      # Your code here
+      # ログイン中のユーザーを取得
+      user = User.find_by!(user_id: current_user.id)
+      Rails.logger.info("[INFO]カレントユーザー情報 - user: #{user.to_json}")
 
-      render json: { 'message' => 'yes, it worked' }
+      # パラメータを使って更新
+      return unless user.update!(user_params)
+
+      # 更新成功時のレスポンス
+      render json: build_response(user), status: :ok
+    end
+
+    private
+
+    def user_params
+      Rails.logger.info("[INFO]user_params: #{params}")
+      params.require(:user).permit(:pen_name, :nick_name, :birth_ym, :agreed_terms_version, :is_anonymous,
+                                   :profile_icon_image, :remarks)
+    end
+
+    def build_response(user)
+      {
+        user_id: user.id,
+        pen_name: user.pen_name,
+        nick_name: user.nick_name,
+        birth_ym: user.birth_ym, # 追加項目
+        is_anonymous: user.is_anonymous, # 追加項目
+        profile_icon_image: user.profile_icon_image,
+        # evaluation_good_count: user.evaluation_good_count, # TODO: 評価数の取得
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      }
+    end
+
+    # カスタムエラーメッセージを定義
+    def custom_record_invalid_message(exception)
+      "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
     end
   end
 end
