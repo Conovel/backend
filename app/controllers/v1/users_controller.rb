@@ -48,11 +48,17 @@ module V1
       user = User.find_by!(user_id: current_user.id)
       Rails.logger.info("[INFO]カレントユーザー情報 - user: #{user.to_json}")
 
+      # Good評価のカウントを取得
+      evaluation_good_count = Evaluation.joins(:sentence)
+                                        .where(sentences: { sentence_user_id: user.user_id })
+                                        .where(evaluation: 'good')
+                                        .count
+
       # パラメータを使って更新
       return unless user.update!(user_params)
 
       # 更新成功時のレスポンス
-      render json: build_response(user), status: :ok
+      render json: build_response(user, evaluation_good_count), status: :ok
     end
 
     private
@@ -63,7 +69,7 @@ module V1
                                    :profile_icon_image, :remarks)
     end
 
-    def build_response(user)
+    def build_response(user, evaluation_good_count)
       {
         user_id: user.id,
         pen_name: user.pen_name,
@@ -71,7 +77,7 @@ module V1
         birth_ym: user.birth_ym, # 追加項目
         is_anonymous: user.is_anonymous, # 追加項目
         profile_icon_image: user.profile_icon_image,
-        # evaluation_good_count: user.evaluation_good_count, # TODO: 評価数の取得
+        evaluation_good_count:,
         created_at: user.created_at,
         updated_at: user.updated_at
       }

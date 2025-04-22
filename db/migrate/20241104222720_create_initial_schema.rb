@@ -170,6 +170,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :sentences, :parent_sentence_id
     add_index :sentences, :sentence_user_id
     add_index :sentences, :title_id, name: 'index_sentences_on_title_id'
+    add_index :sentences, :sentence_id, name: 'index_sentences_on_sentence_id'
     add_index :titles, :author_user_id, name: 'index_titles_on_author_user_id'
     add_index :titles, :deleted_at
     add_index :users, :email, unique: true
@@ -177,6 +178,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :deleted_at
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
+    add_index :evaluations, :sentence_id, name: 'index_evaluations_on_sentence_id'
     add_index :title_genres, %i[title_id genre_id], unique: true
     add_index :viewed_sentences, %i[viewed_sentence_id viewed_user_id], unique: true
     add_index :viewed_sentences, :deleted_at
