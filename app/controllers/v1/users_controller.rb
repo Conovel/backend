@@ -43,10 +43,10 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
-    # def update_user_by_me
-    #   # Your code here
+    def update_user_by_me
+      # Your code here
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      render json: { 'message' => 'yes, it worked' }
+    end
   end
 end
