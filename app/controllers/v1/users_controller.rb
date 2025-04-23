@@ -17,28 +17,25 @@ module V1
     def delete_user_by_me
       user = User.find_by(user_id: current_user.id)
       if user.nil?
-        user = User.only_deleted.find_by(user_id: current_user.id) # 一時復活用
-        user.restore # 一時復活用
+        # user = User.only_deleted.find_by(user_id: current_user.id) # 一時復活用
+        # user.restore # 一時復活用
         render_error_response(422, 'ユーザーが見つかりません。')
         return
       end
 
       begin
-        if user.destroy
-          Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
+        user.destroy! # destroy! を使用して例外を発生させる
+        Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
 
-          # セッションをリセット
-          reset_session
-          Rails.logger.info('[INFO] セッションがリセットされました')
-          Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+        # セッションをリセット
+        reset_session
+        Rails.logger.info('[INFO] セッションがリセットされました')
+        Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
 
-          # トップ画面にリダイレクト
-          frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-          redirect_to frontend_url, allow_other_host: true
-        else
-          render json: { error: 'Failed to delete user.' }, status: :unprocessable_entity
-        end
-      rescue ActiveRecord::RecordInvalid => e
+        # トップ画面にリダイレクト
+        frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
+        redirect_to frontend_url, allow_other_host: true
+      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed => e
         render_error_response(422, "ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
       end
     end
