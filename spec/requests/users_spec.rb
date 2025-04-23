@@ -6,7 +6,7 @@ RSpec.describe 'V1::UsersController', type: :request do
   describe 'POST /v1/users/me/update' do
     let(:current_user_id) { 2 } # current_user_idを2に設定（仮）
     let!(:users) { create_list(:user, 4) } # 4人のユーザーを作成
-    let(:user) { users.find { |u| u.user_id == current_user_id } } # user_id: 2 のユーザーを取得
+    let(:user) { users.find { |u| u.user_id == current_user_id } } # current_user_idのユーザーを取得
     let(:headers) { auth_headers(user) } # ヘッダーにAuthenticationを追加
     let(:valid_params) do
       {
@@ -42,13 +42,15 @@ RSpec.describe 'V1::UsersController', type: :request do
     end
 
     context 'with a good evaluation' do
-      let(:evaluator) { users.find { |u| u.user_id != current_user_id } } # current_user_id以外のユーザーを評価者に設定
-      let(:evaluator_headers) { auth_headers(evaluator) } # 評価者の認証情報を設定
+      # current_user以外のユーザーを評価者に設定
+      let(:evaluator) { users.find { |u| u.user_id != current_user_id } }
+      let(:evaluator_headers) { auth_headers(evaluator) }
 
       before do
-        sentence = create(:sentence, sentence_user_id: user.user_id) # current_userが書いた文章
+        # current_userが書いた文章を評価者が評価する
+        sentence = create(:sentence, sentence_user_id: user.user_id)
         evaluation_valid_attributes = { sentence_id: sentence.sentence_id, evaluation: 'good' }
-        post('/v1/evaluations', params: evaluation_valid_attributes, headers: evaluator_headers) # 評価者が評価を行う
+        post('/v1/evaluations', params: evaluation_valid_attributes, headers: evaluator_headers)
       end
 
       it 'updates the user and returns a successful response with evaluation_good_count as 1' do
@@ -66,8 +68,7 @@ RSpec.describe 'V1::UsersController', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         json = JSON.parse(response.body)
-        Rails.logger.debug("[DEBUG] json: #{json}") # デバッグ用ログ出力
-        expect(json['error']['message']).to include('ユーザーアカウント情報の更新に失敗しました') # 修正: 正しいキーを参照
+        expect(json['error']['message']).to include('ユーザーアカウント情報の更新に失敗しました')
       end
     end
   end
