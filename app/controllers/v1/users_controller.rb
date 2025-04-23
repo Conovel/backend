@@ -13,11 +13,11 @@ module V1
   class UsersController < ApplicationController
     # TODO: 以下のアクションを実装する
 
-    # def delete_user_by_me
-    #   # Your code here
+    def delete_user_by_me
+      # Your code here
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      render json: { 'message' => 'yes, it worked' }
+    end
 
     # def get_novels_by_user_id
     #   # Your code here
