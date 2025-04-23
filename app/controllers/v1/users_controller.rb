@@ -43,6 +43,7 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # rubocop:disable Metrics/AbcSize
     def update_user_by_me
       # ログイン中のユーザーを取得
       user = User.find_by!(user_id: current_user.id)
@@ -53,6 +54,7 @@ module V1
                                         .where(sentences: { sentence_user_id: user.user_id })
                                         .where(evaluation: 'good')
                                         .count
+      Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
 
       # パラメータを使って更新
       return unless user.update!(user_params)
@@ -60,6 +62,7 @@ module V1
       # 更新成功時のレスポンス
       render json: build_response(user, evaluation_good_count), status: :ok
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
