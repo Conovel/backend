@@ -12,21 +12,24 @@ RSpec.describe 'V1::UsersController', type: :request do
       {
         user: {
           pen_name: 'NewPenName',
-          nick_name: 'NewNickName',
-          birth_ym: '199001',
-          agreed_terms_version: 2,
-          is_anonymous: false,
-          profile_icon_image: 'new_icon.png',
-          remarks: 'Updated remarks'
+          nick_name: 'NewNickName'
         }
       }
     end
-
     let(:invalid_params) do
       {
         user: {
           pen_name: '', # 無効な値
           nick_name: 'NewNickName'
+        }
+      }
+    end
+    let(:miissing_params) do
+      {
+        user: {
+          pen_name: 'NewPenName',
+          nick_name: 'NewNickName',
+          xxx: 'NewNickName' # 存在しないパラメータ
         }
       }
     end
@@ -69,6 +72,16 @@ RSpec.describe 'V1::UsersController', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json = JSON.parse(response.body)
         expect(json['error']['message']).to include('ユーザーアカウント情報の更新に失敗しました')
+      end
+    end
+
+    context 'with miissing parameters' do
+      it 'returns an error response' do
+        post('/v1/users/me/update', params: miissing_params, headers:)
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['evaluation_good_count']).to eq(0)
       end
     end
   end
