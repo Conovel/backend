@@ -76,7 +76,7 @@ RSpec.describe 'V1::UsersController', type: :request do
     end
 
     context 'with miissing parameters' do
-      it 'returns an error response' do
+      it 'It updates the user, omitting any non-existent parameters, and returns a success response.' do
         post('/v1/users/me/update', params: miissing_params, headers:)
 
         expect(response).to have_http_status(:ok)
