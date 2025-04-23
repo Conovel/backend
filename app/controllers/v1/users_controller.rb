@@ -11,13 +11,38 @@
 module V1
   # UsersController
   class UsersController < ApplicationController
-    # TODO: 以下のアクションを実装する
+    include ErrorResponseHelper
 
+    # rubocop:disable Metrics/AbcSize
     def delete_user_by_me
-      # Your code here
+      user = User.find_by(user_id: current_user.id)
+      if user.nil?
+        user = User.only_deleted.find_by(user_id: current_user.id) # 一時復活用
+        user.restore # 一時復活用
+        render_error_response(422, 'ユーザーが見つかりません。')
+        return
+      end
 
-      render json: { 'message' => 'yes, it worked' }
+      begin
+        if user.destroy
+          Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
+
+          # セッションをリセット
+          reset_session
+          Rails.logger.info('[INFO] セッションがリセットされました')
+          Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+
+          # トップ画面にリダイレクト
+          frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
+          redirect_to frontend_url, allow_other_host: true
+        else
+          render json: { error: 'Failed to delete user.' }, status: :unprocessable_entity
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        render_error_response(422, "ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
+      end
     end
+    # rubocop:enable Metrics/AbcSize
 
     # def get_novels_by_user_id
     #   # Your code here
@@ -46,8 +71,11 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
       # ログイン中のユーザーを取得
-      user = User.find_by!(user_id: current_user.id)
-      Rails.logger.info("[INFO]カレントユーザー情報 - user: #{user.to_json}")
+      user = User.find_by(user_id: current_user.id)
+      if user.nil?
+        render_error_response(422, 'ユーザーが見つかりません。')
+        return
+      end
 
       # Good評価のカウントを取得
       evaluation_good_count = Evaluation.joins(:sentence)
@@ -56,11 +84,12 @@ module V1
                                         .count
       Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
 
-      # パラメータを使って更新
-      return unless user.update!(user_params)
-
-      # 更新成功時のレスポンス
-      render json: build_response(user, evaluation_good_count), status: :ok
+      begin
+        user.update!(user_params)
+        render json: build_response(user, evaluation_good_count), status: :ok
+      rescue ActiveRecord::RecordInvalid => e
+        render_error_response(422, "ユーザーアカウント情報の更新に失敗しました。: #{e.message}")
+      end
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -86,9 +115,10 @@ module V1
       }
     end
 
+    # MEMO：メッセージが複数種類の時のだしわけが難しいためコメントアウト
     # カスタムエラーメッセージを定義
-    def custom_record_invalid_message(exception)
-      "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
-    end
+    # def custom_record_invalid_message(exception)
+    #   "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
+    # end
   end
 end
