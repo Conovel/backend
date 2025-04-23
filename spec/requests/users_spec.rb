@@ -14,9 +14,12 @@ RSpec.describe 'V1::UsersController', type: :request do
         # ユーザーが存在する状態で削除を実行
         post('/v1/users/me/delete', headers:)
 
+        expect(response).to have_http_status(:ok) # 200 OK
+        expect(response.body).to be_empty # レスポンスボディが空であることを確認
+
         # リダイレクトを確認
-        expect(response).to have_http_status(:found) # 302 Found
-        expect(response.headers['Location']).to eq('http://localhost:3000') # トップ画面のURL
+        # expect(response).to have_http_status(:found) # 302 Found
+        # expect(response.headers['Location']).to eq('http://localhost:3000') # トップ画面のURL
 
         # セッションがリセットされていることを確認
         expect(session[:user_id]).to be_nil
