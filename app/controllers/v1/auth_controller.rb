@@ -18,23 +18,12 @@ module V1
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-    Rails.logger.info("[INFO] Frontend URL: #{FRONTEND_URL}")
+    Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
-      Rails.logger.info("[INFO] Request params: #{params.inspect}")
-      Rails.logger.info("[INFO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
-      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
-
-      # セッションをリセット
-      reset_session
-      Rails.logger.info('[INFO] セッションがリセットされました')
-      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
-
-      # CSRFトークンを再生成
-      new_token = form_authenticity_token
-      Rails.logger.info("[INFO] 新しいCSRFトークンが生成されました: #{new_token}")
-      Rails.logger.info("[INFO] セッション内のCSRFトークン: #{session[:_csrf_token]}")
+      Rails.logger.debug("[DEBUG] Request params: #{params.inspect}")
+      Rails.logger.debug("[DEBUG] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
 
       begin
         # OmniAuth から認証情報を取得
@@ -48,9 +37,9 @@ module V1
         google_user_id = user_info['uid']
         provider = user_info['provider']
         google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
-        Rails.logger.info("[INFO] Google User ID: #{google_user_id}")
-        Rails.logger.info("[INFO] provider: #{provider}")
-        Rails.logger.info("[INFO] google_sub: #{google_sub}")
+        Rails.logger.debug("[DEBUG] Google User ID: #{google_user_id}")
+        Rails.logger.debug("[DEBUG] provider: #{provider}")
+        Rails.logger.debug("[DEBUG] google_sub: #{google_sub}")
 
         # ユーザー認証情報を確認
         existing_user = User.find_by(google_sub:)
@@ -64,7 +53,7 @@ module V1
           birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
           profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
           google_sub = id_info['sub']
-          Rails.logger.info(
+          Rails.logger.debug(
             "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{profile_icon_image}, " \
             "email: #{email}, google_sub: #{google_sub}"
           )
@@ -80,7 +69,7 @@ module V1
             email:,
             google_sub:
           )
-          Rails.logger.info("[INFO] 新しいユーザー情報 - user: #{user.inspect}")
+          Rails.logger.debug("[DEBUG] 新しいユーザー情報 - user: #{user.inspect}")
 
           # 保存処理
           begin
@@ -91,17 +80,23 @@ module V1
             return
           end
         else
-          Rails.logger.info('既存のユーザーが見つかりました。')
-          Rails.logger.info("[INFO] ユーザー情報 - user: #{existing_user}")
+          Rails.logger.debug('既存のユーザーが見つかりました。')
+          Rails.logger.debug("[INFO] ユーザー情報 - user: #{existing_user}")
         end
 
         # JWTトークンを生成
         payload = { google_user_id:, provider: }
         token = JwtService.encode(payload)
-        Rails.logger.info("[INFO] JWTトークン - token: #{token}")
+        Rails.logger.debug("[DEBUG] JWTトークン - token: #{token}")
 
-        # セッションにトークンを保存
-        session[:jwt_token] = token
+        # クッキーにトークンを保存
+        cookies[:jwt_token] = {
+          value: token,
+          httponly: true, # JavaScriptからアクセスできないようにする
+          secure: Rails.env.production?, # HTTPSのみで送信
+          expires: 1.hour.from_now # 有効期限を設定
+        }
+        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
 
         # アカウント画面にリダイレクト
         redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
@@ -118,13 +113,10 @@ module V1
     # OmniAuthのエラー処理
     # rubocop:disable Metrics/AbcSize
     def auth_failure
-      # セッションの内容（リセット前）
-      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
-
-      # セッションをリセット
-      reset_session
-      Rails.logger.info('[INFO] セッションがリセットされました')
-      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+      # JWTトークンを保存しているクッキーを削除
+      cookies.delete(:jwt_token, httponly: true, secure: Rails.env.production?)
+      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:jwt_token].inspect: #{cookies[:jwt_token].inspect}")
 
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
