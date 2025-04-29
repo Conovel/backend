@@ -112,7 +112,8 @@ RSpec.configure do |config|
     uid: '123456789',
     info: {
       email: 'test@example.com',
-      name: 'Test User'
+      name: 'Test User',
+      image: 'https://example.com/test_image.png'
     },
     credentials: {
       token: 'mock_token',
@@ -120,7 +121,7 @@ RSpec.configure do |config|
       expires_at: Time.now + 1.week
     },
     extra: {
-      id_info: {
+      raw_info: {
         email: 'test@example.com',
         email_verified: true,
         sub: '123456789',

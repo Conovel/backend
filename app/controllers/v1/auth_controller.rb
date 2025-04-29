@@ -22,24 +22,25 @@ module V1
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
-      Rails.logger.debug("[DEBUG] Request params: #{params.inspect}")
-      Rails.logger.debug("[DEBUG] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
+      Rails.logger.debug("[DEBUG] Request params: #{params.to_json}")
+      Rails.logger.debug("[DEBUG] Request env['omniauth.auth']: #{request.env['omniauth.auth'].to_json}")
 
       begin
         # OmniAuth から認証情報を取得
-        user_info = request.env['omniauth.auth']
-        if user_info.nil?
+        user_data = request.env['omniauth.auth']
+        if user_data.nil?
           handle_error_and_redirect('[ERROR] omniauth.auth が存在しません')
           return
         end
+        Rails.logger.debug("[DEBUG] user_data: #{user_data.to_json}")
 
         # ユーザー情報を取得
-        google_user_id = user_info['uid']
-        provider = user_info['provider']
-        google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
-        Rails.logger.debug("[DEBUG] Google User ID: #{google_user_id}")
+        provider = user_data['provider']
+        google_sub = user_data['uid']
+        user_info = user_data['info']
         Rails.logger.debug("[DEBUG] provider: #{provider}")
         Rails.logger.debug("[DEBUG] google_sub: #{google_sub}")
+        Rails.logger.debug("[DEBUG] user_info: #{user_info.to_json}")
 
         # ユーザー認証情報を確認
         existing_user = User.find_by(google_sub:)
@@ -47,16 +48,10 @@ module V1
           Rails.logger.info('新規ユーザーが見つかりません。')
 
           # ユーザー情報を取得
-          id_info = user_info['extra']['id_info']
-          email = id_info['email']
+          email = user_info['email']
           account_name = email.split('@').first # Googleのアカウント名
           birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
-          profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
-          google_sub = id_info['sub']
-          Rails.logger.debug(
-            "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{profile_icon_image}, " \
-            "email: #{email}, google_sub: #{google_sub}"
-          )
+          profile_icon_image = user_info['image'] # Googleのアイコン画像URL
 
           # 新しいユーザーを作成
           user = User.new(
@@ -69,25 +64,26 @@ module V1
             email:,
             google_sub:
           )
-          Rails.logger.debug("[DEBUG] 新しいユーザー情報 - user: #{user.inspect}")
+          Rails.logger.debug("[DEBUG] 新しいユーザー情報 - user: #{user.to_json}")
 
           # 保存処理
           begin
             user.save!
-            Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
+            Rails.logger.info('[INFO] 新しいユーザーが作成されました')
+            Rails.logger.info("[DEBUG] ユーザー情報 - user: #{user.to_json}")
           rescue ActiveRecord::RecordInvalid => e
             handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return
           end
         else
-          Rails.logger.debug('既存のユーザーが見つかりました。')
-          Rails.logger.debug("[INFO] ユーザー情報 - user: #{existing_user}")
+          Rails.logger.info('[INFO] 既存のユーザーが見つかりました。')
+          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{existing_user.to_json}")
         end
 
         # JWTトークンを生成
-        payload = { google_user_id:, provider: }
+        payload = { provider:, google_sub: }
         token = JwtService.encode(payload)
-        Rails.logger.debug("[DEBUG] JWTトークン - token: #{token}")
+        Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
 
         # クッキーにトークンを保存
         cookies[:jwt_token] = {
@@ -116,7 +112,7 @@ module V1
       # JWTトークンを保存しているクッキーを削除
       cookies.delete(:jwt_token, httponly: true, secure: Rails.env.production?)
       Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
-      Rails.logger.debug("[DEBUG] cookies[:jwt_token].inspect: #{cookies[:jwt_token].inspect}")
+      Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
