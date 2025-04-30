@@ -8,7 +8,9 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            {
              scope: 'email profile',
              prompt: 'select_account',
-             skip_jwt: true
+             skip_jwt: true,
+             image_aspect_ratio: 'square',
+             image_size: PROFILE_ICON_IMAGE_SIZE
            }
   OmniAuth.config.allowed_request_methods = %i[post get]
 end

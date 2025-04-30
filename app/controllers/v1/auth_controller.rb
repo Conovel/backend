@@ -12,6 +12,7 @@ module V1
   # AuthController
   class AuthController < ApplicationController
     include ActionController::RequestForgeryProtection
+    include ImageHelper
 
     # ApplicationControllerのauthenticate_requestをスキップ
     skip_before_action :authenticate_request, only: %i[create auth_failure]
@@ -51,7 +52,8 @@ module V1
           email = user_info['email']
           account_name = email.split('@').first # Googleのアカウント名
           birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
-          profile_icon_image = user_info['image'] # Googleのアイコン画像URL
+          profile_icon_image_url = user_info['image'] # Googleのアイコン画像URL
+          profile_icon_image = fetch_image_as_base64(profile_icon_image_url) # アイコン画像をBASE64に変換
 
           # 新しいユーザーを作成
           user = User.new(

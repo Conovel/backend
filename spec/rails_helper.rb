@@ -113,7 +113,7 @@ RSpec.configure do |config|
     info: {
       email: 'test@example.com',
       name: 'Test User',
-      image: 'https://example.com/test_image.png'
+      image: 'https://placehold.jp/150x150.png'
     },
     credentials: {
       token: 'mock_token',
@@ -125,7 +125,7 @@ RSpec.configure do |config|
         email: 'test@example.com',
         email_verified: true,
         sub: '123456789',
-        picture: 'https://example.com/test_image.png'
+        picture: 'https://placehold.jp/150x150.png'
       }
     }
   )
