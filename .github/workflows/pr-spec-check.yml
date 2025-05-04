@@ -43,9 +43,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Yarn packages (optional)
-        run: yarn install
-        if: exists('yarn.lock')
+      - name: Install Yarn packages
+        run: |
+          if [ -f yarn.lock ]; then
+            yarn install
+          fi
 
       - name: Generate config/database.yml for test
         run: |
