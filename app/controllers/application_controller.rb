@@ -31,8 +31,13 @@ class ApplicationController < ActionController::API
   # リクエストの認証
   # rubocop:disable Metrics/AbcSize
   def authenticate_request
-    token = request.headers['Authorization']
-    token = token.split.last if token
+    # クッキーからJWTトークンを取得
+    token = cookies[:jwt_token]
+    if token.blank?
+      render json: { error: 'トークン情報の取得に失敗しました' }, status: :unauthorized
+      return
+    end
+
     begin
       @decoded = JwtService.decode(token)
       Rails.logger.info("[INFO]トークン - token: #{token}")

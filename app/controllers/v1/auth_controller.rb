@@ -19,7 +19,8 @@ module V1
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-    Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
+    # Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
+    Rails.logger.debug("Frontend URL: #{FRONTEND_URL}")
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create

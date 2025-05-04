@@ -49,15 +49,19 @@ RSpec.describe 'Sentences', type: :request do
     }
   end
 
+  before do
+    # クッキーにJWTトークンを設定
+    cookies[:jwt_token] = JwtService.encode(user_id: users[2].id)
+    get '/v1/novels'
+  end
+
   # showのテスト
   describe 'GET /v1/sentences/:sentence_id' do
-    let(:headers) { auth_headers } # ヘッダーにAuthorizationを追加
-
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
 
-        get("/v1/sentences/#{main_sentence.sentence_id}", headers:)
+        get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
 
@@ -86,7 +90,7 @@ RSpec.describe 'Sentences', type: :request do
         allow(ViewedSentence).to receive(:find_or_initialize_by).and_return(viewed_sentence_double)
         allow(viewed_sentence_double).to receive(:save!).and_raise(StandardError.new('DB error'))
 
-        get("/v1/sentences/#{main_sentence.sentence_id}", headers:)
+        get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(420)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['message']).to eq('投稿の取得に失敗しました。')
@@ -95,7 +99,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when the sentence does not exist' do
       it 'returns a 404 not found error' do
-        get("/v1/sentences/#{not_exist_sentence_id}", headers:)
+        get("/v1/sentences/#{not_exist_sentence_id}")
         expect(response).to have_http_status(404)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['message']).to eq('投稿が見つかりません。')
@@ -105,12 +109,10 @@ RSpec.describe 'Sentences', type: :request do
 
   # createのテスト
   describe 'POST /v1/sentences' do
-    let(:headers) { auth_headers } # ヘッダーにAuthorizationを追加
-
     context 'with valid parameters' do
       it 'creates a new Sentence' do
         expect do
-          post v1_sentences_path, params: valid_attributes, headers:
+          post v1_sentences_path, params: valid_attributes
         end.to change(Sentence, :count).by(1)
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
@@ -120,7 +122,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when required parameters are missing' do
       it 'returns an unprocessable entity status' do
-        post(v1_sentences_path, params: valid_attributes.merge(sentence: ''), headers:)
+        post(v1_sentences_path, params: valid_attributes.merge(sentence: ''))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
@@ -130,7 +132,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when parent_sentence_id does not exist' do
       it 'returns an unprocessable entity status' do
-        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: 100), headers:)
+        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: 100))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
@@ -140,8 +142,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'with invalid parameters' do
       it 'returns a conflict status' do
-        post(v1_sentences_path, params: valid_attributes.merge(parent_updated_at: '2024-01-01T01:01:09.292+09:00'),
-                                headers:)
+        post(v1_sentences_path, params: valid_attributes.merge(parent_updated_at: '2024-01-01T01:01:09.292+09:00'))
         expect(response).to have_http_status(:conflict)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(409)
@@ -152,7 +153,7 @@ RSpec.describe 'Sentences', type: :request do
     context 'when consecutive self post is detected' do
       it 'returns an unprocessable entity status' do
         post_user_id = 2 # Google認証未実装のため、仮のユーザーID
-        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: post_user_id), headers:)
+        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: post_user_id))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
@@ -163,7 +164,7 @@ RSpec.describe 'Sentences', type: :request do
     context 'when sentence length exceeds the limit' do
       it 'returns an unprocessable entity status' do
         long_sentence = 'a' * 101
-        post(v1_sentences_path, params: valid_attributes.merge(sentence: long_sentence), headers:)
+        post(v1_sentences_path, params: valid_attributes.merge(sentence: long_sentence))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
