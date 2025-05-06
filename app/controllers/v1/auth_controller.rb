@@ -83,14 +83,14 @@ module V1
           Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
         end
 
-        # リフレッシュトークンをリセット
-        user.generate_refresh_token
-        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
-
         # JWTトークンを生成
         payload = { provider:, google_sub: }
         token = JwtService.encode(payload)
         Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
+
+        # リフレッシュトークンをリセット
+        user.generate_refresh_token
+        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
 
         # クッキーにトークンを保存
         cookies[:jwt_token] = {
@@ -124,12 +124,12 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def auth_failure
       # JWTトークンを保存しているクッキーを削除
-      cookies.delete(:jwt_token, httponly: true, secure: Rails.env.production?)
+      cookies.delete(:jwt_token)
       Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
       Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
       # リフレッシュトークンを保存しているクッキーを削除
-      cookies.delete(:refresh_token, httponly: true, secure: Rails.env.production?)
+      cookies.delete(:refresh_token)
       Rails.logger.info('[INFO] リフレッシュトークンがクッキーから削除されました')
       Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
 
