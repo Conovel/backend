@@ -19,4 +19,22 @@ class User < ApplicationRecord
   validates :profile_icon_image, presence: true
   validates :email, presence: true, uniqueness: true
   validates :google_sub, presence: true, uniqueness: true, length: { maximum: 128 }
+  validates :refresh_token, uniqueness: true, allow_nil: true
+
+  # リフレッシュトークンを生成
+  def generate_refresh_token
+    self.refresh_token = SecureRandom.hex(64)
+    save!
+  end
+
+  # リフレッシュトークンを検証
+  def valid_refresh_token?(token)
+    ActiveSupport::SecurityUtils.secure_compare(refresh_token, token)
+  end
+
+  # リフレッシュトークンを無効化
+  def invalidate_refresh_token
+    self.refresh_token = nil
+    save!
+  end
 end

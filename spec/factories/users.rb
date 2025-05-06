@@ -11,5 +11,6 @@ FactoryBot.define do
     sequence(:profile_icon_image) { |n| "icon#{n}.png" }
     sequence(:email) { |n| "user#{n}@example.com" }
     sequence(:google_sub) { |n| "sub#{n}" }
+    refresh_token { SecureRandom.hex(64) }
   end
 end

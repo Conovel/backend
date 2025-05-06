@@ -89,12 +89,14 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.string 'email', null: false
     t.string 'google_sub', limit: 128, null: false
     t.text 'remarks'
+    t.string 'refresh_token'
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
     t.index ['deleted_at'], name: 'index_users_on_deleted_at'
     t.index ['email'], name: 'index_users_on_email', unique: true
     t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
+    t.index ['refresh_token'], name: 'index_users_on_refresh_token', unique: true
   end
 
   create_table 'viewed_sentences', primary_key: %w[viewed_sentence_id viewed_user_id], charset: 'utf8mb4',
