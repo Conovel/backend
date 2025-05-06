@@ -19,8 +19,9 @@ module ImageHelper
 
       response = http.get(uri.request_uri)
       if response.is_a?(Net::HTTPSuccess)
-        image_data = response.body
-        Base64.encode64(image_data) # Base64形式に変換して返す
+        content_type = response['Content-Type'] || 'image/jpeg'
+        base64_data = Base64.strict_encode64(response.body)
+        "data:#{content_type};base64,#{base64_data}"
       else
         profile_icon_image # HTTPリクエストが失敗した場合のデフォルト値
       end
