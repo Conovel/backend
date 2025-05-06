@@ -10,16 +10,6 @@ class ApplicationController < ActionController::API
   # カレントユーザーを返す
   attr_reader :current_user
 
-  # 仮のユーザーオブジェクトを返す（最終的には削除）
-  # def current_user
-  #   Struct.new(:id).new(2) # 仮のユーザーIDを2とする
-  # end
-
-  # Google認証実装後のcurrent_userメソッド
-  # def current_user
-  #   @current_user ||= User.find(session[:user_id]) if session[:user_id]
-  # end
-
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
   rescue_from ArgumentError, with: :handle_argument_error
@@ -32,33 +22,53 @@ class ApplicationController < ActionController::API
   # rubocop:disable Metrics/AbcSize
   def authenticate_request
     # クッキーからJWTトークンを取得
-    token = cookies[:jwt_token]
-    if token.blank?
-      render json: { error: 'トークン情報の取得に失敗しました' }, status: :unauthorized
-      return
+    jwt_token = cookies[:jwt_token]
+    if jwt_token.present?
+      begin
+        @decoded = JwtService.decode(jwt_token)
+        Rails.logger.info("[INFO] トークン - token: #{jwt_token}")
+        Rails.logger.info("[INFO] デコード - decoded: #{@decoded}")
+
+        @current_user = Struct.new(:user_id).new(@decoded['user_id'])
+        Rails.logger.info("[INFO] カレントユーザー - @current_user: #{@current_user.to_json}")
+        return
+      rescue JWT::ExpiredSignature
+        Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
+      rescue JWT::DecodeError => e
+        Rails.logger.error("[ERROR] JWTデコードエラー - e.message: #{e.message}")
+      end
     end
 
-    begin
-      @decoded = JwtService.decode(token)
-      Rails.logger.info("[INFO]トークン - token: #{token}")
-      Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
+    # JWTトークンが無効または期限切れの場合、リフレッシュトークンを使用
+    refresh_token = cookies[:refresh_token]
+    if refresh_token.present?
+      user = User.find_by(refresh_token:)
+      if user
+        Rails.logger.info("[INFO] リフレッシュトークンでユーザーを特定しました - user: #{user.to_json}")
 
-      @current_user = if @decoded['user_id'] == '2' # 仮の条件
+        # 新しいJWTトークンを発行
+        payload = { user_id: user.user_id }
+        token = JwtService.encode(payload)
+        Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
+        # クッキーにトークンを保存
+        cookies[:jwt_token] = {
+          value: token,
+          httponly: true, # JavaScriptからアクセスできないようにする
+          secure: Rails.env.production?, # HTTPSのみで送信
+          expires: 1.hour.from_now # 有効期限
+        }
+        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
 
-                        User.find(@decoded['user_id']) # TODO：ここを作り込みたい
-                      else
-                        # user_auth = User.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
-                        # @current_user = user_auth.user if user_auth
-
-                        # 仮のユーザーオブジェクトを返す
-                        Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
-                      end
-      Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
-      raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
-    rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
-      Rails.logger.error("[ERROR]認証エラー - e.message: #{e.message}")
-      render json: { errors: e.message }, status: :unauthorized
+        @current_user = Struct.new(:user_id).new(payload['user_id'])
+        return
+      else
+        Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
+      end
     end
+
+    # 認証エラーを返す
+    # TODO：ここは未ログイン時の出し分けにしたい
+    render json: { error: '認証に失敗しました' }, status: :unauthorized
   end
   # rubocop:enable Metrics/AbcSize
 

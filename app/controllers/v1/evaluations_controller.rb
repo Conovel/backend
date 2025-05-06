@@ -15,7 +15,7 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def create
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
-                                                    evaluator_user_id: current_user.id)
+                                                    evaluator_user_id: current_user.user_id)
       evaluation.evaluation = evaluation_params[:evaluation]
       evaluation.save!
 

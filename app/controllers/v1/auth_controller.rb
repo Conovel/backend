@@ -83,29 +83,27 @@ module V1
           Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
         end
 
-        # JWTトークンを生成
-        payload = { provider:, google_sub: }
+        # JWTトークン
+        payload = { user_id: user.user_id }
         token = JwtService.encode(payload)
         Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
-
-        # リフレッシュトークンをリセット
-        user.generate_refresh_token
-        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
-
-        # クッキーにトークンを保存
         cookies[:jwt_token] = {
           value: token,
           httponly: true, # JavaScriptからアクセスできないようにする
           secure: Rails.env.production?, # HTTPSのみで送信
           expires: 1.hour.from_now # 有効期限
         }
+        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+
+        # リフレッシュトークン
+        user.generate_refresh_token
+        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
         cookies[:refresh_token] = {
           value: user.refresh_token,
           httponly: true,
           secure: Rails.env.production?,
           expires: 30.days.from_now # 有効期限
         }
-        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
         Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies[:refresh_token]}")
 
         # アカウント画面にリダイレクト

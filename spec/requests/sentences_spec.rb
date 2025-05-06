@@ -152,7 +152,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when consecutive self post is detected' do
       it 'returns an unprocessable entity status' do
-        post_user_id = 2 # Google認証未実装のため、仮のユーザーID
+        post_user_id = users[2].id # 連続投稿のユーザーID
         post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: post_user_id))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
