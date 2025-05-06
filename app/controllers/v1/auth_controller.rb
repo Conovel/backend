@@ -45,8 +45,8 @@ module V1
         Rails.logger.debug("[DEBUG] user_info: #{user_info.to_json}")
 
         # ユーザー認証情報を確認
-        existing_user = User.find_by(google_sub:)
-        if existing_user.nil?
+        user = User.find_by(google_sub:)
+        if user.nil?
           Rails.logger.info('新規ユーザーが見つかりません。')
 
           # ユーザー情報を取得
@@ -80,8 +80,12 @@ module V1
           end
         else
           Rails.logger.info('[INFO] 既存のユーザーが見つかりました。')
-          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{existing_user.to_json}")
+          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
         end
+
+        # リフレッシュトークンをリセット
+        user.generate_refresh_token
+        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
 
         # JWTトークンを生成
         payload = { provider:, google_sub: }
@@ -93,9 +97,16 @@ module V1
           value: token,
           httponly: true, # JavaScriptからアクセスできないようにする
           secure: Rails.env.production?, # HTTPSのみで送信
-          expires: 1.hour.from_now # 有効期限を設定
+          expires: 1.hour.from_now # 有効期限
+        }
+        cookies[:refresh_token] = {
+          value: user.refresh_token,
+          httponly: true,
+          secure: Rails.env.production?,
+          expires: 30.days.from_now # 有効期限
         }
         Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+        Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies[:refresh_token]}")
 
         # アカウント画面にリダイレクト
         redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
@@ -116,6 +127,11 @@ module V1
       cookies.delete(:jwt_token, httponly: true, secure: Rails.env.production?)
       Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
       Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
+      # リフレッシュトークンを保存しているクッキーを削除
+      cookies.delete(:refresh_token, httponly: true, secure: Rails.env.production?)
+      Rails.logger.info('[INFO] リフレッシュトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
 
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
