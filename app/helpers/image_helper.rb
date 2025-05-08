@@ -27,7 +27,7 @@ module ImageHelper
       end
     rescue StandardError => e
       Rails.logger.error("[ERROR] 画像の取得またはBASE64変換に失敗しました: #{e.message}")
-      default_value
+      profile_icon_image
     end
   end
   # rubocop:enable Metrics/AbcSize
