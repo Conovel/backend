@@ -28,14 +28,6 @@ Rails.application.routes.draw do
   get '/auth/:provider/callback', to: 'v1/auth#create'
   get '/auth/failure', to: 'v1/auth#auth_failure'
 
-  # ユーザー登録のルート(API)
-  namespace :api do
-    namespace :v1 do
-      # カレントユーザーの呼び出し
-      get 'users/current', to: 'auth#current'
-    end
-  end
-
   # Swagger UI
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'

@@ -139,15 +139,6 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
-    # カレントユーザーを返す
-    def current
-      if @current_user
-        render json: { user: @current_user }
-      else
-        render json: { error: '認証情報を取得できません' }, status: :unauthorized
-      end
-    end
-
     # TODO: ログアウト機能を実装する
     # def log_out
     #   # Your code here
