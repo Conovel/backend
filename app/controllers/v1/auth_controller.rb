@@ -19,8 +19,7 @@ module V1
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-    # Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
-    Rails.logger.debug("Frontend URL: #{FRONTEND_URL}")
+    Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
@@ -73,7 +72,7 @@ module V1
           begin
             user.save!
             Rails.logger.info('[INFO] 新しいユーザーが作成されました')
-            Rails.logger.info("[DEBUG] ユーザー情報 - user: #{user.to_json}")
+            Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
           rescue ActiveRecord::RecordInvalid => e
             handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return

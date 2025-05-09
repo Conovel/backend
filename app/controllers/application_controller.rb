@@ -26,11 +26,11 @@ class ApplicationController < ActionController::API
     if jwt_token.present?
       begin
         @decoded = JwtService.decode(jwt_token)
-        Rails.logger.info("[INFO] トークン - token: #{jwt_token}")
-        Rails.logger.info("[INFO] デコード - decoded: #{@decoded}")
+        Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
+        Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
 
         @current_user = Struct.new(:user_id).new(@decoded['user_id'])
-        Rails.logger.info("[INFO] カレントユーザー - @current_user: #{@current_user.to_json}")
+        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user: #{@current_user.to_json}")
         return
       rescue JWT::ExpiredSignature
         Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
@@ -44,7 +44,8 @@ class ApplicationController < ActionController::API
     if refresh_token.present?
       user = User.find_by(refresh_token:)
       if user
-        Rails.logger.info("[INFO] リフレッシュトークンでユーザーを特定しました - user: #{user.to_json}")
+        Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
+        Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
         # 新しいJWTトークンを発行
         payload = { user_id: user.user_id }
