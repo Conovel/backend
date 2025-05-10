@@ -30,3 +30,6 @@
 
 # Ignore macOS metadata files
 .DS_Store
+
+# env
+.env
