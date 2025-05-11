@@ -148,7 +148,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
     before do
       # ユーザー1でログイン
-      allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user1)
+      allow_any_instance_of(ApplicationController).to receive(:current_user_id).and_return(user1.user_id)
     end
 
     before do
@@ -235,7 +235,7 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['reader_count']).to eq(1) # 読者数も1
 
       # ユーザー2でログイン
-      allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user2)
+      allow_any_instance_of(ApplicationController).to receive(:current_user_id).and_return(user2.user_id)
 
       # ユーザー2が投稿1を閲覧
       get("/v1/sentences/#{sentence1.sentence_id}")

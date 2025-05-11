@@ -12,10 +12,9 @@ module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
     # POST /v1/evaluations
-    # rubocop:disable Metrics/AbcSize
     def create
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
-                                                    evaluator_user_id: current_user.user_id)
+                                                    evaluator_user_id: current_user_id)
       evaluation.evaluation = evaluation_params[:evaluation]
       evaluation.save!
 
@@ -24,7 +23,6 @@ module V1
 
       render json: build_response(evaluation_params, evaluation_counts), status: :created
     end
-    # rubocop:enable Metrics/AbcSize
 
     private
 

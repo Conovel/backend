@@ -8,7 +8,7 @@ class ApplicationController < ActionController::API
   include ActionController::Cookies
 
   # カレントユーザーを返す
-  attr_reader :current_user
+  attr_reader :current_user_id
 
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
@@ -29,8 +29,8 @@ class ApplicationController < ActionController::API
         Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
         Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
 
-        @current_user = Struct.new(:user_id).new(@decoded['user_id'])
-        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user: #{@current_user.to_json}")
+        @current_user_id = @decoded['user_id']
+        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
         return
       rescue JWT::ExpiredSignature
         Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
@@ -60,7 +60,7 @@ class ApplicationController < ActionController::API
         }
         Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
 
-        @current_user = Struct.new(:user_id).new(payload['user_id'])
+        @current_user_id = payload['user_id']
         return
       else
         Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
