@@ -86,7 +86,7 @@ module V1
         payload = { user_id: user.user_id }
         token = JwtService.encode(payload)
         Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
-        cookies.encrypted[:jwt_token] = {
+        cookies[:jwt_token] = {
           value: token,
           httponly: true, # JavaScriptからアクセスできないようにする
           secure: Rails.env.production?, # HTTPSのみで送信
