@@ -120,6 +120,41 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+    # リフレッシュトークンを使用して新しいJWTトークンを発行
+    # rubocop:disable Metrics/AbcSize
+    def refresh
+      refresh_token = cookies[:refresh_token]
+      if refresh_token.present?
+        user = User.find_by(refresh_token:)
+        if user
+          Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
+          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
+
+          # 新しいJWTトークンを発行
+          payload = { user_id: user.user_id }
+          token = JwtService.encode(payload)
+          Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
+
+          # クッキーにトークンを保存
+          cookies[:jwt_token] = {
+            value: token,
+            httponly: true,
+            secure: Rails.env.production?,
+            expires: 1.hour.from_now
+          }
+          Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+
+          render json: { message: 'トークンが再発行されました' }, status: :ok
+        else
+          Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
+          render json: { error: 'リフレッシュトークンが無効です' }, status: :unauthorized
+        end
+      else
+        render json: { error: 'リフレッシュトークンが見つかりません' }, status: :unauthorized
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
     # OmniAuthのエラー処理
     # rubocop:disable Metrics/AbcSize
     def auth_failure

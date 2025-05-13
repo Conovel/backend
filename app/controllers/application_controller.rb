@@ -39,34 +39,6 @@ class ApplicationController < ActionController::API
       end
     end
 
-    # JWTトークンが無効または期限切れの場合、リフレッシュトークンを使用
-    refresh_token = cookies[:refresh_token]
-    if refresh_token.present?
-      user = User.find_by(refresh_token:)
-      if user
-        Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
-        Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
-
-        # 新しいJWTトークンを発行
-        payload = { user_id: user.user_id }
-        token = JwtService.encode(payload)
-        Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
-        # クッキーにトークンを保存
-        cookies[:jwt_token] = {
-          value: token,
-          httponly: true, # JavaScriptからアクセスできないようにする
-          secure: Rails.env.production?, # HTTPSのみで送信
-          expires: 1.hour.from_now # 有効期限
-        }
-        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
-
-        @current_user_id = payload['user_id']
-        return
-      else
-        Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
-      end
-    end
-
     # 認証エラーを返す
     # TODO：ここは未ログイン時の出し分けにしたい
     render json: { error: '認証に失敗しました' }, status: :unauthorized
