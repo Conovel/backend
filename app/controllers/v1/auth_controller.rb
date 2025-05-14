@@ -15,7 +15,7 @@ module V1
     include ImageHelper
 
     # ApplicationControllerのauthenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: %i[create auth_failure]
+    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token]
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
@@ -123,7 +123,8 @@ module V1
     # リフレッシュトークンを使用して新しいJWTトークンを発行
     # rubocop:disable Metrics/AbcSize
     def refresh_token
-      refresh_token = cookies[:refresh_token]
+      refresh_token = cookies.encrypted[:refresh_token]
+      Rails.logger.debug("[DEBUG] refresh_token: #{refresh_token.to_json}")
       if refresh_token.present?
         user = User.find_by(refresh_token:)
         if user
