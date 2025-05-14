@@ -83,30 +83,10 @@ module V1
         end
 
         # JWTトークン
-        payload = { user_id: user.user_id }
-        token = JwtService.encode(payload)
-        Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
-        cookies[:jwt_token] = {
-          value: token,
-          httponly: true, # JavaScriptからアクセスできないようにする
-          secure: Rails.env.production?, # HTTPSのみで送信
-          expires: 1.hour.from_now, # 有効期限
-          same_site: :strict
-        }
-        Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+        generate_jwt_token(user)
 
         # リフレッシュトークン
-        user.generate_refresh_token
-        Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
-        cookies.encrypted[:refresh_token] = {
-          value: user.refresh_token,
-          httponly: true,
-          secure: Rails.env.production?,
-          expires: 30.days.from_now, # 有効期限
-          same_site: :strict
-          # path: '/auth/refresh' # TODO: 新たなエンドポイントを作成する際にここでpathを指定
-        }
-        Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies[:refresh_token]}")
+        generate_refresh_token(user)
 
         # アカウント画面にリダイレクト
         redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
@@ -132,18 +112,7 @@ module V1
           Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
           # 新しいJWTトークンを発行
-          payload = { user_id: user.user_id }
-          token = JwtService.encode(payload)
-          Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
-
-          # クッキーにトークンを保存
-          cookies[:jwt_token] = {
-            value: token,
-            httponly: true,
-            secure: Rails.env.production?,
-            expires: 1.hour.from_now
-          }
-          Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+          generate_jwt_token(user)
 
           render json: { message: 'トークンが再発行されました' }, status: :ok
         else
@@ -185,6 +154,37 @@ module V1
     # end
 
     private
+
+    # JWTトークンを生成してクッキーに保存する
+    def generate_jwt_token(user)
+      payload = { user_id: user.user_id }
+      token = JwtService.encode(payload)
+      Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
+      cookies[:jwt_token] = {
+        value: token,
+        httponly: true, # JavaScriptからアクセスできないようにする
+        secure: Rails.env.production?, # HTTPSのみで送信
+        expires: 1.hour.from_now, # 有効期限
+        same_site: :strict
+      }
+      Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
+    end
+
+    # リフレッシュトークンを生成してクッキーに保存する
+    def generate_refresh_token(user)
+      user.generate_refresh_token
+      Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
+
+      cookies.encrypted[:refresh_token] = {
+        value: user.refresh_token,
+        httponly: true,
+        secure: Rails.env.production?,
+        expires: 30.days.from_now, # 有効期限
+        same_site: :strict
+        # path: '/auth/refresh' # TODO: 新たなエンドポイントを作成する際にここでpathを指定
+      }
+      Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies[:refresh_token]}")
+    end
 
     # エラーメッセージをフロントエンドにリダイレクト
     def handle_error_and_redirect(message)
