@@ -122,7 +122,7 @@ module V1
 
     # リフレッシュトークンを使用して新しいJWTトークンを発行
     # rubocop:disable Metrics/AbcSize
-    def refresh
+    def refresh_token
       refresh_token = cookies[:refresh_token]
       if refresh_token.present?
         user = User.find_by(refresh_token:)
