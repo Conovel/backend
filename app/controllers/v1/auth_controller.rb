@@ -171,6 +171,7 @@ module V1
     end
 
     # リフレッシュトークンを生成してクッキーに保存する
+    # rubocop:disable Metrics/AbcSize
     def generate_refresh_token(user)
       user.generate_refresh_token
       Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
@@ -181,10 +182,11 @@ module V1
         secure: Rails.env.production?,
         expires: 30.days.from_now, # 有効期限
         same_site: :strict
-        # path: '/auth/refresh' # TODO: 新たなエンドポイントを作成する際にここでpathを指定
+        # path: '/auth/refresh' # ここを有効にするとブラウザのcookieに保存されない
       }
-      Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies[:refresh_token]}")
+      Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies.encrypted[:refresh_token]}")
     end
+    # rubocop:enable Metrics/AbcSize
 
     # エラーメッセージをフロントエンドにリダイレクト
     def handle_error_and_redirect(message)
