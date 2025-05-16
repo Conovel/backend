@@ -39,8 +39,13 @@ class ApplicationController < ActionController::API
       end
     end
 
+    # JWTトークンを保存しているクッキーを削除
+    cookies.delete(:jwt_token)
+    Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
     # 認証エラーを返す
-    # TODO：ここは未ログイン時の出し分けにしたい
+    # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
     render json: { error: '認証に失敗しました' }, status: :unauthorized
   end
   # rubocop:enable Metrics/AbcSize
