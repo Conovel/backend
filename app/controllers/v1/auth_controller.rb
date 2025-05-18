@@ -116,27 +116,22 @@ module V1
 
           render json: { message: 'トークンが再発行されました' }, status: :ok
         else
+          # リフレッシュトークンが無効な場合、削除する
+          delete_tokens_from_cookies
           Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
           render json: { error: 'リフレッシュトークンが無効です' }, status: :unauthorized
         end
       else
+        # リフレッシュトークンが存在しない場合、念のためクッキーをクリア
+        delete_tokens_from_cookies
         render json: { error: 'リフレッシュトークンが見つかりません' }, status: :unauthorized
       end
     end
     # rubocop:enable Metrics/AbcSize
 
     # OmniAuthのエラー処理
-    # rubocop:disable Metrics/AbcSize
     def auth_failure
-      # JWTトークンを保存しているクッキーを削除
-      cookies.delete(:jwt_token)
-      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
-      Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
-
-      # リフレッシュトークンを保存しているクッキーを削除
-      cookies.delete(:refresh_token)
-      Rails.logger.info('[INFO] リフレッシュトークンがクッキーから削除されました')
-      Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
+      delete_tokens_from_cookies
 
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
@@ -144,8 +139,6 @@ module V1
       # アカウント画面にリダイレクト
       handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
-    # rubocop:enable Metrics/AbcSize
-
     # TODO: ログアウト機能を実装する
     # def log_out
     #   # Your code here
@@ -185,6 +178,21 @@ module V1
         # path: '/auth/refresh' # ここを有効にするとブラウザのcookieに保存されない
       }
       Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies.encrypted[:refresh_token]}")
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    # トークンをクッキーから削除する共通メソッド
+    # rubocop:disable Metrics/AbcSize
+    def delete_tokens_from_cookies
+      # JWTトークンを保存しているクッキーを削除
+      cookies.delete(:jwt_token)
+      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
+      # リフレッシュトークンを保存しているクッキーを削除
+      cookies.delete(:refresh_token)
+      Rails.logger.info('[INFO] リフレッシュトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
     end
     # rubocop:enable Metrics/AbcSize
 

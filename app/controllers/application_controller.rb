@@ -44,6 +44,9 @@ class ApplicationController < ActionController::API
     Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
     Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
+    @current_user_id = nil
+    Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
     # 認証エラーを返す
     # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
     render json: { error: '認証に失敗しました' }, status: :unauthorized
