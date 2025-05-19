@@ -49,7 +49,7 @@ class ApplicationController < ActionController::API
 
     # 認証エラーを返す
     # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
-    render json: { error: '認証に失敗しました' }, status: :unauthorized
+    render_error_response(401, '認証に失敗しました')
   end
   # rubocop:enable Metrics/AbcSize
 

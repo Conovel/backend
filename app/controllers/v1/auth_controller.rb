@@ -119,12 +119,12 @@ module V1
           # リフレッシュトークンが無効な場合、削除する
           delete_tokens_from_cookies
           Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
-          render json: { error: 'リフレッシュトークンが無効です' }, status: :unauthorized
+          render_error_response(401, 'リフレッシュトークンが無効です')
         end
       else
         # リフレッシュトークンが存在しない場合、念のためクッキーをクリア
         delete_tokens_from_cookies
-        render json: { error: 'リフレッシュトークンが見つかりません' }, status: :unauthorized
+        render_error_response(401, 'リフレッシュトークンが見つかりません')
       end
     end
     # rubocop:enable Metrics/AbcSize
