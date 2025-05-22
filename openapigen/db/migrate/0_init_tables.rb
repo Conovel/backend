@@ -30,6 +30,12 @@ class InitTables < ActiveRecord::Migration
       t.timestamps
     end
 
+    create_table "get_current_user_id_200_response".pluralize.to_sym, id: false do |t|
+      t.integer :user_id
+
+      t.timestamps
+    end
+
     create_table "novel_detail".pluralize.to_sym, id: false do |t|
       t.integer :title_id
       t.string :title

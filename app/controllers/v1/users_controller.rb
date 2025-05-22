@@ -19,6 +19,12 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    def current_user_id
+      # Your code here
+
+      render json: { 'message' => 'yes, it worked' }
+    end
+
     # def get_novels_by_user_id
     #   # Your code here
 

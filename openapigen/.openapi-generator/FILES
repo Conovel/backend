@@ -16,6 +16,7 @@ app/models/application_record.rb
 app/models/error_response.rb
 app/models/error_response_error.rb
 app/models/evaluate_sentence.rb
+app/models/get_current_user_id_200_response.rb
 app/models/novel_detail.rb
 app/models/novel_list_item.rb
 app/models/post_sentence.rb
