@@ -23,7 +23,7 @@ Rails.application.routes.draw do
     add_openapi_route 'GET', '/novels', controller_name: 'novels', action_name: 'index'
     add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show'
     add_openapi_route 'POST', '/sentences', controller_name: 'sentences', action_name: 'create'
-    add_openapi_route 'GET', '/v1/users/current_user_id', controller_name: 'users', action_name: 'get_current_user_id'
+    add_openapi_route 'GET', '/users/current_user_id', controller_name: 'users', action_name: 'current_user_id'
   end
 
   # google認証にアクセス
