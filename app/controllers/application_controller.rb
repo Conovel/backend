@@ -41,7 +41,7 @@ class ApplicationController < ActionController::API
 
     # JWTトークンを保存しているクッキーを削除
     cookies.delete(:jwt_token)
-    Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+    Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました-1')
     Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
     @current_user_id = nil
@@ -49,7 +49,7 @@ class ApplicationController < ActionController::API
 
     # 認証エラーを返す
     # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
-    render_error_response(401, '認証に失敗しました')
+    # render_error_response(401, '認証に失敗しました') # current_user_idの動作確認のため一時的にコメントアウト
   end
   # rubocop:enable Metrics/AbcSize
 

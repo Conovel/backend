@@ -187,7 +187,7 @@ module V1
     def delete_tokens_from_cookies
       # JWTトークンを保存しているクッキーを削除
       cookies.delete(:jwt_token)
-      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました-2')
       Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
       # リフレッシュトークンを保存しているクッキーを削除
