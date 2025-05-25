@@ -11,6 +11,9 @@
 module V1
   # UsersController
   class UsersController < ApplicationController
+    # ApplicationControllerのauthenticate_requestをスキップ
+    # skip_before_action :authenticate_request, only: %i[current_user_id]
+
     # TODO: 以下のアクションを実装する
 
     # def delete_user_by_me
@@ -20,9 +23,13 @@ module V1
     # end
 
     def current_user_id
-      # Your code here
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
-      render json: { 'message' => 'yes, it worked' }
+      if @current_user_id.present?
+        render json: { user_id: @current_user_id }, status: :ok
+      else
+        render_error_response(401, 'カレントユーザーのid取得に失敗しました')
+      end
     end
 
     # def get_novels_by_user_id
