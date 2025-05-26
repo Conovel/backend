@@ -21,7 +21,7 @@ class InitTables < ActiveRecord::Migration
     end
 
     create_table "current_user_id".pluralize.to_sym, id: false do |t|
-      t.integer :user_id
+      t.integer :current_user_id
 
       t.timestamps
     end
