@@ -23,6 +23,7 @@ class ApplicationController < ActionController::API
   def authenticate_request
     # クッキーからJWTトークンを取得
     jwt_token = cookies[:jwt_token]
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json(処理前): #{cookies[:jwt_token].to_json}")
     if jwt_token.present?
       begin
         @decoded = JwtService.decode(jwt_token)
