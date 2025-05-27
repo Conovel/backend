@@ -15,7 +15,7 @@ module V1
     include ImageHelper
 
     # ApplicationControllerのauthenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token]
+    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token log_out]
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
@@ -144,10 +144,11 @@ module V1
     def log_out
       @current_user_id = nil
       delete_tokens_from_cookies
+      Rails.logger.info('[INFO] ユーザーがログアウトしました')
       render status: :ok
     rescue StandardError => e
       Rails.logger.error("[ERROR] ログアウト処理でエラー: #{e.message}")
-      render json: { error: 'ログアウトに失敗しました', detail: e.message }, status: :internal_server_error
+      render_error_response(401, 'ログアウトに失敗しました')
     end
 
     private
@@ -190,7 +191,7 @@ module V1
     def delete_tokens_from_cookies
       # JWTトークンを保存しているクッキーを削除
       cookies.delete(:jwt_token)
-      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました-2')
+      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
       Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
 
       # リフレッシュトークンを保存しているクッキーを削除
