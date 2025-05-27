@@ -17,6 +17,7 @@ Rails.application.routes.draw do
 
   # namespace
   namespace :v1 do
+    add_openapi_route 'POST', '/auth/logout', controller_name: 'auth', action_name: 'log_out'
     add_openapi_route 'POST', '/auth/refresh', controller_name: 'auth', action_name: 'refresh_token'
     add_openapi_route 'POST', '/evaluations', controller_name: 'evaluations', action_name: 'create'
     add_openapi_route 'GET', '/novels/{title_id}', controller_name: 'novels', action_name: 'show'

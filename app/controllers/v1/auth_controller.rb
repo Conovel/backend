@@ -140,12 +140,12 @@ module V1
       handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
 
-    # TODO: ログアウト機能を実装する
-    # def log_out
-    #   # Your code here
+    # ログアウト機能を実装する
+    def log_out
+      # Your code here
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      render json: { 'message' => 'yes, it worked' }
+    end
 
     private
 
