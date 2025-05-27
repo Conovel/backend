@@ -114,7 +114,7 @@ module V1
           # 新しいJWTトークンを発行
           generate_jwt_token(user)
 
-          render json: { message: 'トークンが再発行されました' }, status: :ok
+          render status: :ok
         else
           # リフレッシュトークンが無効な場合、削除する
           delete_tokens_from_cookies
@@ -142,9 +142,12 @@ module V1
 
     # ログアウト機能を実装する
     def log_out
-      # Your code here
-
-      render json: { 'message' => 'yes, it worked' }
+      @current_user_id = nil
+      delete_tokens_from_cookies
+      render status: :ok
+    rescue StandardError => e
+      Rails.logger.error("[ERROR] ログアウト処理でエラー: #{e.message}")
+      render json: { error: 'ログアウトに失敗しました', detail: e.message }, status: :internal_server_error
     end
 
     private
