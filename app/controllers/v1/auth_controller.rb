@@ -140,7 +140,7 @@ module V1
       handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
 
-    # ログアウト機能を実装する
+    # ログアウト機能
     def log_out
       @current_user_id = nil
       delete_tokens_from_cookies

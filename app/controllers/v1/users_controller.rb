@@ -44,11 +44,11 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
-    # def get_user_by_me
-    #   # Your code here
+    def get_user_by_me
+      # Your code here
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      render json: { 'message' => 'yes, it worked' }
+    end
 
     # def get_viewed_novels_by_me
     #   # Your code here
