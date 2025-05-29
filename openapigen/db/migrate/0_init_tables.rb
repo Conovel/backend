@@ -20,12 +20,6 @@ class InitTables < ActiveRecord::Migration
       t.timestamps
     end
 
-    create_table "current_user_id".pluralize.to_sym, id: false do |t|
-      t.integer :current_user_id
-
-      t.timestamps
-    end
-
     create_table "error_response".pluralize.to_sym, id: false do |t|
       t.string :error
 
