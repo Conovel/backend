@@ -22,16 +22,6 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
-    def current_user_id
-      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
-
-      if @current_user_id.present?
-        render json: { current_user_id: @current_user_id }, status: :ok
-      else
-        render_error_response(401, 'カレントユーザーのid取得に失敗しました')
-      end
-    end
-
     # def get_novels_by_user_id
     #   # Your code here
 
@@ -45,9 +35,13 @@ module V1
     # end
 
     def get_user_by_me
-      # Your code here
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
-      render json: { 'message' => 'yes, it worked' }
+      if @current_user_id.present?
+        render json: { user_id: @current_user_id }, status: :ok
+      else
+        render_error_response(401, 'カレントユーザーのid取得に失敗しました')
+      end
     end
 
     # def get_viewed_novels_by_me
