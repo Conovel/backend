@@ -201,10 +201,10 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
-    # エラーメッセージをフロントエンドにリダイレクト
+    # エラー時はトップ画面にリダイレクト
     def handle_error_and_redirect(message)
       Rails.logger.error(message)
-      redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
+      redirect_to FRONTEND_URL.to_s, allow_other_host: true
     end
   end
 end
