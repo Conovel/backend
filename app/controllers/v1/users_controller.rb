@@ -34,16 +34,38 @@ module V1
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # rubocop:disable Metrics/AbcSize
+    # カレントユーザーの情報を取得する
     def get_user_by_me
       Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
       if @current_user_id.present?
-        render json: { user_id: @current_user_id }, status: :ok
+        user = User.includes(sentences: :evaluations).find_by(user_id: @current_user_id)
+        Rails.logger.debug("[DEBUG] ユーザー情報: #{user.to_json}") if user
+
+        if user
+          good_count = user.sentences.flat_map(&:evaluations).count { |e| e.evaluation == 'good' }
+          Rails.logger.debug("[DEBUG] 評価数: #{good_count}")
+
+          render json: {
+            user_id: user.user_id,
+            user_name: user.pen_name,
+            nick_name: user.nick_name,
+            profile_icon_image: user.profile_icon_image,
+            evaluation_good_count: good_count,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            birth_year_and_month: user.birth_ym,
+            is_anonymous: user.is_anonymous
+          }, status: :ok
+        else
+          render_error_response(404, 'ユーザーが見つかりません')
+        end
       else
         render_error_response(401, 'カレントユーザーのid取得に失敗しました')
       end
     end
-
+    # rubocop:enable Metrics/AbcSize
     # def get_viewed_novels_by_me
     #   # Your code here
 
