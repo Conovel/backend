@@ -14,7 +14,7 @@ module V1
     include ActionController::RequestForgeryProtection
     include ImageHelper
 
-    # ApplicationControllerのauthenticate_requestをスキップ
+    # authenticate_requestをスキップ
     skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token log_out]
 
     # フロントエンドのURLを定数として定義
