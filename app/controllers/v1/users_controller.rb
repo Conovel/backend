@@ -11,23 +11,26 @@
 module V1
   # UsersController
   class UsersController < ApplicationController
-    # ApplicationControllerのauthenticate_requestをスキップ
-    # skip_before_action :authenticate_request, only: %i[current_user_id]
+    # authenticate_requestをスキップ
+    # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
 
     # TODO: 以下のアクションを実装する
 
+    # 自分自身のユーザーアカウントを削除（論理削除）
     # def delete_user_by_me
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # IDで自分以外のユーザーアカウント情報を取得
     # def show
     #   # Your code here
 
@@ -35,7 +38,7 @@ module V1
     # end
 
     # rubocop:disable Metrics/AbcSize
-    # カレントユーザーの情報を取得する
+    # 自分自身のユーザーアカウント情報
     def get_user_by_me
       Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
@@ -66,12 +69,15 @@ module V1
       end
     end
     # rubocop:enable Metrics/AbcSize
+
+    # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # 自分自身のユーザーアカウント情報を更新
     # def update_user_by_me
     #   # Your code here
 
