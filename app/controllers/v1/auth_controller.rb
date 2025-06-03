@@ -142,7 +142,6 @@ module V1
 
     # ログアウト機能
     def log_out
-      @current_user_id = nil
       delete_tokens_from_cookies
       Rails.logger.info('[INFO] ユーザーがログアウトしました')
       render status: :ok
@@ -189,6 +188,10 @@ module V1
     # トークンをクッキーから削除する共通メソッド
     # rubocop:disable Metrics/AbcSize
     def delete_tokens_from_cookies
+      # カレントユーザーIDをnilに設定
+      @current_user_id = nil
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
       # JWTトークンを保存しているクッキーを削除
       cookies.delete(:jwt_token)
       Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
