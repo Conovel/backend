@@ -15,7 +15,7 @@ module V1
     include ImageHelper
 
     # authenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token log_out]
+    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token]
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
@@ -117,13 +117,13 @@ module V1
           render status: :ok
         else
           # リフレッシュトークンが無効な場合、削除する
-          delete_tokens_from_cookies
+          delete_tokens
           Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
           render_error_response(401, 'リフレッシュトークンが無効です')
         end
       else
         # リフレッシュトークンが存在しない場合、念のためクッキーをクリア
-        delete_tokens_from_cookies
+        delete_tokens
         render_error_response(401, 'リフレッシュトークンが見つかりません')
       end
     end
@@ -131,7 +131,7 @@ module V1
 
     # OmniAuthのエラー処理
     def auth_failure
-      delete_tokens_from_cookies
+      delete_tokens
 
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
@@ -142,7 +142,7 @@ module V1
 
     # ログアウト機能
     def log_out
-      delete_tokens_from_cookies
+      delete_tokens
       Rails.logger.info('[INFO] ユーザーがログアウトしました')
       render status: :ok
     rescue StandardError => e
@@ -187,9 +187,20 @@ module V1
 
     # トークンをクッキーから削除する共通メソッド
     # rubocop:disable Metrics/AbcSize
-    def delete_tokens_from_cookies
+    def delete_tokens
+      # ユーザーテーブルのリフレッシュトークンを無効化
+      if @current_user_id.present?
+        user = User.find_by(user_id: @current_user_id)
+        user&.invalidate_refresh_token
+        Rails.logger.info('[INFO] ユーザーテーブルのリフレッシュトークンが無効化されました')
+        Rails.logger.debug("[DEBUG] ユーザーテーブルのリフレッシュトークン： #{user&.refresh_token.to_json}") if user
+      else
+        Rails.logger.warn('[WARN] @current_user_id が設定されていません。リフレッシュトークンの無効化は行われませんでした。')
+      end
+
       # カレントユーザーIDをnilに設定
       @current_user_id = nil
+      Rails.logger.info('[INFO] カレントユーザーIDがリセットされました')
       Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
       # JWTトークンを保存しているクッキーを削除
