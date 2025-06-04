@@ -9,11 +9,11 @@ RSpec.describe 'Evaluations', type: :request do
   describe 'POST /v1/evaluations' do
     let(:valid_attributes) { { sentence_id: sentence.sentence_id, evaluation: 'good' } }
 
-    before do
-      # クッキーにJWTトークンを設定
-      cookies[:jwt_token] = JwtService.encode(user_id: user.id)
-      get '/v1/novels'
-    end
+    # before do
+    #   # クッキーにJWTトークンを設定
+    #   cookies[:jwt_token] = JwtService.encode(user_id: user.id)
+    #   get '/v1/novels'
+    # end
 
     context 'when the request is valid (good)' do
       it 'creates a new evaluation' do
