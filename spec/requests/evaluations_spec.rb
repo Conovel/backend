@@ -9,16 +9,15 @@ RSpec.describe 'Evaluations', type: :request do
   describe 'POST /v1/evaluations' do
     let(:valid_attributes) { { sentence_id: sentence.sentence_id, evaluation: 'good' } }
 
-    # before do
-    #   # クッキーにJWTトークンを設定
-    #   cookies[:jwt_token] = JwtService.encode(user_id: user.id)
-    #   get '/v1/novels'
-    # end
+    before do
+      # クッキーにJWTトークンを設定
+      cookies[:jwt_token] = JwtService.encode(user_id: user.id)
+      get '/v1/novels'
+    end
 
     context 'when the request is valid (good)' do
       it 'creates a new evaluation' do
-        jwt = JwtService.encode(user_id: user.id)
-        post('/v1/evaluations', params: valid_attributes, headers: { 'Cookie' => "jwt_token=#{jwt}" })
+        post('/v1/evaluations', params: valid_attributes)
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(1)
