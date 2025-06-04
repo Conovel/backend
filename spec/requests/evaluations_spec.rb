@@ -17,7 +17,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     context 'when the request is valid (good)' do
       it 'creates a new evaluation' do
-        post('/v1/evaluations', params: valid_attributes)
+        post('/v1/evaluations', params: valid_attributes, headers: { 'Cookie' => "jwt_token=#{cookies[:jwt_token]}" })
         expect(response).to have_http_status(:created)
         expect(json['sentence_id'].to_i).to eq(sentence.sentence_id)
         expect(json['evaluation_good_count']).to eq(1)
