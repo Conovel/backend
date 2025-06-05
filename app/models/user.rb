@@ -23,13 +23,20 @@ class User < ApplicationRecord
 
   # リフレッシュトークンを生成
   def generate_refresh_token
-    self.refresh_token = SecureRandom.hex(64)
+    token = SecureRandom.hex(64)
+    self.refresh_token = Digest::SHA256.hexdigest(token)
     save!
+    token
   end
 
   # リフレッシュトークンを検証
   def valid_refresh_token?(token)
-    ActiveSupport::SecurityUtils.secure_compare(refresh_token, token)
+    return false if refresh_token.blank? || token.blank?
+
+    ActiveSupport::SecurityUtils.secure_compare(
+      refresh_token,
+      Digest::SHA256.hexdigest(token)
+    )
   end
 
   # リフレッシュトークンを無効化

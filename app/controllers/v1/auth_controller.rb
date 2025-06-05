@@ -83,18 +83,20 @@ module V1
         end
 
         # JWTトークン
-        generate_jwt_token(user)
+        set_jwt_token(user)
 
         # リフレッシュトークン
-        generate_refresh_token(user)
+        set_refresh_token(user)
 
         # アカウント画面にリダイレクト
         redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
       rescue ActiveRecord::RecordInvalid => e
         # 保存に失敗した場合の処理
+        delete_tokens
         handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
       rescue StandardError => e
         # その他のエラー処理
+        delete_tokens
         handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}")
       end
     end
@@ -105,26 +107,21 @@ module V1
     def refresh_token
       refresh_token = cookies.encrypted[:refresh_token]
       Rails.logger.debug("[DEBUG] refresh_token: #{refresh_token.to_json}")
-      if refresh_token.present?
-        user = User.find_by(refresh_token:)
-        if user
-          Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
-          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
-          # 新しいJWTトークンを発行
-          generate_jwt_token(user)
+      hashed_token = Digest::SHA256.hexdigest(refresh_token)
+      user = User.find_by(refresh_token: hashed_token)
+      if user
+        Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
+        Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
-          render status: :ok
-        else
-          # リフレッシュトークンが無効な場合、削除する
-          delete_tokens
-          Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
-          render_error_response(401, 'リフレッシュトークンが無効です')
-        end
+        # 新しいJWTトークンを発行
+        set_jwt_token(user)
+        render status: :ok
       else
-        # リフレッシュトークンが存在しない場合、念のためクッキーをクリア
+        # リフレッシュトークンが無効または見つからない場合、削除する
         delete_tokens
-        render_error_response(401, 'リフレッシュトークンが見つかりません')
+        Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
+        render_error_response(401, 'リフレッシュトークンが無効です')
       end
     end
     # rubocop:enable Metrics/AbcSize
@@ -132,10 +129,7 @@ module V1
     # OmniAuthのエラー処理
     def auth_failure
       delete_tokens
-
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
-      Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
-
       # アカウント画面にリダイレクト
       handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
@@ -146,6 +140,7 @@ module V1
       Rails.logger.info('[INFO] ユーザーがログアウトしました')
       render status: :ok
     rescue StandardError => e
+      delete_tokens
       Rails.logger.error("[ERROR] ログアウト処理でエラー: #{e.message}")
       render_error_response(401, 'ログアウトに失敗しました')
     end
@@ -153,7 +148,7 @@ module V1
     private
 
     # JWTトークンを生成してクッキーに保存する
-    def generate_jwt_token(user)
+    def set_jwt_token(user)
       payload = { user_id: user.user_id }
       token = JwtService.encode(payload)
       Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
@@ -169,17 +164,18 @@ module V1
 
     # リフレッシュトークンを生成してクッキーに保存する
     # rubocop:disable Metrics/AbcSize
-    def generate_refresh_token(user)
-      user.generate_refresh_token
-      Rails.logger.debug("[DEBUG] 新しいリフレッシュトークン: #{user.refresh_token}")
+    def set_refresh_token(user)
+      # ユーザーモデルでリフレッシュトークンを生成し、返り値（生トークン）を取得
+      plain_refresh_token = user.generate_refresh_token
+      Rails.logger.debug("[DEBUG] Cookie保存値: plain_refresh_token=#{plain_refresh_token}")
+      Rails.logger.debug("[DEBUG] DB保存値: refresh_token=#{user.refresh_token}")
 
       cookies.encrypted[:refresh_token] = {
-        value: user.refresh_token,
+        value: plain_refresh_token,
         httponly: true,
         secure: Rails.env.production?,
-        expires: 30.days.from_now, # 有効期限
+        expires: 30.days.from_now,
         same_site: :strict
-        # path: '/auth/refresh' # ここを有効にするとブラウザのcookieに保存されない
       }
       Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies.encrypted[:refresh_token]}")
     end
