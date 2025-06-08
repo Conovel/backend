@@ -34,7 +34,6 @@ Rails.application.routes.draw do
 
   # google認証にアクセス
   get '/auth/:provider/callback', to: 'v1/auth#create'
-  get '/auth/failure', to: 'v1/auth#auth_failure'
 
   # Swagger UI
   mount Rswag::Ui::Engine => '/api-docs'
