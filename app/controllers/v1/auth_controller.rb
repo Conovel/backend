@@ -75,6 +75,7 @@ module V1
             Rails.logger.info('[INFO] 新しいユーザーが作成されました')
             Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
           rescue ActiveRecord::RecordInvalid => e
+            delete_tokens
             handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return
           end
