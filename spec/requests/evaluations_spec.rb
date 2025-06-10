@@ -11,8 +11,7 @@ RSpec.describe 'Evaluations', type: :request do
 
     before do
       # クッキーにJWTトークンを設定
-      cookies[:jwt_token] = JwtService.encode(user_id: user.id)
-      get '/v1/novels'
+      login_as(user)
     end
 
     context 'when the request is valid (good)' do

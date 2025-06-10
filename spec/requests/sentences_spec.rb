@@ -51,8 +51,7 @@ RSpec.describe 'Sentences', type: :request do
 
   before do
     # クッキーにJWTトークンを設定
-    cookies[:jwt_token] = JwtService.encode(user_id: users[2].id)
-    get '/v1/novels'
+    login_as(users[2])
   end
 
   # showのテスト

@@ -16,8 +16,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
     before do
       # クッキーにJWTトークンを設定
-      cookies[:jwt_token] = JwtService.encode(user_id: user.id)
-      get '/v1/novels'
+      login_as(user)
     end
 
     before do
@@ -88,8 +87,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
     before do
       # クッキーにJWTトークンを設定
-      cookies[:jwt_token] = JwtService.encode(user_id: user2.id)
-      get '/v1/novels'
+      login_as(user2)
     end
 
     before do
@@ -153,8 +151,7 @@ RSpec.describe 'V1::Novels', type: :request do
 
     before do
       # クッキーにJWTトークンを設定
-      cookies[:jwt_token] = JwtService.encode(user_id: user2.id)
-      get '/v1/novels'
+      login_as(user2)
     end
 
     # 投稿が閲覧された時のview_countとreader_countの更新のテスト
