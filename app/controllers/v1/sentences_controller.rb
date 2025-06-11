@@ -95,8 +95,8 @@ module V1
         profile_icon_image: user.profile_icon_image,
         evaluation_good_count: evaluation_counts[:good],
         evaluation_stay_count: evaluation_counts[:stay],
-        created_at: format_time(sentence.created_at),
-        updated_at: format_time(sentence.updated_at)
+        created_at: sentence.created_at,
+        updated_at: sentence.updated_at
       }
     end
 
@@ -128,8 +128,8 @@ module V1
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
-      parent_updated_at = format_time_from_string_with_strftime(sentence_params[:parent_updated_at])
-      parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
+      parent_updated_at = time_from_string_with_strftime(sentence_params[:parent_updated_at])
+      parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
       raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
