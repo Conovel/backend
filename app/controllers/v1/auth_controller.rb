@@ -172,6 +172,9 @@ module V1
       Rails.logger.debug("[DEBUG] Cookie保存値: plain_refresh_token=#{plain_refresh_token}")
       Rails.logger.debug("[DEBUG] DB保存値: refresh_token=#{user.refresh_token}")
 
+      user.update!(refresh_token_created_at: Time.current)
+      Rails.logger.debug("[DEBUG] ユーザーのリフレッシュトークン作成日時: #{user.refresh_token_created_at}")
+
       cookies.encrypted[:refresh_token] = {
         value: plain_refresh_token,
         httponly: true,
