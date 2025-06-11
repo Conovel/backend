@@ -79,6 +79,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.string 'google_sub', limit: 128, null: false
     table.text 'remarks'
     table.string 'refresh_token', limit: 255
+    table.datetime 'refresh_token_created_at'
     table.datetime 'deleted_at'
   end
 

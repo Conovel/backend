@@ -90,6 +90,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.string 'google_sub', limit: 128, null: false
     t.text 'remarks'
     t.string 'refresh_token'
+    t.datetime 'refresh_token_created_at'
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
