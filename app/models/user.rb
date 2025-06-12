@@ -44,4 +44,11 @@ class User < ApplicationRecord
     self.refresh_token = nil
     save!
   end
+
+  # リフレッシュトークンが期限切れの場合はnilに設定
+  def self.cleanup_expired_refresh_tokens
+    expiration_date = 1.month.ago
+    where('refresh_token_created_at < ?', expiration_date).update_all(refresh_token: nil, refresh_token_created_at: nil)
+    Rails.logger.info('[INFO] Expired refresh tokens have been cleaned up.')
+  end
 end

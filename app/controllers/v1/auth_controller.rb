@@ -47,7 +47,7 @@ module V1
         # ユーザー認証情報を確認
         user = User.find_by(google_sub:)
         if user.nil?
-          Rails.logger.info('新規ユーザーが見つかりません。')
+          Rails.logger.info('既存のユーザーが見つかりません。')
 
           # ユーザー情報を取得
           email = user_info['email']
