@@ -112,19 +112,28 @@ module V1
 
       hashed_token = Digest::SHA256.hexdigest(refresh_token)
       user = User.find_by(refresh_token: hashed_token)
-      if user
-        Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
-        Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
-        # 新しいJWTトークンを発行
-        set_jwt_token(user)
-        render status: :ok
-      else
-        # リフレッシュトークンが無効または見つからない場合、削除する
+      # リフレッシュトークンが無効または見つからない場合
+      unless user
         delete_tokens
         Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
         render_error_response(401, 'リフレッシュトークンが無効です')
+        return
       end
+
+      Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
+      Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
+
+      # リフレッシュトークンの期限切れチェック
+      if user.cleanup_expired_refresh_token(Time.current)
+        Rails.logger.warn('[WARN] リフレッシュトークンが期限切れのため削除されました')
+        render_error_response(401, 'リフレッシュトークンが期限切れです')
+        return
+      end
+
+      # 新しいJWTトークンを発行
+      set_jwt_token(user)
+      render status: :ok
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -172,8 +181,8 @@ module V1
       Rails.logger.debug("[DEBUG] Cookie保存値: plain_refresh_token=#{plain_refresh_token}")
       Rails.logger.debug("[DEBUG] DB保存値: refresh_token=#{user.refresh_token}")
 
-      user.update!(refresh_token_created_at: Time.current)
-      Rails.logger.debug("[DEBUG] ユーザーのリフレッシュトークン作成日時: #{user.refresh_token_created_at}")
+      user.update!(refresh_token_expires_at: 30.days.from_now)
+      Rails.logger.debug("[DEBUG] ユーザーのリフレッシュトークン有効期限: #{user.refresh_token_expires_at}")
 
       cookies.encrypted[:refresh_token] = {
         value: plain_refresh_token,

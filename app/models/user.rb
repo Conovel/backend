@@ -46,9 +46,16 @@ class User < ApplicationRecord
   end
 
   # リフレッシュトークンが期限切れの場合はnilに設定
-  def self.cleanup_expired_refresh_tokens
-    expiration_date = 1.month.ago
-    where('refresh_token_created_at < ?', expiration_date).update_all(refresh_token: nil, refresh_token_created_at: nil)
-    Rails.logger.info('[INFO] Expired refresh tokens have been cleaned up.')
+  def cleanup_expired_refresh_token(api_execution_date)
+    Rails.logger.debug("[DEBUG] ユーザーID#{id}のリフレッシュトークンの有効期限: #{refresh_token_expires_at.to_json}")
+
+    if refresh_token_expires_at.present? && refresh_token_expires_at < api_execution_date
+      update!(refresh_token: nil, refresh_token_expires_at: nil)
+      Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンを削除しました")
+      true
+    else
+      Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンはありませんでした")
+      false
+    end
   end
 end
