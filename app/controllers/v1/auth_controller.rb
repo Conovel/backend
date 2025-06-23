@@ -31,7 +31,7 @@ module V1
         # OmniAuth から認証情報を取得
         user_data = request.env['omniauth.auth']
         if user_data.nil?
-          handle_error_and_redirect('[ERROR] omniauth.auth が存在しません')
+          Rails.logger.error('[ERROR] omniauth.auth が存在しません')
           return
         end
         Rails.logger.debug("[DEBUG] user_data: #{user_data.to_json}")
@@ -76,7 +76,7 @@ module V1
             Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
           rescue ActiveRecord::RecordInvalid => e
             delete_tokens
-            handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+            Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return
           end
         else
@@ -95,11 +95,11 @@ module V1
       rescue ActiveRecord::RecordInvalid => e
         # 保存に失敗した場合の処理
         delete_tokens
-        handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+        Rails.logger.error("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
       rescue StandardError => e
         # その他のエラー処理
         delete_tokens
-        handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}")
+        Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
       end
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
@@ -142,7 +142,7 @@ module V1
       delete_tokens
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
       # アカウント画面にリダイレクト
-      handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
+      Rails.logger.error("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
 
     # ログアウト機能
@@ -224,11 +224,5 @@ module V1
       Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
     end
     # rubocop:enable Metrics/AbcSize
-
-    # エラー時はトップ画面にリダイレクト
-    def handle_error_and_redirect(message)
-      Rails.logger.error(message)
-      redirect_to FRONTEND_URL.to_s, allow_other_host: true
-    end
   end
 end
