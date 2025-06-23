@@ -110,6 +110,13 @@ module V1
       refresh_token = cookies.encrypted[:refresh_token]
       Rails.logger.debug("[DEBUG] refresh_token: #{refresh_token.to_json}")
 
+      if refresh_token.nil?
+        delete_tokens
+        Rails.logger.error('[ERROR] リフレッシュトークンが存在しません')
+        render_error_response(401, 'リフレッシュトークンが存在しません')
+        return
+      end
+
       hashed_token = Digest::SHA256.hexdigest(refresh_token)
       user = User.find_by(refresh_token: hashed_token)
 
@@ -126,6 +133,7 @@ module V1
 
       # リフレッシュトークンの期限切れチェック
       if user.cleanup_expired_refresh_token(Time.current)
+        delete_tokens
         Rails.logger.warn('[WARN] リフレッシュトークンが期限切れのため削除されました')
         render_error_response(401, 'リフレッシュトークンが期限切れです')
         return
