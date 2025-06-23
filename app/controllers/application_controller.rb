@@ -3,9 +3,11 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
-  before_action :authenticate_request
   include ErrorResponseHelper
   include ActionController::Cookies
+
+  # authenticate_requestをスキップ
+  before_action :authenticate_request
 
   # カレントユーザーを返す
   attr_reader :current_user_id
