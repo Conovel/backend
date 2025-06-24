@@ -149,7 +149,7 @@ module V1
     def auth_failure
       delete_tokens
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
-      # アカウント画面にリダイレクト
+      # ログイン画面にリダイレクト
       redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
       Rails.logger.error("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
