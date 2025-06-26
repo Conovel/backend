@@ -29,8 +29,8 @@ class User < ApplicationRecord
     token
   end
 
-  # リフレッシュトークンを検証
-  def valid_refresh_token?(token)
+  # リフレッシュトークンの値を検証
+  def valid_refresh_token_value?(token)
     return false if refresh_token.blank? || token.blank?
 
     ActiveSupport::SecurityUtils.secure_compare(
@@ -46,16 +46,16 @@ class User < ApplicationRecord
   end
 
   # リフレッシュトークンが期限切れの場合はnilに設定
-  def cleanup_expired_refresh_token(api_execution_date)
+  def valid_refresh_token_expiry?(api_execution_date)
     Rails.logger.debug("[DEBUG] ユーザーID#{id}のリフレッシュトークンの有効期限: #{refresh_token_expires_at.to_json}")
 
     if refresh_token_expires_at.present? && refresh_token_expires_at < api_execution_date
       update!(refresh_token: nil, refresh_token_expires_at: nil)
       Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンを削除しました")
-      true
+      false # トークンは無効
     else
       Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンはありませんでした")
-      false
+      true # トークンは有効
     end
   end
 end

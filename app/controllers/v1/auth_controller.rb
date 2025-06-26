@@ -132,7 +132,7 @@ module V1
       Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
 
       # リフレッシュトークンの期限切れチェック
-      if user.cleanup_expired_refresh_token(Time.current)
+      unless user.valid_refresh_token_expiry?(Time.current)
         delete_tokens
         Rails.logger.warn('[WARN] リフレッシュトークンが期限切れのため削除されました')
         render_error_response(401, 'リフレッシュトークンが期限切れです')
