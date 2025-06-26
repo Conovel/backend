@@ -176,7 +176,7 @@ module V1
         value: token,
         httponly: true, # JavaScriptからアクセスできないようにする
         secure: Rails.env.production?, # HTTPSのみで送信
-        expires: 1.hour.from_now, # 有効期限
+        expires: JWT_EXPIRATION_HOURS.hour.from_now, # 有効期限
         same_site: :strict
       }
       Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
@@ -190,14 +190,14 @@ module V1
       Rails.logger.debug("[DEBUG] Cookie保存値: plain_refresh_token=#{plain_refresh_token}")
       Rails.logger.debug("[DEBUG] DB保存値: refresh_token=#{user.refresh_token}")
 
-      user.update!(refresh_token_expires_at: 30.days.from_now)
+      user.update!(refresh_token_expires_at: REFRESH_TOKEN_EXPIRATION_DAYS.days.from_now)
       Rails.logger.debug("[DEBUG] ユーザーのリフレッシュトークン有効期限: #{user.refresh_token_expires_at}")
 
       cookies.encrypted[:refresh_token] = {
         value: plain_refresh_token,
         httponly: true,
         secure: Rails.env.production?,
-        expires: 30.days.from_now,
+        expires: REFRESH_TOKEN_EXPIRATION_DAYS.days.from_now,
         same_site: :strict
       }
       Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies.encrypted[:refresh_token]}")
