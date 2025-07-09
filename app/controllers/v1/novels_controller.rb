@@ -47,10 +47,10 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    # GET /v1/novels/{title_id}
+    # GET /v1/novels/{titleId}
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def show
-      novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
+      novel = Title.includes(:author_user, title_genres: :genre).find(params[:titleId])
 
       # 小説の基本情報を取得
       famous_sentence_record = Sentence

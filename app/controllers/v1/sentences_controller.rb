@@ -15,10 +15,10 @@ module V1
     include ErrorResponseHelper
     include EvaluationHelper
 
-    # GET /v1/sentences/:sentence_id
+    # GET /v1/sentences/:sentenceId
     # rubocop:disable Metrics/AbcSize
     def show
-      sentence = Sentence.includes(:user, :evaluations).find_by_id(params[:sentence_id])
+      sentence = Sentence.includes(:user, :evaluations).find_by(sentence_id: params[:sentenceId])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
 
       begin
@@ -38,7 +38,7 @@ module V1
     def create
       sentence = nil
       ActiveRecord::Base.transaction do
-        parent_sentence_id = sentence_params[:parent_sentence_id]
+        parent_sentence_id = sentence_params[:parentSentenceId]
         sentence_text = sentence_params[:sentence]
 
         check_sentence_length(sentence_text)
@@ -88,15 +88,15 @@ module V1
       evaluation_counts = fetch_evaluation_counts(sentence)
 
       {
-        sentence_id: sentence.sentence_id,
+        sentenceId: sentence.sentence_id,
         sentence: sentence.sentence,
-        sentence_user_id: sentence.sentence_user_id,
-        sentence_user_name: user.pen_name,
-        profile_icon_image: user.profile_icon_image,
-        evaluation_good_count: evaluation_counts[:good],
-        evaluation_stay_count: evaluation_counts[:stay],
-        created_at: sentence.created_at,
-        updated_at: sentence.updated_at
+        sentenceUserId: sentence.sentence_user_id,
+        sentenceUserName: user.pen_name,
+        profileIconImage: user.profile_icon_image,
+        evaluationGoodCount: evaluation_counts[:good],
+        evaluationStayCount: evaluation_counts[:stay],
+        createdAt: sentence.created_at,
+        updatedAt: sentence.updated_at
       }
     end
 
@@ -123,12 +123,12 @@ module V1
 
     # 投稿のパラメータを取得
     def sentence_params
-      params.permit(:parent_sentence_id, :sentence, :parent_updated_at)
+      params.permit(:parentSentenceId, :sentence, :parentUpdatedAt)
     end
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
-      parent_updated_at = time_from_string_with_strftime(sentence_params[:parent_updated_at])
+      parent_updated_at = time_from_string_with_strftime(sentence_params[:parentUpdatedAt])
       parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 

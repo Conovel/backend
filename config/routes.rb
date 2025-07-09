@@ -20,15 +20,15 @@ Rails.application.routes.draw do
     add_openapi_route 'POST', '/auth/logout', controller_name: 'auth', action_name: 'log_out'
     add_openapi_route 'POST', '/auth/refresh', controller_name: 'auth', action_name: 'refresh_token'
     add_openapi_route 'POST', '/evaluations', controller_name: 'evaluations', action_name: 'create'
-    add_openapi_route 'GET', '/novels/{title_id}', controller_name: 'novels', action_name: 'show' # TODO: パスをキャメルケースに変更
+    add_openapi_route 'GET', '/novels/{titleId}', controller_name: 'novels', action_name: 'show'
     add_openapi_route 'GET', '/novels', controller_name: 'novels', action_name: 'index'
-    add_openapi_route 'GET', '/sentences/{sentence_id}', controller_name: 'sentences', action_name: 'show' # TODO: パスをキャメルケースに変更
+    add_openapi_route 'GET', '/sentences/{sentenceId}', controller_name: 'sentences', action_name: 'show'
     add_openapi_route 'POST', '/sentences', controller_name: 'sentences', action_name: 'create'
     # add_openapi_route 'POST', '/users/me/delete', controller_name: 'users', action_name: 'delete_user_by_me'
-    # add_openapi_route 'GET', '/users/{user_id}/posted_novels', controller_name: 'users', action_name: 'get_novels_by_user_id' # TODO: パスをキャメルケースに変更
-    # add_openapi_route 'GET', '/users/{user_id}', controller_name: 'users', action_name: 'show' # TODO: パスをキャメルケースに変更
+    # add_openapi_route 'GET', '/users/{userId}/posted_novels', controller_name: 'users', action_name: 'get_novels_by_user_id'
+    # add_openapi_route 'GET', '/users/{userId}', controller_name: 'users', action_name: 'show'
     add_openapi_route 'GET', '/users/me', controller_name: 'users', action_name: 'get_user_by_me'
-    # add_openapi_route 'GET', '/users/me/viewed_novels', controller_name: 'users', action_name: 'get_viewed_novels_by_me' # TODO: パスをキャメルケースに変更
+    # add_openapi_route 'GET', '/users/me/viewedNovels', controller_name: 'users', action_name: 'get_viewed_novels_by_me'
     # add_openapi_route 'POST', '/users/me/update', controller_name: 'users', action_name: 'update_user_by_me'
   end
 
