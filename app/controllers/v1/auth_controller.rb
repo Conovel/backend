@@ -16,7 +16,7 @@ module V1
     include TimeHelper
 
     # authenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token]
+    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token log_out]
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
