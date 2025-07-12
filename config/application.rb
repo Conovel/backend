@@ -31,7 +31,7 @@ module Backend
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    config.time_zone = 'Asia/Tokyo'
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Only loads a smaller set of middleware suitable for API only apps.
@@ -60,6 +60,10 @@ module Backend
 
     # Add custom error directory to autoload and eager load paths
     config.paths.add 'app/errors', eager_load: true
+
+    # Add session middleware
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil)
   end
 end
 

@@ -95,8 +95,8 @@ module V1
         profile_icon_image: user.profile_icon_image,
         evaluation_good_count: evaluation_counts[:good],
         evaluation_stay_count: evaluation_counts[:stay],
-        created_at: format_time(sentence.created_at),
-        updated_at: format_time(sentence.updated_at)
+        created_at: sentence.created_at,
+        updated_at: sentence.updated_at
       }
     end
 
@@ -128,8 +128,8 @@ module V1
 
     # 親投稿の更新日時を確認
     def check_parent_sentence_updated(parent_sentence)
-      parent_updated_at = format_time_from_string_with_strftime(sentence_params[:parent_updated_at])
-      parent_sentence_updated_at = format_time_with_strftime(parent_sentence.updated_at)
+      parent_updated_at = time_from_string_with_strftime(sentence_params[:parent_updated_at])
+      parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
       raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
@@ -137,7 +137,7 @@ module V1
 
     # 連続投稿の確認
     def check_consecutive_self_post(parent_sentence)
-      return unless parent_sentence.sentence_user_id == current_user.id
+      return unless parent_sentence.sentence_user_id == current_user_id
 
       raise CustomError.new('自分自身の投稿の後に連続で投稿を追加することはできません。', 422)
     end
@@ -165,7 +165,7 @@ module V1
     # 新規投稿データを作成
     def build_sentence(parent_sentence, sentence_text)
       Sentence.new.tap do |sentence|
-        sentence.sentence_user_id = current_user.id
+        sentence.sentence_user_id = current_user_id
         sentence.title_id = parent_sentence.title_id
         sentence.sentence_hierarchy = parent_sentence.sentence_hierarchy + 1
         sentence.sentence = sentence_text
@@ -178,17 +178,17 @@ module V1
     def process_viewed_sentence(sentence)
       viewed_sentence = ViewedSentence.find_or_initialize_by(
         viewed_sentence_id: sentence.sentence_id,
-        viewed_user_id: current_user.id
+        viewed_user_id: current_user_id
       )
       viewed_sentence.viewed_at = Time.current
 
       # 新規・更新判定デバッグ用ログ
       if viewed_sentence.new_record?
         # 新規ログ
-        Rails.logger.info("[INFO]viewed_sentence(新規) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+        Rails.logger.debug("[DEBUG]viewed_sentence(新規) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
       else
         # 更新ログ
-        Rails.logger.info("[INFO]viewed_sentence(更新) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user.id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
+        Rails.logger.debug("[DEBUG]viewed_sentence(更新) - sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, viewed_at: #{viewed_sentence.viewed_at}, created_at: #{viewed_sentence.created_at}, updated_at: #{viewed_sentence.updated_at}")
       end
 
       viewed_sentence.save! # 新規・更新共通処理

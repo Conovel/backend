@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   end
 
   add_openapi_route 'POST', '/v1/auth/logout', controller_name: 'auth', action_name: 'log_out'
+  add_openapi_route 'POST', '/v1/auth/refresh', controller_name: 'auth', action_name: 'refresh_token'
   add_openapi_route 'POST', '/v1/evaluations', controller_name: 'evaluations', action_name: 'create'
   add_openapi_route 'GET', '/v1/novels/{title_id}', controller_name: 'novels', action_name: 'show'
   add_openapi_route 'GET', '/v1/novels', controller_name: 'novels', action_name: 'index'

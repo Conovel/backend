@@ -14,4 +14,10 @@ class AuthController < ApplicationController
 
     render json: {"message" => "yes, it worked"}
   end
+
+  def refresh_token
+    # Your code here
+
+    render json: {"message" => "yes, it worked"}
+  end
 end

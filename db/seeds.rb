@@ -37,7 +37,8 @@ users = User.create!([
                          is_anonymous: false,
                          profile_icon_image: 'icon1.png',
                          email: 'user1@example.com',
-                         google_sub: 'sub1'
+                         google_sub: 'sub1',
+                         refresh_token: SecureRandom.hex(64)
                        },
                        {
                          pen_name: 'コノベル二郎',
@@ -47,7 +48,8 @@ users = User.create!([
                          is_anonymous: false,
                          profile_icon_image: 'icon2.png',
                          email: 'user2@example.com',
-                         google_sub: 'sub2'
+                         google_sub: 'sub2',
+                         refresh_token: SecureRandom.hex(64)
                        },
                        {
                          pen_name: 'コノベル三郎',
@@ -57,7 +59,8 @@ users = User.create!([
                          is_anonymous: false,
                          profile_icon_image: 'icon3.png',
                          email: 'user3@example.com',
-                         google_sub: 'sub3'
+                         google_sub: 'sub3',
+                         refresh_token: SecureRandom.hex(64)
                        },
                        {
                          pen_name: 'コノベル四郎',
@@ -67,7 +70,8 @@ users = User.create!([
                          is_anonymous: false,
                          profile_icon_image: 'icon4.png',
                          email: 'user4@example.com',
-                         google_sub: 'sub4'
+                         google_sub: 'sub4',
+                         refresh_token: SecureRandom.hex(64)
                        }
                      ])
 

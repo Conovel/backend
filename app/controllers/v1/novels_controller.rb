@@ -11,6 +11,9 @@
 module V1
   # NovelsController
   class NovelsController < ApplicationController
+    # authenticate_requestをスキップ
+    skip_before_action :authenticate_request, only: %i[index show]
+
     # GET /v1/novels
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def index

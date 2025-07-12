@@ -104,4 +104,29 @@ RSpec.configure do |config|
   #   Rails.logger = Logger.new(STDOUT)
   #   Rails.logger.level = Logger::DEBUG
   # end
+
+  # Google認証のモック設定
+  OmniAuth.config.test_mode = true
+  OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
+    provider: 'google_oauth2',
+    uid: '123456789',
+    info: {
+      email: 'test@example.com',
+      name: 'Test User',
+      image: 'https://placehold.jp/150x150.png'
+    },
+    credentials: {
+      token: 'mock_token',
+      refresh_token: 'mock_refresh_token',
+      expires_at: Time.now + 1.week
+    },
+    extra: {
+      raw_info: {
+        email: 'test@example.com',
+        email_verified: true,
+        sub: '123456789',
+        picture: 'https://placehold.jp/150x150.png'
+      }
+    }
+  )
 end

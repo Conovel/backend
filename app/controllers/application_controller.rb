@@ -4,17 +4,13 @@
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
   include ErrorResponseHelper
+  include ActionController::Cookies
 
-  # 仮のcurrent_userメソッド
-  def current_user
-    # 仮のユーザーオブジェクトを返す
-    Struct.new(:id).new(2) # 仮のユーザーIDを2とする
-  end
+  # authenticate_requestをスキップ
+  before_action :authenticate_request
 
-  # Google認証実装後のcurrent_userメソッド
-  # def current_user
-  #   @current_user ||= User.find(session[:user_id]) if session[:user_id]
-  # end
+  # カレントユーザーを返す
+  attr_reader :current_user_id
 
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
@@ -23,6 +19,43 @@ class ApplicationController < ActionController::API
   rescue_from CustomError, with: :handle_custom_error
 
   private
+
+  # リクエストの認証
+  # rubocop:disable Metrics/AbcSize
+  def authenticate_request
+    # クッキーからJWTトークンを取得
+    jwt_token = cookies[:jwt_token]
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json(処理前): #{cookies[:jwt_token].to_json}")
+    if jwt_token.present?
+      begin
+        @decoded = JwtService.decode(jwt_token)
+        Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
+        Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
+
+        @current_user_id = @decoded['user_id']
+        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+        return
+      rescue JWT::ExpiredSignature
+        Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
+      rescue JWT::DecodeError => e
+        Rails.logger.error("[ERROR] JWTデコードエラー - e.message: #{e.message}")
+      end
+    end
+
+    # JWTトークンを保存しているクッキーを削除
+    cookies.delete(:jwt_token)
+    Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
+    @current_user_id = nil
+    Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
+    # 認証エラーを返す
+    # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
+    # ログアウトでも影響ないAPIをskipすれば良い
+    render_error_response(401, '認証に失敗しました') # current_user_idの動作確認のため一時的にコメントアウト
+  end
+  # rubocop:enable Metrics/AbcSize
 
   # 標準的な例外の処理
   def handle_standard_error(exception)
