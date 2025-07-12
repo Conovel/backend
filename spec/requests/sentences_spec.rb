@@ -43,9 +43,9 @@ RSpec.describe 'Sentences', type: :request do
   # createのデータ
   let(:valid_attributes) do
     {
-      parent_sentence_id: parent_sentence.sentence_id,
+      parentSentenceId: parent_sentence.sentence_id,
       sentence: '投稿追加テストです。',
-      parent_updated_at: parent_sentence.updated_at
+      parentUpdatedAt: parent_sentence.updated_at
     }
   end
 
@@ -63,9 +63,6 @@ RSpec.describe 'Sentences', type: :request do
         get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-
-        # レスポンスを確認
-        # puts json_response
 
         expect(json_response['main']['sentence']).to eq('いいいいい')
         expect(json_response).to have_key('parent')
@@ -131,7 +128,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when parent_sentence_id does not exist' do
       it 'returns an unprocessable entity status' do
-        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: 100))
+        post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: 100))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)
@@ -141,7 +138,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'with invalid parameters' do
       it 'returns a conflict status' do
-        post(v1_sentences_path, params: valid_attributes.merge(parent_updated_at: '2024-01-01T01:01:09.292+09:00'))
+        post(v1_sentences_path, params: valid_attributes.merge(parentUpdatedAt: '2024-01-01T01:01:09.292+09:00'))
         expect(response).to have_http_status(:conflict)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(409)
@@ -152,7 +149,7 @@ RSpec.describe 'Sentences', type: :request do
     context 'when consecutive self post is detected' do
       it 'returns an unprocessable entity status' do
         post_user_id = users[2].id # 連続投稿のユーザーID
-        post(v1_sentences_path, params: valid_attributes.merge(parent_sentence_id: post_user_id))
+        post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: post_user_id))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['error']['code']).to eq(422)

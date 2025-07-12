@@ -51,15 +51,15 @@ module V1
           Rails.logger.debug("[DEBUG] 評価数: #{good_count}")
 
           render json: {
-            user_id: user.user_id,
-            user_name: user.pen_name,
-            nick_name: user.nick_name,
-            profile_icon_image: user.profile_icon_image,
-            evaluation_good_count: good_count,
-            created_at: user.created_at,
-            updated_at: user.updated_at,
-            birth_year_and_month: user.birth_ym,
-            is_anonymous: user.is_anonymous
+            userId: user.user_id,
+            userName: user.pen_name,
+            nickName: user.nick_name,
+            profileIconImage: user.profile_icon_image,
+            evaluationGoodCount: good_count,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+            birthYearAndMonth: user.birth_ym,
+            isAnonymous: user.is_anonymous
           }, status: :ok
         else
           render_error_response(404, 'ユーザーが見つかりません')

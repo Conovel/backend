@@ -50,10 +50,7 @@ class ApplicationController < ActionController::API
     @current_user_id = nil
     Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
-    # 認証エラーを返す
-    # TODO：今は一律でエラーのjsonを返しているがここは未ログイン時の出し分けトリガーにしたい
-    # ログアウトでも影響ないAPIをskipすれば良い
-    render_error_response(401, '認証に失敗しました') # current_user_idの動作確認のため一時的にコメントアウト
+    render_error_response(401, '認証に失敗しました')
   end
   # rubocop:enable Metrics/AbcSize
 

@@ -47,10 +47,10 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    # GET /v1/novels/{title_id}
+    # GET /v1/novels/{titleId}
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def show
-      novel = Title.includes(:author_user, title_genres: :genre).find(params[:title_id])
+      novel = Title.includes(:author_user, title_genres: :genre).find(params[:titleId])
 
       # 小説の基本情報を取得
       famous_sentence_record = Sentence
@@ -111,29 +111,29 @@ module V1
       sentences = novel.sentences
 
       {
-        title_id: novel.title_id,
+        titleId: novel.title_id,
         title: novel.title,
-        famous_sentence_text: famous_sentence_text || '',
-        author_user_id: author_user.user_id,
-        author_user_name: author_user.pen_name,
-        profile_icon_image: author_user.profile_icon_image,
-        title_genres: title_genres.map(&:genre_name),
-        is_new: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
-        is_famous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
-        view_count: sentences.sum(&:viewed_sentences_count),
-        evaluation_good_count: total_good_count || 0,
-        created_at: novel.created_at,
-        updated_at: novel.updated_at
+        famousSentenceText: famous_sentence_text || '',
+        authorUserId: author_user.user_id,
+        authorUserName: author_user.pen_name,
+        profileIconImage: author_user.profile_icon_image,
+        titleGenres: title_genres.map(&:genre_name),
+        isNew: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
+        isFamous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
+        viewCount: sentences.sum(&:viewed_sentences_count),
+        evaluationGoodCount: total_good_count || 0,
+        createdAt: novel.created_at,
+        updatedAt: novel.updated_at
       }
     end
     # rubocop:enable Metrics/AbcSize
 
     def build_novel_detail_data(novel, sentence_hierarchy_count, sentence_user_count, reader_count)
       {
-        main_copy: novel.main_copy,
-        sentence_user_count: sentence_user_count || 0,
-        sentence_hierarchy_count: sentence_hierarchy_count || 0,
-        reader_count: reader_count || 0,
+        mainCopy: novel.main_copy,
+        sentenceUserCount: sentence_user_count || 0,
+        sentenceHierarchyCount: sentence_hierarchy_count || 0,
+        readerCount: reader_count || 0,
         overview: novel.overview
       }
     end
