@@ -9,5 +9,14 @@ NEW_PERIOD_DAYS = 30 # 仮番号
 # 評価が有名と見なされるための最小件数
 FAMOUS_EVALUATION_THRESHOLD = 5 # 仮番号
 
-# セッションの有効期限
-SESSION_EXPIRATION_TIME = 30.minutes
+# アイコン画像サイズ
+PROFILE_ICON_IMAGE_SIZE = 112 # アイコンは56pxで表示したいがRetina対応で倍のサイズにした方が良い？
+
+# タイムアウト時間（秒）
+TIMEOUT_SECONDS = 5
+
+# JWTの有効期間（時間）
+JWT_EXPIRATION_HOURS = 1
+
+# リフレッシュトークンの有効期間（日数）
+REFRESH_TOKEN_EXPIRATION_DAYS = 30

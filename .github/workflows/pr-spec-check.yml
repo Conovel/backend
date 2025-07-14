@@ -1,0 +1,82 @@
+name: Rails Build & Spec Check
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        ports: ['3306:3306']
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      RAILS_ENV: test
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      DATABASE_URL: mysql2://root:root@127.0.0.1:3306/test_db
+      JWT_SECRET_KEY: app_omniauth_jwt_key
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.4
+          bundler-cache: true
+
+      - name: Setup Node.js (if needed for Webpacker/Vite)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Yarn packages
+        run: |
+          if [ -f yarn.lock ]; then
+            yarn install
+          fi
+
+      - name: Generate config/database.yml for test
+        run: |
+          cat <<EOF > config/database.yml
+          test:
+            adapter: mysql2
+            encoding: utf8mb4
+            collation: utf8mb4_unicode_ci
+            pool: 5
+            database: test_db
+            username: root
+            password: root
+            host: 127.0.0.1
+            port: 3306
+          EOF
+
+      - name: Set up DB
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+          bundle exec rails db:seed
+
+      - name: Run RSpec
+        run: bundle exec rspec
+
+      - name: Upload Rails logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rails-logs
+          path: log/

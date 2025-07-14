@@ -19,4 +19,43 @@ class User < ApplicationRecord
   validates :profile_icon_image, presence: true
   validates :email, presence: true, uniqueness: true
   validates :google_sub, presence: true, uniqueness: true, length: { maximum: 128 }
+  validates :refresh_token, uniqueness: true, allow_nil: true
+
+  # リフレッシュトークンを生成
+  def generate_refresh_token
+    token = SecureRandom.hex(64)
+    self.refresh_token = Digest::SHA256.hexdigest(token)
+    save!
+    token
+  end
+
+  # リフレッシュトークンの値を検証
+  def valid_refresh_token_value?(token)
+    return false if refresh_token.blank? || token.blank?
+
+    ActiveSupport::SecurityUtils.secure_compare(
+      refresh_token,
+      Digest::SHA256.hexdigest(token)
+    )
+  end
+
+  # リフレッシュトークンを無効化
+  def invalidate_refresh_token
+    self.refresh_token = nil
+    save!
+  end
+
+  # リフレッシュトークンが期限切れの場合はnilに設定
+  def valid_refresh_token_expiry?(api_execution_date)
+    Rails.logger.debug("[DEBUG] ユーザーID#{id}のリフレッシュトークンの有効期限: #{refresh_token_expires_at.to_json}")
+
+    if refresh_token_expires_at.present? && refresh_token_expires_at < api_execution_date
+      update!(refresh_token: nil, refresh_token_expires_at: nil)
+      Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンを削除しました")
+      false # トークンは無効
+    else
+      Rails.logger.info("[INFO] ユーザーID#{id}の期限切れリフレッシュトークンはありませんでした")
+      true # トークンは有効
+    end
+  end
 end

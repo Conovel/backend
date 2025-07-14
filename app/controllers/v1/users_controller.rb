@@ -11,32 +11,66 @@
 module V1
   # UsersController
   class UsersController < ApplicationController
+    # authenticate_requestをスキップ
+    # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
+
     # TODO: 以下のアクションを実装する
 
+    # 自分自身のユーザーアカウントを削除（論理削除）
     # def delete_user_by_me
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # IDで自分以外のユーザーアカウント情報を取得
     # def show
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
-    # def get_user_by_me
-    #   # Your code here
+    # rubocop:disable Metrics/AbcSize
+    # 自分自身のユーザーアカウント情報
+    def get_user_by_me
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      if @current_user_id.present?
+        user = User.includes(sentences: :evaluations).find_by(user_id: @current_user_id)
+        Rails.logger.debug("[DEBUG] ユーザー情報: #{user.to_json}") if user
 
+        if user
+          good_count = user.sentences.flat_map(&:evaluations).count { |e| e.evaluation == 'good' }
+          Rails.logger.debug("[DEBUG] 評価数: #{good_count}")
+
+          render json: {
+            userId: user.user_id,
+            userName: user.pen_name,
+            nickName: user.nick_name,
+            profileIconImage: user.profile_icon_image,
+            evaluationGoodCount: good_count,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+            birthYearAndMonth: user.birth_ym,
+            isAnonymous: user.is_anonymous
+          }, status: :ok
+        else
+          render_error_response(404, 'ユーザーが見つかりません')
+        end
+      else
+        render_error_response(401, 'カレントユーザーのid取得に失敗しました')
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
     #   # Your code here
 
@@ -46,7 +80,7 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
       # ログイン中のユーザーを取得
-      user = User.find_by!(user_id: current_user.id)
+      user = User.find_by!(user_id: @current_user_id)
       Rails.logger.info("[INFO]カレントユーザー情報 - user: #{user.to_json}")
 
       # Good評価のカウントを取得
@@ -60,7 +94,17 @@ module V1
       return unless user.update!(user_params)
 
       # 更新成功時のレスポンス
-      render json: build_response(user, evaluation_good_count), status: :ok
+      render json: {
+        userId: user.id,
+        penName: user.pen_name,
+        nickName: user.nick_name,
+        birthYm: user.birth_ym, # 追加項目
+        isAnonymous: user.is_anonymous, # 追加項目
+        profileIconImage: user.profile_icon_image,
+        evaluationGoodCount:,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      }, status: :ok
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -70,20 +114,6 @@ module V1
       Rails.logger.info("[INFO]user_params: #{params}")
       params.require(:user).permit(:pen_name, :nick_name, :birth_ym, :agreed_terms_version, :is_anonymous,
                                    :profile_icon_image, :remarks)
-    end
-
-    def build_response(user, evaluation_good_count)
-      {
-        user_id: user.id,
-        pen_name: user.pen_name,
-        nick_name: user.nick_name,
-        birth_ym: user.birth_ym, # 追加項目
-        is_anonymous: user.is_anonymous, # 追加項目
-        profile_icon_image: user.profile_icon_image,
-        evaluation_good_count:,
-        created_at: user.created_at,
-        updated_at: user.updated_at
-      }
     end
 
     # カスタムエラーメッセージを定義

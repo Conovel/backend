@@ -78,6 +78,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.string 'email', limit: 255, null: false # uniqueのindexを設定するために文字数制限が必要
     table.string 'google_sub', limit: 128, null: false
     table.text 'remarks'
+    table.string 'refresh_token', limit: 255
+    table.datetime 'refresh_token_expires_at'
     table.datetime 'deleted_at'
   end
 
@@ -175,6 +177,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :titles, :deleted_at
     add_index :users, :email, unique: true
     add_index :users, :google_sub, unique: true
+    add_index :users, :refresh_token, unique: true
     add_index :users, :deleted_at
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
