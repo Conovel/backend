@@ -79,32 +79,42 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
-      # ログイン中のユーザーを取得
       user = User.find_by!(user_id: @current_user_id)
-      Rails.logger.info("[INFO]カレントユーザー情報 - user: #{user.to_json}")
+      Rails.logger.debug("[DEBUG]カレントユーザー情報 - user: #{user.to_json}")
 
-      # Good評価のカウントを取得
-      evaluation_good_count = Evaluation.joins(:sentence)
-                                        .where(sentences: { sentence_user_id: user.user_id })
-                                        .where(evaluation: 'good')
-                                        .count
-      Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
+      # パラメータをスネークケースからキャメルケースに変換
+      transformed_params = params.transform_keys(&:underscore)
+      Rails.logger.debug("[DEBUG] 変換後のパラメータ: #{transformed_params.to_json}")
 
-      # パラメータを使って更新
-      return unless user.update!(user_params)
+      update_hash = transformed_params.dup
+      update_hash['pen_name'] = update_hash.delete('user_name') if update_hash['user_name']
 
-      # 更新成功時のレスポンス
-      render json: {
-        userId: user.id,
-        penName: user.pen_name,
-        nickName: user.nick_name,
-        birthYm: user.birth_ym, # 追加項目
-        isAnonymous: user.is_anonymous, # 追加項目
-        profileIconImage: user.profile_icon_image,
-        evaluationGoodCount:,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at
-      }, status: :ok
+      # user_nameからpen_nameに変換（TODD: 将来は統一予定）
+      if user.update(update_hash.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
+                                        :agreed_terms_version, :remarks))
+        user.reload # 最新状態取得
+        evaluation_good_count = Evaluation.joins(:sentence)
+                                          .where(sentences: { sentence_user_id: user.user_id })
+                                          .where(evaluation: 'good')
+                                          .count
+        Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
+
+        render json: {
+          userId: user.user_id,
+          userName: user.pen_name,
+          nickName: user.nick_name,
+          birthYm: user.birth_ym,
+          isAnonymous: user.is_anonymous,
+          profileIconImage: user.profile_icon_image,
+          evaluationGoodCount: evaluation_good_count,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        }, status: :ok
+      else
+        render json: { error: { message: custom_record_invalid_message(ActiveRecord::RecordInvalid.new(user)) } },
+               status: :unprocessable_entity
+        nil
+      end
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -112,8 +122,8 @@ module V1
 
     def user_params
       Rails.logger.info("[INFO]user_params: #{params}")
-      params.require(:user).permit(:pen_name, :nick_name, :birth_ym, :agreed_terms_version, :is_anonymous,
-                                   :profile_icon_image, :remarks)
+      params.permit(:user_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym, :agreed_terms_version,
+                    :remarks)
     end
 
     # カスタムエラーメッセージを定義
