@@ -90,8 +90,8 @@ module V1
       update_hash['pen_name'] = update_hash.delete('user_name') if update_hash['user_name']
 
       # user_nameからpen_nameに変換（TODD: 将来は統一予定）
-      if user.update(update_hash.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
-                                        :agreed_terms_version, :remarks))
+      if user.update!(update_hash.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
+                                         :agreed_terms_version, :remarks))
         user.reload # 最新状態取得
         evaluation_good_count = Evaluation.joins(:sentence)
                                           .where(sentences: { sentence_user_id: user.user_id })
@@ -110,10 +110,6 @@ module V1
           createdAt: user.created_at,
           updatedAt: user.updated_at
         }, status: :ok
-      else
-        render json: { error: { message: custom_record_invalid_message(ActiveRecord::RecordInvalid.new(user)) } },
-               status: :unprocessable_entity
-        nil
       end
     end
     # rubocop:enable Metrics/AbcSize
