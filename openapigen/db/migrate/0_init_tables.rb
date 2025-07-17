@@ -108,6 +108,9 @@ class InitTables < ActiveRecord::Migration
       t.string :nick_name
       t.boolean :is_anonymous
       t.string :profile_icon_image
+      t.string :birth_ym
+      t.integer :agreed_terms_version
+      t.string :remarks
 
       t.timestamps
     end
