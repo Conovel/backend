@@ -116,12 +116,6 @@ module V1
 
     private
 
-    def user_params
-      Rails.logger.info("[INFO]user_params: #{params}")
-      params.permit(:user_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym, :agreed_terms_version,
-                    :remarks)
-    end
-
     # カスタムエラーメッセージを定義
     def custom_record_invalid_message(exception)
       "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
