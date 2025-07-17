@@ -14,7 +14,7 @@ class User < ApplicationRecord
   validates :pen_name, presence: true, length: { maximum: 32 }
   validates :nick_name, presence: true, length: { maximum: 32 }
   validates :birth_ym, presence: true, length: { is: 6 }
-  validates :agreed_terms_version, presence: true, numericality: { only_integer: true }
+  validates :agreed_terms_version, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :is_anonymous, inclusion: { in: [true, false] }
   validates :profile_icon_image, presence: true
   validates :email, presence: true, uniqueness: true
