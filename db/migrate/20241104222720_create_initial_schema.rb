@@ -74,7 +74,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.string 'birth_ym', limit: 6, null: false # dateだと8桁（YYYYMMDD）になるためstringの6桁（YYYYMM）にする
     table.integer 'agreed_terms_version', null: false, unsigned: true
     table.boolean 'is_anonymous', null: false
-    table.text 'profile_icon_image', null: false
+    table.text 'profile_icon_image'
     table.string 'email', limit: 255, null: false # uniqueのindexを設定するために文字数制限が必要
     table.string 'google_sub', limit: 128, null: false
     table.text 'remarks'

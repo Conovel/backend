@@ -13,7 +13,6 @@ class UpdateUser < ApplicationRecord
   validates_presence_of :user_name
   validates_presence_of :nick_name
   validates_presence_of :is_anonymous
-  validates_presence_of :profile_icon_image
   validates_presence_of :birth_ym
   validates_presence_of :agreed_terms_version
 

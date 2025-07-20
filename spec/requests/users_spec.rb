@@ -20,7 +20,7 @@ RSpec.describe 'V1::UsersController', type: :request do
         birthYm: '199001',
         agreedTermsVersion: 1,
         isAnonymous: false,
-        profileIconImage: 'icon2.png'
+        profileIconImage: '' # null許容
       }
     end
     let(:invalid_params) do
@@ -30,7 +30,7 @@ RSpec.describe 'V1::UsersController', type: :request do
         birthYm: '199001',
         agreedTermsVersion: 1,
         isAnonymous: false,
-        profileIconImage: 'icon2.png'
+        profileIconImage: '' # null許容
       }
     end
     let(:miissing_params) do
@@ -40,7 +40,7 @@ RSpec.describe 'V1::UsersController', type: :request do
         birthYm: '199001',
         agreedTermsVersion: 1,
         isAnonymous: false,
-        profileIconImage: 'icon2.png',
+        profileIconImage: '', # null許容
         xxx: 'NewNickName' # 存在しないパラメータ
       }
     end

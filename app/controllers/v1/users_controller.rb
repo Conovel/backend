@@ -80,7 +80,7 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
       # パラメータの存在チェック
-      required_keys = %w[userName nickName isAnonymous profileIconImage birthYm agreedTermsVersion]
+      required_keys = %w[userName nickName isAnonymous birthYm agreedTermsVersion]
       missing_keys = required_keys.reject { |key| params.key?(key) }
       if missing_keys.any?
         render_error_response(422, "必須項目が不足しています: #{missing_keys.join(', ')}")
