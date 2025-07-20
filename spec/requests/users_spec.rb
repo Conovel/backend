@@ -15,20 +15,32 @@ RSpec.describe 'V1::UsersController', type: :request do
 
     let(:valid_params) do
       {
-        userName: 'NewPenName',
-        nickName: 'NewNickName'
+        userName: 'コノベル新太郎',
+        nickName: 'ジロさん',
+        birthYm: '199001',
+        agreedTermsVersion: 1,
+        isAnonymous: false,
+        profileIconImage: 'icon2.png'
       }
     end
     let(:invalid_params) do
       {
         userName: '', # 無効な値
-        nickName: 'NewNickName'
+        nickName: 'ジロさん',
+        birthYm: '199001',
+        agreedTermsVersion: 1,
+        isAnonymous: false,
+        profileIconImage: 'icon2.png'
       }
     end
     let(:miissing_params) do
       {
-        userName: 'NewPenName',
-        nickName: 'NewNickName',
+        userName: 'コノベル新太郎',
+        nickName: 'ジロさん',
+        birthYm: '199001',
+        agreedTermsVersion: 1,
+        isAnonymous: false,
+        profileIconImage: 'icon2.png',
         xxx: 'NewNickName' # 存在しないパラメータ
       }
     end
