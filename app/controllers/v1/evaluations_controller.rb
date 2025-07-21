@@ -16,12 +16,7 @@ module V1
     def create
       # パラメータの存在チェック
       required_keys = %w[sentenceId evaluation]
-      missing_keys = required_keys.reject { |key| params.key?(key) }
-      if missing_keys.any?
-        render_error_response(422, "必須項目が不足しています: #{missing_keys.join(', ')}")
-        Rails.logger.error("[ERROR] 必須項目が不足しています: #{missing_keys.join(', ')}")
-        return
-      end
+      return unless check_required_keys(params, required_keys)
 
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentenceId],
                                                     evaluator_user_id: current_user_id)
