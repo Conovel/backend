@@ -36,6 +36,15 @@ module V1
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
     def create
+      # パラメータの存在チェック
+      required_keys = %w[parentSentenceId parentUpdatedAt sentence]
+      missing_keys = required_keys.reject { |key| params.key?(key) }
+      if missing_keys.any?
+        render_error_response(422, "必須項目が不足しています: #{missing_keys.join(', ')}")
+        Rails.logger.error("[ERROR] 必須項目が不足しています: #{missing_keys.join(', ')}")
+        return
+      end
+
       sentence = nil
       ActiveRecord::Base.transaction do
         parent_sentence_id = sentence_params[:parentSentenceId]
