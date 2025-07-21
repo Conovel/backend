@@ -45,7 +45,7 @@ class InitTables < ActiveRecord::Migration
       t.string :title
       t.string :famous_sentence_text
       t.integer :author_user_id
-      t.string :author_user_name
+      t.string :author_pen_name
       t.string :profile_icon_image
       t.string :title_genres
       t.boolean :is_new
@@ -68,7 +68,7 @@ class InitTables < ActiveRecord::Migration
       t.string :title
       t.string :famous_sentence_text
       t.integer :author_user_id
-      t.string :author_user_name
+      t.string :author_pen_name
       t.string :profile_icon_image
       t.string :title_genres
       t.boolean :is_new
@@ -93,7 +93,7 @@ class InitTables < ActiveRecord::Migration
       t.integer :sentence_id
       t.string :sentence
       t.integer :sentence_user_id
-      t.string :sentence_user_name
+      t.string :sentence_pen_name
       t.string :profile_icon_image
       t.integer :evaluation_good_count
       t.integer :evaluation_stay_count
@@ -104,7 +104,7 @@ class InitTables < ActiveRecord::Migration
     end
 
     create_table "update_user".pluralize.to_sym, id: false do |t|
-      t.string :user_name
+      t.string :pen_name
       t.string :nick_name
       t.boolean :is_anonymous
       t.string :profile_icon_image
@@ -117,7 +117,7 @@ class InitTables < ActiveRecord::Migration
 
     create_table "user".pluralize.to_sym, id: false do |t|
       t.integer :user_id
-      t.string :user_name
+      t.string :pen_name
       t.string :nick_name
       t.string :profile_icon_image
       t.integer :evaluation_good_count
@@ -137,7 +137,7 @@ class InitTables < ActiveRecord::Migration
 
     create_table "view_me_user".pluralize.to_sym, id: false do |t|
       t.integer :user_id
-      t.string :user_name
+      t.string :pen_name
       t.string :nick_name
       t.string :profile_icon_image
       t.integer :evaluation_good_count

@@ -52,7 +52,7 @@ module V1
 
           render json: {
             userId: user.user_id,
-            userName: user.pen_name,
+            penName: user.pen_name,
             nickName: user.nick_name,
             profileIconImage: user.profile_icon_image,
             evaluationGoodCount: good_count,
@@ -80,7 +80,7 @@ module V1
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
       # パラメータの存在チェック
-      required_keys = %w[userName nickName isAnonymous birthYm agreedTermsVersion]
+      required_keys = %w[penName nickName isAnonymous birthYm agreedTermsVersion]
       return unless check_required_keys(params, required_keys)
 
       user = User.find_by!(user_id: @current_user_id)
@@ -90,12 +90,8 @@ module V1
       transformed_params = params.transform_keys(&:underscore)
       Rails.logger.debug("[DEBUG] 変換後のパラメータ: #{transformed_params.to_json}")
 
-      update_hash = transformed_params.dup
-      update_hash['pen_name'] = update_hash.delete('user_name') if update_hash['user_name']
-
-      # user_nameからpen_nameに変換（TODD: 将来は統一予定）
-      if user.update!(update_hash.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
-                                         :agreed_terms_version, :remarks))
+      if user.update!(transformed_params.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
+                                                :agreed_terms_version, :remarks))
         user.reload # 最新状態取得
         evaluation_good_count = Evaluation.joins(:sentence)
                                           .where(sentences: { sentence_user_id: user.user_id })
@@ -105,7 +101,7 @@ module V1
 
         render json: {
           userId: user.user_id,
-          userName: user.pen_name,
+          penName: user.pen_name,
           nickName: user.nick_name,
           birthYm: user.birth_ym,
           isAnonymous: user.is_anonymous,

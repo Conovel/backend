@@ -95,7 +95,7 @@ module V1
         sentenceId: sentence.sentence_id,
         sentence: sentence.sentence,
         sentenceUserId: sentence.sentence_user_id,
-        sentenceUserName: user.pen_name,
+        sentencePenName: user.pen_name,
         profileIconImage: user.profile_icon_image,
         evaluationGoodCount: evaluation_counts[:good],
         evaluationStayCount: evaluation_counts[:stay],

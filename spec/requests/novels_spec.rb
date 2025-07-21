@@ -37,7 +37,7 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
       expect(json_response['authorUserId']).to eq(user.user_id)
-      expect(json_response['authorUserName']).to eq(user.pen_name)
+      expect(json_response['authorPenName']).to eq(user.pen_name)
       expect(json_response['profileIconImage']).to eq(user.profile_icon_image)
       expect(json_response['isNew']).to be_truthy
       expect(json_response['isFamous']).to be_truthy
@@ -103,7 +103,7 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
       expect(json_response['authorUserId']).to eq(user1.user_id)
-      expect(json_response['authorUserName']).to eq(user1.pen_name)
+      expect(json_response['authorPenName']).to eq(user1.pen_name)
       expect(json_response['profileIconImage']).to eq(user1.profile_icon_image)
       expect(json_response['isNew']).to be_truthy
       expect(json_response['isFamous']).to be_truthy

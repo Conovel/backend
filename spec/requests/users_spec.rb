@@ -15,7 +15,7 @@ RSpec.describe 'V1::UsersController', type: :request do
 
     let(:valid_params) do
       {
-        userName: 'コノベル新太郎',
+        penName: 'コノベル新太郎',
         nickName: 'ジロさん',
         birthYm: '199001',
         agreedTermsVersion: 1,
@@ -25,7 +25,7 @@ RSpec.describe 'V1::UsersController', type: :request do
     end
     let(:invalid_params) do
       {
-        userName: '', # 無効な値
+        penName: '', # 無効な値
         nickName: 'ジロさん',
         birthYm: '199001',
         agreedTermsVersion: 1,
@@ -35,7 +35,7 @@ RSpec.describe 'V1::UsersController', type: :request do
     end
     let(:miissing_params) do
       {
-        userName: 'コノベル新太郎',
+        penName: 'コノベル新太郎',
         nickName: 'ジロさん',
         birthYm: '199001',
         agreedTermsVersion: 1,

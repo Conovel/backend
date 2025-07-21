@@ -115,7 +115,7 @@ module V1
         title: novel.title,
         famousSentenceText: famous_sentence_text || '',
         authorUserId: author_user.user_id,
-        authorUserName: author_user.pen_name,
+        authorPenName: author_user.pen_name,
         profileIconImage: author_user.profile_icon_image,
         titleGenres: title_genres.map(&:genre_name),
         isNew: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
