@@ -6,10 +6,9 @@ module RequestSpecHelper
     JSON.parse(response.body)
   end
 
-  # Authorizationヘッダーを生成するメソッド
-  # デフォルトでユーザーIDを2に設定
-  def auth_headers(user_id = 2)
-    token = JwtService.encode({ user_id: })
-    { 'Authorization' => "Bearer #{token}" }
+  # ログインユーザーとしてリクエストを送信するメソッド
+  def login_as(user)
+    cookies[:jwt_token] = JwtService.encode(user_id: user.id)
+    get '/v1/novels'
   end
 end

@@ -12,6 +12,8 @@ module V1
   # UsersController
   class UsersController < ApplicationController
     include ErrorResponseHelper
+    # authenticate_requestをスキップ
+    # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
 
     # rubocop:disable Metrics/AbcSize
     def delete_user_by_me
@@ -44,24 +46,54 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
+    # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
+    # IDで自分以外のユーザーアカウント情報を取得
     # def show
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}
     # end
 
-    # def get_user_by_me
-    #   # Your code here
+    # rubocop:disable Metrics/AbcSize
+    # 自分自身のユーザーアカウント情報
+    def get_user_by_me
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
-    #   render json: {"message" => "yes, it worked"}
-    # end
+      if @current_user_id.present?
+        user = User.includes(sentences: :evaluations).find_by(user_id: @current_user_id)
+        Rails.logger.debug("[DEBUG] ユーザー情報: #{user.to_json}") if user
 
+        if user
+          good_count = user.sentences.flat_map(&:evaluations).count { |e| e.evaluation == 'good' }
+          Rails.logger.debug("[DEBUG] 評価数: #{good_count}")
+
+          render json: {
+            userId: user.user_id,
+            penName: user.pen_name,
+            nickName: user.nick_name,
+            profileIconImage: user.profile_icon_image,
+            evaluationGoodCount: good_count,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+            birthYearAndMonth: user.birth_ym,
+            isAnonymous: user.is_anonymous
+          }, status: :ok
+        else
+          render_error_response(404, 'ユーザーが見つかりません')
+        end
+      else
+        render_error_response(401, 'カレントユーザーのid取得に失敗しました')
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
     #   # Your code here
 
@@ -70,52 +102,43 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
-      # ログイン中のユーザーを取得
-      user = User.find_by(user_id: current_user.id)
-      if user.nil?
-        render_error_response(422, 'ユーザーが見つかりません。')
-        return
-      end
+      # パラメータの存在チェック
+      required_keys = %w[penName nickName isAnonymous birthYm agreedTermsVersion]
+      return unless check_required_keys(params, required_keys)
 
-      # Good評価のカウントを取得
-      evaluation_good_count = Evaluation.joins(:sentence)
-                                        .where(sentences: { sentence_user_id: user.user_id })
-                                        .where(evaluation: 'good')
-                                        .count
-      Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
+      user = User.find_by!(user_id: @current_user_id)
+      Rails.logger.debug("[DEBUG]カレントユーザー情報 - user: #{user.to_json}")
 
-      begin
-        user.update!(user_params)
-        render json: build_response(user, evaluation_good_count), status: :ok
-      rescue ActiveRecord::RecordInvalid => e
-        render_error_response(422, "ユーザーアカウント情報の更新に失敗しました。: #{e.message}")
+      # パラメータをスネークケースからキャメルケースに変換
+      transformed_params = params.transform_keys(&:underscore)
+      Rails.logger.debug("[DEBUG] 変換後のパラメータ: #{transformed_params.to_json}")
+
+      if user.update!(transformed_params.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
+                                                :agreed_terms_version, :remarks))
+        user.reload # 最新状態取得
+        evaluation_good_count = Evaluation.joins(:sentence)
+                                          .where(sentences: { sentence_user_id: user.user_id })
+                                          .where(evaluation: 'good')
+                                          .count
+        Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
+
+        render json: {
+          userId: user.user_id,
+          penName: user.pen_name,
+          nickName: user.nick_name,
+          birthYm: user.birth_ym,
+          isAnonymous: user.is_anonymous,
+          profileIconImage: user.profile_icon_image,
+          evaluationGoodCount: evaluation_good_count,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        }, status: :ok
       end
     end
     # rubocop:enable Metrics/AbcSize
 
-    private
+    # private
 
-    def user_params
-      Rails.logger.info("[INFO]user_params: #{params}")
-      params.require(:user).permit(:pen_name, :nick_name, :birth_ym, :agreed_terms_version, :is_anonymous,
-                                   :profile_icon_image, :remarks)
-    end
-
-    def build_response(user, evaluation_good_count)
-      {
-        user_id: user.id,
-        pen_name: user.pen_name,
-        nick_name: user.nick_name,
-        birth_ym: user.birth_ym, # 追加項目
-        is_anonymous: user.is_anonymous, # 追加項目
-        profile_icon_image: user.profile_icon_image,
-        evaluation_good_count:,
-        created_at: user.created_at,
-        updated_at: user.updated_at
-      }
-    end
-
-    # MEMO：メッセージが複数種類の時のだしわけが難しいためコメントアウト
     # カスタムエラーメッセージを定義
     # def custom_record_invalid_message(exception)
     #   "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"

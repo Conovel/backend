@@ -12,62 +12,49 @@ module V1
   # AuthController
   class AuthController < ApplicationController
     include ActionController::RequestForgeryProtection
+    include ImageHelper
+    include TimeHelper
 
-    # ApplicationControllerのauthenticate_requestをスキップ
-    skip_before_action :authenticate_request, only: %i[create auth_failure]
+    # authenticate_requestをスキップ
+    skip_before_action :authenticate_request, only: %i[create auth_failure refresh_token log_out]
 
     # フロントエンドのURLを定数として定義
     FRONTEND_URL = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-    Rails.logger.info("[INFO] Frontend URL: #{FRONTEND_URL}")
+    Rails.logger.debug("[DEBUG] Frontend URL: #{FRONTEND_URL}")
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def create
-      Rails.logger.info("[INFO] Request params: #{params.inspect}")
-      Rails.logger.info("[INFO] Request env['omniauth.auth']: #{request.env['omniauth.auth'].inspect}")
-      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
-
-      # セッションをリセット
-      reset_session
-      Rails.logger.info('[INFO] セッションがリセットされました')
-      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
-
-      # CSRFトークンを再生成
-      new_token = form_authenticity_token
-      Rails.logger.info("[INFO] 新しいCSRFトークンが生成されました: #{new_token}")
-      Rails.logger.info("[INFO] セッション内のCSRFトークン: #{session[:_csrf_token]}")
+      Rails.logger.debug("[DEBUG] Request params: #{params.to_json}")
+      Rails.logger.debug("[DEBUG] Request env['omniauth.auth']: #{request.env['omniauth.auth'].to_json}")
 
       begin
         # OmniAuth から認証情報を取得
-        user_info = request.env['omniauth.auth']
-        if user_info.nil?
-          handle_error_and_redirect('[ERROR] omniauth.auth が存在しません')
+        user_data = request.env['omniauth.auth']
+        if user_data.nil?
+          Rails.logger.error('[ERROR] omniauth.auth が存在しません')
           return
         end
+        Rails.logger.debug("[DEBUG] user_data: #{user_data.to_json}")
 
         # ユーザー情報を取得
-        google_user_id = user_info['uid']
-        provider = user_info['provider']
-        google_sub = user_info['extra']['id_info']['sub'] # Googleのsubを取得
-        Rails.logger.info("[INFO] Google User ID: #{google_user_id}")
-        Rails.logger.info("[INFO] provider: #{provider}")
-        Rails.logger.info("[INFO] google_sub: #{google_sub}")
+        provider = user_data['provider']
+        google_sub = user_data['uid']
+        user_info = user_data['info']
+        Rails.logger.debug("[DEBUG] provider: #{provider}")
+        Rails.logger.debug("[DEBUG] google_sub: #{google_sub}")
+        Rails.logger.debug("[DEBUG] user_info: #{user_info.to_json}")
 
         # ユーザー認証情報を確認
-        existing_user = User.find_by(google_sub:)
-        if existing_user.nil?
-          Rails.logger.info('新規ユーザーが見つかりません。')
+        user = User.find_by(google_sub:)
+        if user.nil?
+          Rails.logger.info('既存のユーザーが見つかりません。')
 
           # ユーザー情報を取得
-          id_info = user_info['extra']['id_info']
-          email = id_info['email']
+          email = user_info['email']
           account_name = email.split('@').first # Googleのアカウント名
-          birth_ym = Date.today.strftime('%Y%m') # ユーザー登録年月
-          profile_icon_image = id_info['picture'] # Googleのアイコン画像URL
-          google_sub = id_info['sub']
-          Rails.logger.info(
-            "[INFO] ユーザー情報 - account_name: #{account_name}, birth_ym: #{birth_ym}, picture: #{profile_icon_image}, " \
-            "email: #{email}, google_sub: #{google_sub}"
-          )
+          birth_ym = year_month # ユーザー登録年月
+          profile_icon_image_url = user_info['image'] # Googleのアイコン画像URL
+          profile_icon_image = fetch_image_as_base64(profile_icon_image_url) # アイコン画像をBASE64に変換
 
           # 新しいユーザーを作成
           user = User.new(
@@ -80,82 +67,171 @@ module V1
             email:,
             google_sub:
           )
-          Rails.logger.info("[INFO] 新しいユーザー情報 - user: #{user.inspect}")
+          Rails.logger.debug("[DEBUG] 新しいユーザー情報 - user: #{user.to_json}")
 
           # 保存処理
           begin
             user.save!
-            Rails.logger.info("[INFO] 新しいユーザーが作成されました: #{user.inspect}")
+            Rails.logger.info('[INFO] 新しいユーザーが作成されました')
+            Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
           rescue ActiveRecord::RecordInvalid => e
-            handle_error_and_redirect("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+            delete_tokens
+            Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
             return
           end
         else
-          Rails.logger.info('既存のユーザーが見つかりました。')
-          Rails.logger.info("[INFO] ユーザー情報 - user: #{existing_user}")
+          Rails.logger.info('[INFO] 既存のユーザーが見つかりました。')
+          Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
         end
 
-        # JWTトークンを生成
-        payload = { google_user_id:, provider: }
-        token = JwtService.encode(payload)
-        Rails.logger.info("[INFO] JWTトークン - token: #{token}")
+        # JWTトークン
+        set_jwt_token(user)
 
-        # セッションにトークンを保存
-        session[:jwt_token] = token
+        # リフレッシュトークン
+        set_refresh_token(user)
 
         # アカウント画面にリダイレクト
         redirect_to "#{FRONTEND_URL}/account", allow_other_host: true
       rescue ActiveRecord::RecordInvalid => e
         # 保存に失敗した場合の処理
-        handle_error_and_redirect("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+        delete_tokens
+        Rails.logger.error("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
       rescue StandardError => e
         # その他のエラー処理
-        handle_error_and_redirect("[ERROR] サーバーエラーが発生しました: #{e.message}")
+        delete_tokens
+        Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
       end
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
-    # OmniAuthのエラー処理
+    # リフレッシュトークンを使用して新しいJWTトークンを発行
     # rubocop:disable Metrics/AbcSize
-    def auth_failure
-      # セッションの内容（リセット前）
-      Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
+    def refresh_token
+      refresh_token = cookies.encrypted[:refresh_token]
+      Rails.logger.debug("[DEBUG] refresh_token: #{refresh_token.to_json}")
 
-      # セッションをリセット
-      reset_session
-      Rails.logger.info('[INFO] セッションがリセットされました')
-      Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+      if refresh_token.nil?
+        delete_tokens
+        Rails.logger.error('[ERROR] リフレッシュトークンが存在しません')
+        render_error_response(401, 'リフレッシュトークンが存在しません')
+        return
+      end
 
-      error_message = request.env['omniauth.error.type'] || 'Unknown error'
-      Rails.logger.error("[ERROR] 認証エラー - #{error_message}")
+      hashed_token = Digest::SHA256.hexdigest(refresh_token)
+      user = User.find_by(refresh_token: hashed_token)
 
-      # アカウント画面にリダイレクト
-      handle_error_and_redirect("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
+      # リフレッシュトークンが無効または見つからない場合
+      unless user
+        delete_tokens
+        Rails.logger.error('[ERROR] リフレッシュトークンが無効です')
+        render_error_response(401, 'リフレッシュトークンが無効です')
+        return
+      end
+
+      Rails.logger.info('[INFO] リフレッシュトークンでユーザーを特定しました')
+      Rails.logger.debug("[DEBUG] ユーザー情報 - user: #{user.to_json}")
+
+      # リフレッシュトークンの期限切れチェック
+      unless user.valid_refresh_token_expiry?(Time.current)
+        delete_tokens
+        Rails.logger.warn('[WARN] リフレッシュトークンが期限切れのため削除されました')
+        render_error_response(401, 'リフレッシュトークンが期限切れです')
+        return
+      end
+
+      # 新しいJWTトークンを発行
+      set_jwt_token(user)
+      render status: :ok
     end
     # rubocop:enable Metrics/AbcSize
 
-    # カレントユーザーを返す
-    def current
-      if @current_user
-        render json: { user: @current_user }
-      else
-        render json: { error: '認証情報を取得できません' }, status: :unauthorized
-      end
+    # OmniAuthのエラー処理
+    def auth_failure
+      delete_tokens
+      error_message = request.env['omniauth.error.type'] || 'Unknown error'
+      # ログイン画面にリダイレクト
+      redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
+      Rails.logger.error("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
     end
 
-    # TODO: ログアウト機能を実装する
-    # def log_out
-    #   # Your code here
-
-    #   render json: {"message" => "yes, it worked"}
-    # end
+    # ログアウト機能
+    def log_out
+      delete_tokens
+      Rails.logger.info('[INFO] ユーザーがログアウトしました')
+      render status: :ok
+    rescue StandardError => e
+      delete_tokens
+      Rails.logger.error("[ERROR] ログアウト処理でエラー: #{e.message}")
+      render_error_response(401, 'ログアウトに失敗しました')
+    end
 
     private
 
-    # エラーメッセージをフロントエンドにリダイレクト
-    def handle_error_and_redirect(message)
-      Rails.logger.error(message)
-      redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
+    # JWTトークンを生成してクッキーに保存する
+    def set_jwt_token(user)
+      payload = { user_id: user.user_id }
+      token = JwtService.encode(payload)
+      Rails.logger.debug("[DEBUG] payload : #{payload.to_json}")
+      cookies[:jwt_token] = {
+        value: token,
+        httponly: true, # JavaScriptからアクセスできないようにする
+        secure: Rails.env.production?, # HTTPSのみで送信
+        expires: JWT_EXPIRATION_HOURS.hour.from_now, # 有効期限
+        same_site: :strict
+      }
+      Rails.logger.debug("[DEBUG] クッキーに保存されたJWTトークン: #{cookies[:jwt_token]}")
     end
+
+    # リフレッシュトークンを生成してクッキーに保存する
+    # rubocop:disable Metrics/AbcSize
+    def set_refresh_token(user)
+      # ユーザーモデルでリフレッシュトークンを生成し、返り値（生トークン）を取得
+      plain_refresh_token = user.generate_refresh_token
+      Rails.logger.debug("[DEBUG] Cookie保存値: plain_refresh_token=#{plain_refresh_token}")
+      Rails.logger.debug("[DEBUG] DB保存値: refresh_token=#{user.refresh_token}")
+
+      user.update!(refresh_token_expires_at: REFRESH_TOKEN_EXPIRATION_DAYS.days.from_now)
+      Rails.logger.debug("[DEBUG] ユーザーのリフレッシュトークン有効期限: #{user.refresh_token_expires_at}")
+
+      cookies.encrypted[:refresh_token] = {
+        value: plain_refresh_token,
+        httponly: true,
+        secure: Rails.env.production?,
+        expires: REFRESH_TOKEN_EXPIRATION_DAYS.days.from_now,
+        same_site: :strict
+      }
+      Rails.logger.debug("[DEBUG] クッキーに保存されたリフレッシュトークン: #{cookies.encrypted[:refresh_token]}")
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    # トークンをクッキーから削除する共通メソッド
+    # rubocop:disable Metrics/AbcSize
+    def delete_tokens
+      # ユーザーテーブルのリフレッシュトークンを無効化
+      if @current_user_id.present?
+        user = User.find_by(user_id: @current_user_id)
+        user&.invalidate_refresh_token
+        Rails.logger.info('[INFO] ユーザーテーブルのリフレッシュトークンが無効化されました')
+        Rails.logger.debug("[DEBUG] ユーザーテーブルのリフレッシュトークン： #{user&.refresh_token.to_json}") if user
+      else
+        Rails.logger.warn('[WARN] @current_user_id が設定されていません。リフレッシュトークンの無効化は行われませんでした。')
+      end
+
+      # カレントユーザーIDをnilに設定
+      @current_user_id = nil
+      Rails.logger.info('[INFO] カレントユーザーIDがリセットされました')
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
+      # JWTトークンを保存しているクッキーを削除
+      cookies.delete(:jwt_token)
+      Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
+      # リフレッシュトークンを保存しているクッキーを削除
+      cookies.delete(:refresh_token)
+      Rails.logger.info('[INFO] リフレッシュトークンがクッキーから削除されました')
+      Rails.logger.debug("[DEBUG] cookies[:refresh_token].to_json: #{cookies[:refresh_token].to_json}")
+    end
+    # rubocop:enable Metrics/AbcSize
   end
 end

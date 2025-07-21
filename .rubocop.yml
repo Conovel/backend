@@ -19,3 +19,15 @@ Metrics/ClassLength:
   Exclude:
     - 'db/migrate/**/*'
   Max: 300
+
+Layout/LineLength:
+  Exclude:
+    - 'config/routes.rb'
+  Max: 120
+
+# TODO: get_、set_のメソッド名を許容すべきか検討（現状は許容）
+Naming/AccessorMethodName:
+  Exclude:
+    - 'app/controllers/**/*'
+    - 'config/**/*'
+

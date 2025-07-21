@@ -14,8 +14,12 @@ module V1
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
     def create
-      evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentence_id],
-                                                    evaluator_user_id: current_user.id)
+      # パラメータの存在チェック
+      required_keys = %w[sentenceId evaluation]
+      return unless check_required_keys(params, required_keys)
+
+      evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentenceId],
+                                                    evaluator_user_id: current_user_id)
       evaluation.evaluation = evaluation_params[:evaluation]
       evaluation.save!
 
@@ -30,15 +34,15 @@ module V1
 
     # 評価のパラメータを取得
     def evaluation_params
-      params.permit(:sentence_id, :evaluation)
+      params.permit(:sentenceId, :evaluation)
     end
 
     # レスポンスを構築
     def build_response(evaluation_params, evaluation_counts)
       {
-        sentence_id: evaluation_params[:sentence_id],
-        evaluation_good_count: evaluation_counts['good'],
-        evaluation_stay_count: evaluation_counts['stay']
+        sentenceId: evaluation_params[:sentenceId],
+        evaluationGoodCount: evaluation_counts['good'],
+        evaluationStayCount: evaluation_counts['stay']
       }
     end
 

@@ -49,7 +49,6 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.integer 'viewed_sentences_count', default: 0, null: false
     t.index ['deleted_at'], name: 'index_sentences_on_deleted_at'
     t.index ['parent_sentence_id'], name: 'index_sentences_on_parent_sentence_id'
-    t.index ['sentence_id'], name: 'index_sentences_on_sentence_id'
     t.index ['sentence_user_id'], name: 'index_sentences_on_sentence_user_id'
     t.index ['title_id'], name: 'index_sentences_on_title_id'
   end
@@ -87,16 +86,19 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.string 'birth_ym', limit: 6, null: false
     t.integer 'agreed_terms_version', null: false, unsigned: true
     t.boolean 'is_anonymous', null: false
-    t.text 'profile_icon_image', null: false
+    t.text 'profile_icon_image'
     t.string 'email', null: false
     t.string 'google_sub', limit: 128, null: false
     t.text 'remarks'
+    t.string 'refresh_token'
+    t.datetime 'refresh_token_expires_at'
     t.datetime 'deleted_at'
     t.datetime 'created_at', null: false
     t.datetime 'updated_at', null: false
     t.index ['deleted_at'], name: 'index_users_on_deleted_at'
     t.index ['email'], name: 'index_users_on_email', unique: true
     t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
+    t.index ['refresh_token'], name: 'index_users_on_refresh_token', unique: true
   end
 
   create_table 'viewed_sentences', primary_key: %w[viewed_sentence_id viewed_user_id], charset: 'utf8mb4',

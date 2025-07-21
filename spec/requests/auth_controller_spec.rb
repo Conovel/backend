@@ -34,10 +34,10 @@ RSpec.describe 'V1::AuthController', type: :request do
         allow(Rails.logger).to receive(:error)
       end
 
-      it 'logs the error and redirects to /login' do
+      it 'logs the error' do
         get '/auth/google_oauth2/callback'
 
-        expect(response).to redirect_to("#{frontend_url}/login")
+        expect(response).to have_http_status(:no_content)
         expect(Rails.logger).to have_received(:error).with(/Something went wrong/)
       end
     end

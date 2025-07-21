@@ -9,7 +9,7 @@ class JwtService
   end
 
   # トークンをエンコードする
-  def self.encode(payload, exp = 24.hours.from_now)
+  def self.encode(payload, exp = 1.hour.from_now)
     hmac_secret = ENV.fetch('JWT_SECRET_KEY', nil)
     payload[:exp] = exp.to_i
     JWT.encode(payload, hmac_secret, 'HS256')

@@ -3,22 +3,14 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
-  before_action :authenticate_request
   include ErrorResponseHelper
   include ActionController::Cookies
 
+  # authenticate_requestをスキップ
+  before_action :authenticate_request
+
   # カレントユーザーを返す
-  attr_reader :current_user
-
-  # 仮のユーザーオブジェクトを返す（最終的には削除）
-  # def current_user
-  #   Struct.new(:id).new(2) # 仮のユーザーIDを2とする
-  # end
-
-  # Google認証実装後のcurrent_userメソッド
-  # def current_user
-  #   @current_user ||= User.find(session[:user_id]) if session[:user_id]
-  # end
+  attr_reader :current_user_id
 
   # 任意の例外を補足
   rescue_from StandardError, with: :handle_standard_error
@@ -31,29 +23,34 @@ class ApplicationController < ActionController::API
   # リクエストの認証
   # rubocop:disable Metrics/AbcSize
   def authenticate_request
-    token = request.headers['Authorization']
-    token = token.split.last if token
-    begin
-      @decoded = JwtService.decode(token)
-      Rails.logger.info("[INFO]トークン - token: #{token}")
-      Rails.logger.info("[INFO]デコード - decorded: #{@decoded}")
+    # クッキーからJWTトークンを取得
+    jwt_token = cookies[:jwt_token]
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json(処理前): #{cookies[:jwt_token].to_json}")
+    if jwt_token.present?
+      begin
+        @decoded = JwtService.decode(jwt_token)
+        Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
+        Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
 
-      @current_user = if @decoded['user_id'] == '2' # 仮の条件
-
-                        User.find(@decoded['user_id']) # TODO：ここを作り込みたい
-                      else
-                        # user_auth = User.find_by(uid: @decoded['google_user_id'], provider: @decoded['provider'])
-                        # @current_user = user_auth.user if user_auth
-
-                        # 仮のユーザーオブジェクトを返す
-                        Struct.new(:id).new(2) # 仮のユーザーIDを2を返す
-                      end
-      Rails.logger.info("[INFO]カレントユーザー - @current_user: #{@current_user}")
-      raise ActiveRecord::RecordNotFound, 'User not found' unless @current_user
-    rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
-      Rails.logger.error("[ERROR]認証エラー - e.message: #{e.message}")
-      render json: { errors: e.message }, status: :unauthorized
+        @current_user_id = @decoded['user_id']
+        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+        return
+      rescue JWT::ExpiredSignature
+        Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
+      rescue JWT::DecodeError => e
+        Rails.logger.error("[ERROR] JWTデコードエラー - e.message: #{e.message}")
+      end
     end
+
+    # JWTトークンを保存しているクッキーを削除
+    cookies.delete(:jwt_token)
+    Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
+    Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
+
+    @current_user_id = nil
+    Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
+    render_error_response(401, '認証に失敗しました')
   end
   # rubocop:enable Metrics/AbcSize
 
