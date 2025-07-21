@@ -12,7 +12,17 @@ module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
     # POST /v1/evaluations
+    # rubocop:disable Metrics/AbcSize
     def create
+      # パラメータの存在チェック
+      required_keys = %w[sentenceId evaluation]
+      missing_keys = required_keys.reject { |key| params.key?(key) }
+      if missing_keys.any?
+        render_error_response(422, "必須項目が不足しています: #{missing_keys.join(', ')}")
+        Rails.logger.error("[ERROR] 必須項目が不足しています: #{missing_keys.join(', ')}")
+        return
+      end
+
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentenceId],
                                                     evaluator_user_id: current_user_id)
       evaluation.evaluation = evaluation_params[:evaluation]
@@ -23,6 +33,7 @@ module V1
 
       render json: build_response(evaluation_params, evaluation_counts), status: :created
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 
