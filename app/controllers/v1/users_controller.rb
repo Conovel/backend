@@ -17,7 +17,9 @@ module V1
 
     # rubocop:disable Metrics/AbcSize
     def delete_user_by_me
-      user = User.find_by(user_id: current_user.id)
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+
+      user = User.find_by(user_id: @current_user_id)
       if user.nil?
         # user = User.only_deleted.find_by(user_id: current_user.id) # 一時復活用
         # user.restore # 一時復活用
@@ -137,11 +139,11 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
-    # private
+    private
 
     # カスタムエラーメッセージを定義
-    # def custom_record_invalid_message(exception)
-    #   "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
-    # end
+    def custom_record_invalid_message(exception)
+      "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
+    end
   end
 end
