@@ -45,8 +45,13 @@ module V1
         Rails.logger.debug("[DEBUG] user_info: #{user_info.to_json}")
 
         # ユーザー認証情報を確認
-        user = User.find_by(google_sub:)
-        if user.nil?
+        user = User.with_deleted.find_by(google_sub:) # 論理削除されたユーザーも含めて検索
+        if user&.deleted_at.present?
+          # 削除済みユーザーを復元
+          user.restore
+          Rails.logger.info('[INFO] 削除済みユーザーが復元されました。')
+          Rails.logger.debug("[DEBUG] 復元されたユーザー情報 - user: #{user.to_json}")
+        elsif user.nil?
           Rails.logger.info('既存のユーザーが見つかりません。')
 
           # ユーザー情報を取得
