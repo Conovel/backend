@@ -20,8 +20,6 @@ module V1
 
       user = User.find_by(user_id: @current_user_id)
       if user.nil?
-        # user = User.only_deleted.find_by(user_id: current_user.id) # 一時復活用
-        # user.restore # 一時復活用
         render_error_response(422, 'ユーザーが見つかりません。')
         return
       end
