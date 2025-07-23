@@ -37,10 +37,6 @@ module V1
 
         # ステータスコード 200 を返す
         head :ok
-
-        # トップ画面にリダイレクト
-        # frontend_url = ENV.fetch('REACT_APP_API_URL', 'http://localhost:3000')
-        # redirect_to frontend_url, allow_other_host: true
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed => e
         render_error_response(422, "ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
       end
