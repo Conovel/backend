@@ -15,7 +15,6 @@ module V1
     # authenticate_requestをスキップ
     # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
 
-    # rubocop:disable Metrics/AbcSize
     def delete_user_by_me
       Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
 
@@ -29,12 +28,12 @@ module V1
 
       begin
         user.destroy! # destroy! を使用して例外を発生させる
-        Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
+        # Rails.logger.info("[DEBUG] セッションの内容（リセット前）: #{session.to_hash.inspect}")
 
         # セッションをリセット
-        reset_session
-        Rails.logger.info('[INFO] セッションがリセットされました')
-        Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
+        # reset_session #不要？
+        # Rails.logger.info('[INFO] セッションがリセットされました')
+        # Rails.logger.info("[DEBUG] セッションの内容（リセット後）: #{session.to_hash.inspect}")
 
         # ステータスコード 200 を返す
         head :ok
@@ -46,8 +45,6 @@ module V1
         render_error_response(422, "ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
       end
     end
-    # rubocop:enable Metrics/AbcSize
-
     # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
     #   # Your code here
