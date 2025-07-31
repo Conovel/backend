@@ -15,35 +15,6 @@ module V1
     # authenticate_requestをスキップ
     # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
 
-    # rubocop:disable Metrics/AbcSize
-    def delete_user_by_me
-      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
-
-      user = User.find_by(user_id: @current_user_id)
-      if user.nil?
-        render_error_response(422, 'ユーザーが見つかりません。')
-        return
-      end
-
-      User.transaction do
-        # is_anonymous を true に設定
-        user.update!(is_anonymous: true)
-        Rails.logger.debug("[DEBUG] ユーザーの is_anonymous を true に設定しました: #{user.to_json}")
-
-        # ユーザーを削除
-        user.destroy!
-        Rails.logger.info("[INFO] ユーザーが削除されました: #{user.user_id}")
-
-        # ステータスコード 200 を返す
-        head :ok
-      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed => e
-        Rails.logger.error("[ERROR] ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
-        render_error_response(422, "ユーザーアカウント情報の削除に失敗しました。: #{e.message}")
-        raise ActiveRecord::Rollback
-      end
-    end
-    # rubocop:enable Metrics/AbcSize
-
     # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
     #   # Your code here
@@ -79,7 +50,7 @@ module V1
             evaluationGoodCount: good_count,
             createdAt: user.created_at,
             updatedAt: user.updated_at,
-            birthYearAndMonth: user.birth_ym,
+            birthYm: user.birth_ym,
             isAnonymous: user.is_anonymous
           }, status: :ok
         else
@@ -97,49 +68,5 @@ module V1
 
     #   render json: {"message" => "yes, it worked"}
     # end
-
-    # rubocop:disable Metrics/AbcSize
-    def update_user_by_me
-      # パラメータの存在チェック
-      required_keys = %w[penName nickName isAnonymous birthYm agreedTermsVersion]
-      return unless check_required_keys(params, required_keys)
-
-      user = User.find_by!(user_id: @current_user_id)
-      Rails.logger.debug("[DEBUG]カレントユーザー情報 - user: #{user.to_json}")
-
-      # パラメータをスネークケースからキャメルケースに変換
-      transformed_params = params.transform_keys(&:underscore)
-      Rails.logger.debug("[DEBUG] 変換後のパラメータ: #{transformed_params.to_json}")
-
-      if user.update!(transformed_params.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
-                                                :agreed_terms_version, :remarks))
-        user.reload # 最新状態取得
-        evaluation_good_count = Evaluation.joins(:sentence)
-                                          .where(sentences: { sentence_user_id: user.user_id })
-                                          .where(evaluation: 'good')
-                                          .count
-        Rails.logger.debug("[DEBUG] Evaluation count query result: #{evaluation_good_count}")
-
-        render json: {
-          userId: user.user_id,
-          penName: user.pen_name,
-          nickName: user.nick_name,
-          birthYm: user.birth_ym,
-          isAnonymous: user.is_anonymous,
-          profileIconImage: user.profile_icon_image,
-          evaluationGoodCount: evaluation_good_count,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at
-        }, status: :ok
-      end
-    end
-    # rubocop:enable Metrics/AbcSize
-
-    private
-
-    # カスタムエラーメッセージを定義
-    def custom_record_invalid_message(exception)
-      "ユーザーアカウント情報の更新に失敗しました。: #{exception.record.errors.full_messages.join(', ')}"
-    end
   end
 end
