@@ -51,7 +51,8 @@ module V1
             createdAt: user.created_at,
             updatedAt: user.updated_at,
             birthYm: user.birth_ym,
-            isAnonymous: user.is_anonymous
+            isAnonymous: user.is_anonymous,
+            agreedTermsVersion: user.agreed_terms_version
           }, status: :ok
         else
           render_error_response(404, 'ユーザーが見つかりません')
