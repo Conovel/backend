@@ -58,8 +58,9 @@ module V1
             evaluationGoodCount: good_count,
             createdAt: user.created_at,
             updatedAt: user.updated_at,
-            birthYearAndMonth: user.birth_ym,
-            isAnonymous: user.is_anonymous
+            birthYm: user.birth_ym,
+            isAnonymous: user.is_anonymous,
+            agreedTermsVersion: user.agreed_terms_version
           }, status: :ok
         else
           render_error_response(404, 'ユーザーが見つかりません')
