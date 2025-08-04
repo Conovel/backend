@@ -22,8 +22,9 @@ module V1
       user = User.find_by!(user_id: @current_user_id)
       Rails.logger.debug("[DEBUG]カレントユーザー情報 - user: #{user.to_json}")
 
-      # パラメータをスネークケースからキャメルケースに変換
+      # パラメータをキャメルケースからスネークケースに変換
       transformed_params = params.transform_keys(&:underscore)
+      Rails.logger.debug("[DEBUG] 変換前のパラメータ: #{params.to_json}")
       Rails.logger.debug("[DEBUG] 変換後のパラメータ: #{transformed_params.to_json}")
 
       if user.update!(transformed_params.permit(:pen_name, :nick_name, :is_anonymous, :profile_icon_image, :birth_ym,
