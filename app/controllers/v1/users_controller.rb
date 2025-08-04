@@ -105,12 +105,13 @@ module V1
           userId: user.user_id,
           penName: user.pen_name,
           nickName: user.nick_name,
-          birthYm: user.birth_ym,
-          isAnonymous: user.is_anonymous,
           profileIconImage: user.profile_icon_image,
           evaluationGoodCount: evaluation_good_count,
           createdAt: user.created_at,
-          updatedAt: user.updated_at
+          updatedAt: user.updated_at,
+          birthYm: user.birth_ym,
+          isAnonymous: user.is_anonymous,
+          agreedTermsVersion: user.agreed_terms_version
         }, status: :ok
       end
     end
