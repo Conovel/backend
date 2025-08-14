@@ -9,7 +9,7 @@
 #
 
 module V1
-  # UsersController
+  # UsersDeleteController
   class UsersDeleteController < ApplicationController
     include ErrorResponseHelper
 
