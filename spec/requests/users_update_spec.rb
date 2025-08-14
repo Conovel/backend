@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'V1::UsersController', type: :request do
+RSpec.describe 'V1::UsersUpdateController', type: :request do
   describe 'POST /v1/users/me/update' do
     let(:current_user_id) { 2 } # current_user_idを2に設定（仮）
     let!(:users) { create_list(:user, 4) } # 4人のユーザーを作成

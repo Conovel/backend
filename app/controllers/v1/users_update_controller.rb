@@ -9,7 +9,7 @@
 #
 
 module V1
-  # UsersController
+  # UsersUpdateController
   class UsersUpdateController < ApplicationController
     include ErrorResponseHelper
 
