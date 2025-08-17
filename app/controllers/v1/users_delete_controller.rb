@@ -25,8 +25,14 @@ module V1
 
       User.transaction do
         # is_anonymous を true に設定
-        user.update!(is_anonymous: true)
-        Rails.logger.debug("[DEBUG] ユーザーの is_anonymous を true に設定しました: #{user.to_json}")
+        user.update_columns(
+          is_anonymous: true,
+          email: "-deleted-#{user.id}",
+          google_sub: "-deleted-#{user.id}",
+          refresh_token: nil,
+          updated_at: Time.current
+        )
+        Rails.logger.debug("[DEBUG] [DEBUG] ユーザーの is_anonymous を true に設定し、一意制約のあるカラムをリセットしました: #{user.to_json}")
 
         # ユーザーを削除
         user.destroy!
