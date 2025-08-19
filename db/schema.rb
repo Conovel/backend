@@ -98,6 +98,8 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.index ['deleted_at'], name: 'index_users_on_deleted_at'
     t.index ['email'], name: 'index_users_on_email', unique: true
     t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
+    t.index ['nick_name'], name: 'index_users_on_nick_name', unique: true
+    t.index ['pen_name'], name: 'index_users_on_pen_name', unique: true
     t.index ['refresh_token'], name: 'index_users_on_refresh_token', unique: true
   end
 

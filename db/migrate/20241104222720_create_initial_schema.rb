@@ -167,6 +167,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   end
 
   # インデックスを追加
+  # rubocop:disable Metrics/AbcSize
   def add_indexes
     add_index :sentences, :deleted_at
     add_index :sentences, :parent_sentence_id
@@ -178,6 +179,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :google_sub, unique: true
     add_index :users, :refresh_token, unique: true
     add_index :users, :deleted_at
+    add_index :users, :pen_name, unique: true
+    add_index :users, :nick_name, unique: true
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
     add_index :evaluations, :sentence_id, name: 'index_evaluations_on_sentence_id'
@@ -185,4 +188,5 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :viewed_sentences, %i[viewed_sentence_id viewed_user_id], unique: true
     add_index :viewed_sentences, :deleted_at
   end
+  # rubocop:enable Metrics/AbcSize
 end
