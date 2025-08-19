@@ -30,6 +30,7 @@ module V1
           email: "-deleted-#{user.id}",
           google_sub: "-deleted-#{user.id}",
           refresh_token: nil,
+          refresh_token_expires_at: nil,
           updated_at: Time.current
         )
         Rails.logger.debug("[DEBUG] [DEBUG] ユーザーの is_anonymous を true に設定し、一意制約のあるカラムをリセットしました: #{user.to_json}")
