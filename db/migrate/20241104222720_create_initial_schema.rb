@@ -179,8 +179,8 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :google_sub, unique: true
     add_index :users, :refresh_token, unique: true
     add_index :users, :deleted_at
-    add_index :users, :pen_name, unique: true
-    add_index :users, :nick_name, unique: true
+    add_index :users, %i[pen_name deleted_at], unique: true
+    add_index :users, %i[nick_name deleted_at], unique: true
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
     add_index :evaluations, :sentence_id, name: 'index_evaluations_on_sentence_id'
