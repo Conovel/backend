@@ -70,12 +70,15 @@ class User < ApplicationRecord
   def self.generate_unique_user_name(base_name)
     name = base_name
     suffix = 1
+    Rails.logger.debug("[generate_unique_user_name] 初期名: #{name}（サフィックス: #{suffix}）")
     while User.where(deleted_at: nil)
               .where('pen_name = ? OR nick_name = ?', name, name)
               .exists?
+      Rails.logger.debug("[generate_unique_user_name] 重複検出: #{name}（サフィックス: #{suffix}）")
       name = "#{base_name}-#{suffix}"
       suffix += 1
     end
+    Rails.logger.debug("[generate_unique_user_name] ユニーク名決定: #{name}")
     name
   end
 
