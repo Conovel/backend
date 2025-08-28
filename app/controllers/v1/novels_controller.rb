@@ -11,13 +11,18 @@
 module V1
   # NovelsController
   class NovelsController < ApplicationController
+    include UserHelper
+
     # authenticate_requestをスキップ
     skip_before_action :authenticate_request, only: %i[index show]
 
     # GET /v1/novels
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def index
-      novels = Title.eager_load(:author_user, title_genres: :genre, sentences: :evaluations).all
+      novels = Title.eager_load(title_genres: :genre, sentences: :evaluations).all
+      # fetch authors (including logically deleted) in one query to avoid N+1
+      author_ids = novels.map(&:author_user_id).compact.uniq
+      authors_map = User.with_deleted.where(user_id: author_ids).index_by(&:user_id)
 
       famous_sentences_records = Sentence
                                  .joins(:evaluations)
@@ -36,9 +41,11 @@ module V1
       total_good_counts = total_good_counts_records.transform_values { |value| value || 0 }
 
       novel_data = novels.map do |novel|
+        author = authors_map[novel.author_user_id]
         build_novel_data(novel,
                          famous_sentences[novel.title_id] || '',
-                         total_good_counts[novel.title_id] || 0)
+                         total_good_counts[novel.title_id] || 0,
+                         author)
       end
 
       render json: novel_data
@@ -50,7 +57,9 @@ module V1
     # GET /v1/novels/{titleId}
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def show
-      novel = Title.includes(:author_user, title_genres: :genre).find(params[:titleId])
+      novel = Title.includes(title_genres: :genre).find(params[:titleId])
+      # 論理削除ユーザーも含めて取得
+      author = User.with_deleted.find_by(user_id: novel.author_user_id)
 
       # 小説の基本情報を取得
       famous_sentence_record = Sentence
@@ -69,7 +78,7 @@ module V1
                                      .count
       evaluation_good_count = evaluation_good_count_record || 0
 
-      data = build_novel_data(novel, famous_sentence, evaluation_good_count)
+      data = build_novel_data(novel, famous_sentence, evaluation_good_count, author)
 
       # 小説の概要情報を取得
       sentence_hierarchy_counts_record = Sentence
@@ -104,10 +113,10 @@ module V1
 
     private
 
-    # rubocop:disable Metrics/AbcSize
-    def build_novel_data(novel, famous_sentence_text, total_good_count)
-      author_user = novel.author_user
-      title_genres = novel.title_genres.map(&:genre)
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+    def build_novel_data(novel, famous_sentence_text, total_good_count, author_user = nil)
+      author_user ||= novel.author_user
+      title_genres = novel.title_genres.map(&:genre).compact
       sentences = novel.sentences
 
       {
@@ -115,7 +124,7 @@ module V1
         title: novel.title,
         famousSentenceText: famous_sentence_text || '',
         authorUserId: author_user.user_id,
-        authorPenName: author_user.pen_name,
+        authorPenName: display_pen_name(author_user),
         profileIconImage: author_user.profile_icon_image,
         titleGenres: title_genres.map(&:genre_name),
         isNew: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
@@ -126,7 +135,7 @@ module V1
         updatedAt: novel.updated_at
       }
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
     def build_novel_detail_data(novel, sentence_hierarchy_count, sentence_user_count, reader_count)
       {
