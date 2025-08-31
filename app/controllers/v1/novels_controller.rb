@@ -20,7 +20,9 @@ module V1
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def index
       novels = Title.eager_load(title_genres: :genre, sentences: :evaluations).all
-      # fetch authors (including logically deleted) in one query to avoid N+1
+      # 論理削除ユーザーも含めて1クエリで作者を取得し、N+1を回避
+      # authors_map はこのコントローラ内で作者オブジェクトを取り出すためのローカルマップとして利用する
+      # （ヘルパーは user オブジェクトのみ受け取る設計なのでインスタンス変数化は不要）
       author_ids = novels.map(&:author_user_id).compact.uniq
       authors_map = User.with_deleted.where(user_id: author_ids).index_by(&:user_id)
 
@@ -41,7 +43,8 @@ module V1
       total_good_counts = total_good_counts_records.transform_values { |value| value || 0 }
 
       novel_data = novels.map do |novel|
-        author = authors_map[novel.author_user_id]
+        # ローカルの authors_map を参照し、nil の場合は空ハッシュで安全にアクセス
+        author = (authors_map || {})[novel.author_user_id]
         build_novel_data(novel,
                          famous_sentences[novel.title_id] || '',
                          total_good_counts[novel.title_id] || 0,
@@ -49,7 +52,9 @@ module V1
       end
 
       render json: novel_data
-    rescue StandardError
+    rescue StandardError => e
+      # 例外発生時にスタックトレースをログ出力して原因を特定しやすくする
+      logger.error e.full_message
       render_error_response(422, '小説リストの取得に失敗しました。')
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -60,6 +65,7 @@ module V1
       novel = Title.includes(title_genres: :genre).find(params[:titleId])
       # 論理削除ユーザーも含めて取得
       author = User.with_deleted.find_by(user_id: novel.author_user_id)
+      # author を単体でロードしているのでそのままヘルパーに渡す
 
       # 小説の基本情報を取得
       famous_sentence_record = Sentence
@@ -106,26 +112,32 @@ module V1
 
       # 小説の基本情報と概要情報を結合して返却
       render json: data.merge(detail_data)
-    rescue StandardError
+    rescue StandardError => e
+      # 例外発生時にスタックトレースをログ出力して原因を特定しやすくする
+      logger.error e.full_message
       render_error_response(422, '小説の概要の取得に失敗しました。')
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     private
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
     def build_novel_data(novel, famous_sentence_text, total_good_count, author_user = nil)
-      author_user ||= novel.author_user
+      # novel.author_user の関連は N+1 を引き起こす可能性があるため、author_user 引数（Userオブジェクト）を優先使用する
       title_genres = novel.title_genres.map(&:genre).compact
       sentences = novel.sentences
+
+      # author_user が渡されない場合でも user_display_info(nil) は匿名を返すので
+      # 常に呼び出しておき、返却ハッシュ側でデフォルトを適用する方が簡潔
+      user_info = user_display_info(author_user)
 
       {
         titleId: novel.title_id,
         title: novel.title,
         famousSentenceText: famous_sentence_text || '',
-        authorUserId: author_user.user_id,
-        authorPenName: display_pen_name(author_user),
-        profileIconImage: author_user.profile_icon_image,
+        authorUserId: novel.author_user_id,
+        authorPenName: user_info[:pen_name] || ANONYMOUS_DISPLAY,
+        profileIconImage: user_info[:profile_icon_image] || '',
         titleGenres: title_genres.map(&:genre_name),
         isNew: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
         isFamous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
@@ -135,7 +147,7 @@ module V1
         updatedAt: novel.updated_at
       }
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
 
     def build_novel_detail_data(novel, sentence_hierarchy_count, sentence_user_count, reader_count)
       {
