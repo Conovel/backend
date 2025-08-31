@@ -121,7 +121,7 @@ module V1
 
     private
 
-    # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/AbcSize
     def build_novel_data(novel, famous_sentence_text, total_good_count, author_user = nil)
       # novel.author_user の関連は N+1 を引き起こす可能性があるため、author_user 引数（Userオブジェクト）を優先使用する
       title_genres = novel.title_genres.map(&:genre).compact
@@ -136,8 +136,8 @@ module V1
         title: novel.title,
         famousSentenceText: famous_sentence_text || '',
         authorUserId: novel.author_user_id,
-        authorPenName: user_info[:pen_name] || ANONYMOUS_DISPLAY,
-        profileIconImage: user_info[:profile_icon_image] || '',
+        authorPenName: user_info[:pen_name],
+        profileIconImage: user_info[:profile_icon_image],
         titleGenres: title_genres.map(&:genre_name),
         isNew: sentences.max_by(&:created_at).created_at > NEW_PERIOD_DAYS.days.ago,
         isFamous: total_good_count >= FAMOUS_EVALUATION_THRESHOLD,
@@ -147,7 +147,7 @@ module V1
         updatedAt: novel.updated_at
       }
     end
-    # rubocop:enable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/AbcSize
 
     def build_novel_detail_data(novel, sentence_hierarchy_count, sentence_user_count, reader_count)
       {
