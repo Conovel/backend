@@ -59,6 +59,21 @@ gem 'composite_primary_keys'
 # Used to Logical deletion
 gem 'paranoia', '~> 2.4'
 
+# Supports OAuth authentication through multiple providers
+gem 'omniauth'
+
+# Protecting against CSRF attacks when using OmniAuth in Rails applications
+gem 'omniauth-rails_csrf_protection'
+
+# An OmniAuth strategy for authentication using Google's OAuth 2.0 service.
+gem 'omniauth-google-oauth2'
+
+# Encode and decode JSON Web Tokens (JWT)
+gem 'jwt'
+
+# Used to create test data
+gem 'factory_bot_rails'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri mingw x64_mingw]
@@ -69,26 +84,12 @@ group :development, :test do
   # Used to integrate rspec and openAPI
   gem 'rswag'
 
-  # Used to create test data
-  gem 'factory_bot_rails'
-
   # Use ActiveRecord database for cleanup
   gem 'database_cleaner-active_record'
 
   # Use dotenv-rails to manage environment variables
   gem 'dotenv-rails'
 
-  # Supports OAuth authentication through multiple providers
-  gem 'omniauth'
-
-  # Protecting against CSRF attacks when using OmniAuth in Rails applications
-  gem 'omniauth-rails_csrf_protection'
-
-  # An OmniAuth strategy for authentication using Google's OAuth 2.0 service.
-  gem 'omniauth-google-oauth2'
-
-  # Encode and decode JSON Web Tokens (JWT)
-  gem 'jwt'
 end
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
