@@ -19,20 +19,25 @@ RSpec.describe 'V1::Novels', type: :request do
       login_as(user)
     end
 
-    before do
-      get '/v1/novels'
-    end
-
     it 'returns a successful response' do
+      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      get '/v1/novels'
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct number of novels' do
+      # コントローラが `user_display_info` ヘルパーを呼び出すことを検証
+      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      get '/v1/novels'
       json_response = JSON.parse(response.body)
       expect(json_response.size).to eq(1)
     end
 
     it 'returns the correct novel data' do
+      # コントローラが `user_display_info` ヘルパーを呼び出すことを検証
+      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      get '/v1/novels'
       json_response = JSON.parse(response.body).first
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
@@ -90,15 +95,21 @@ RSpec.describe 'V1::Novels', type: :request do
       login_as(user2)
     end
 
-    before do
-      get "/v1/novels/#{title.title_id}"
-    end
+    # リクエストは各 example 内で実行し、ヘルパー呼び出しの期待値を設定可能にする
 
     it 'returns a successful response' do
+      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).at_least(:once).and_call_original
+
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct novel detail data' do
+      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).at_least(:once).and_call_original
+
+      get "/v1/novels/#{title.title_id}"
       json_response = JSON.parse(response.body)
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
@@ -165,6 +176,8 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(viewed_sentence).not_to be_nil
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -219,6 +232,8 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)

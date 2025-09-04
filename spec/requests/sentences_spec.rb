@@ -34,10 +34,6 @@ RSpec.describe 'Sentences', type: :request do
     create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
                                               parent_sentence:, hierarchy: 2)
   end
-  let!(:parallel_sentence2) do
-    create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
-                                              parent_sentence:, hierarchy: 2)
-  end
   let(:not_exist_sentence_id) { 1000 }
 
   # createのデータ
@@ -59,6 +55,9 @@ RSpec.describe 'Sentences', type: :request do
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
+        # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+        # ヘルパーは main/parent/children/parallels の各ユーザーで複数回呼ばれるため、少なくとも1回の呼び出しを許容する
+        expect_any_instance_of(V1::SentencesController).to receive(:user_display_info).at_least(:once).and_call_original
 
         get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
@@ -107,6 +106,10 @@ RSpec.describe 'Sentences', type: :request do
   describe 'POST /v1/sentences' do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
+        # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
+        # ヘルパーはレスポンス構築時に複数回呼ばれる可能性があるため少なくとも1回の呼び出しを許容する
+        expect_any_instance_of(V1::SentencesController).to receive(:user_display_info).at_least(:once).and_call_original
+
         expect do
           post v1_sentences_path, params: valid_attributes
         end.to change(Sentence, :count).by(1)
