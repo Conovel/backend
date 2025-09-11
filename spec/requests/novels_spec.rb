@@ -20,23 +20,23 @@ RSpec.describe 'V1::Novels', type: :request do
     end
 
     it 'returns a successful response' do
-      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
-      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # コントローラがレスポンス構築時に UserDisplayInfoService を呼び出すことを検証
+      expect(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct number of novels' do
-      # コントローラが `user_display_info` ヘルパーを呼び出すことを検証
-      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # コントローラが `UserDisplayInfoService.build` を呼び出すことを検証
+      expect(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
       json_response = JSON.parse(response.body)
       expect(json_response.size).to eq(1)
     end
 
     it 'returns the correct novel data' do
-      # コントローラが `user_display_info` ヘルパーを呼び出すことを検証
-      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # コントローラが `UserDisplayInfoService.build` を呼び出すことを検証
+      expect(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
       json_response = JSON.parse(response.body).first
       expect(json_response['titleId']).to eq(title.title_id)
@@ -98,16 +98,16 @@ RSpec.describe 'V1::Novels', type: :request do
     # リクエストは各 example 内で実行し、ヘルパー呼び出しの期待値を設定可能にする
 
     it 'returns a successful response' do
-      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
-      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).at_least(:once).and_call_original
+      # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
+      expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
 
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct novel detail data' do
-      # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
-      expect_any_instance_of(V1::NovelsController).to receive(:user_display_info).at_least(:once).and_call_original
+      # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
+      expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
 
       get "/v1/novels/#{title.title_id}"
       json_response = JSON.parse(response.body)
@@ -178,11 +178,7 @@ RSpec.describe 'V1::Novels', type: :request do
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
       # and_wrap_original を使って呼び出し回数をカウントする（複数インスタンスに安全）
-      call_count = 0
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-        call_count += 1
-        m.call(*args)
-      end
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -229,8 +225,8 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['viewCount']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
       expect(json_response['readerCount']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
 
-      # user_display_info が少なくとも1回呼ばれていることを検証
-      expect(call_count).to be >= 1
+      # UserDisplayInfoService.build が少なくとも1回呼ばれていることを検証
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
     end
 
     # 別のユーザーが閲覧した時のview_countとreader_countの更新のテスト
@@ -242,11 +238,7 @@ RSpec.describe 'V1::Novels', type: :request do
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
       # and_wrap_original を使って呼び出し回数をカウントする（複数インスタンスに安全）
-      call_count = 0
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-        call_count += 1
-        m.call(*args)
-      end
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -296,8 +288,8 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['viewCount']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
       expect(json_response['readerCount']).to eq(2) # 同じユーザーが閲覧したため、読者数は2のまま
 
-      # user_display_info が少なくとも1回呼ばれていることを検証
-      expect(call_count).to be >= 1
+      # UserDisplayInfoService.build が少なくとも1回呼ばれていることを検証
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
     end
   end
 end
