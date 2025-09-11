@@ -36,6 +36,8 @@ Rails.application.routes.draw do
   get '/auth/:provider/callback', to: 'v1/auth#create'
 
   # Swagger UI
-  mount Rswag::Ui::Engine => '/api-docs'
-  mount Rswag::Api::Engine => '/api-docs'
+  if Rails.env.development? || Rails.env.test?
+    mount Rswag::Ui::Engine => '/api-docs'
+    mount Rswag::Api::Engine => '/api-docs'
+  end
 end

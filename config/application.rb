@@ -63,7 +63,7 @@ module Backend
 
     # Add session middleware
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil)
+    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil), secure: Rails.env.production?
   end
 end
 

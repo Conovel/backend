@@ -62,4 +62,5 @@ Rails.application.configure do
 
   # ログレベルをデバッグに設定(デバッグ時のみ有効にする)
   # config.log_level = :debug
+  config.require_master_key = false
 end

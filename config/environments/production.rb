@@ -83,4 +83,5 @@ Rails.application.configure do
 
   # Set CORS origin URL
   config.origin_url = ENV['PRODUCTION_ORIGIN_URL'] || 'https://conovel.jp'
+  config.require_master_key = false
 end
