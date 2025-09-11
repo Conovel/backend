@@ -177,7 +177,12 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # and_wrap_original を使って呼び出し回数をカウントする（複数インスタンスに安全）
+      call_count = 0
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        call_count += 1
+        m.call(*args)
+      end
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -223,6 +228,9 @@ RSpec.describe 'V1::Novels', type: :request do
       json_response = JSON.parse(response.body)
       expect(json_response['viewCount']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
       expect(json_response['readerCount']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
+
+      # user_display_info が少なくとも1回呼ばれていることを検証
+      expect(call_count).to be >= 1
     end
 
     # 別のユーザーが閲覧した時のview_countとreader_countの更新のテスト
@@ -233,7 +241,12 @@ RSpec.describe 'V1::Novels', type: :request do
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
       # コントローラがレスポンス構築時に `user_display_info` ヘルパーを呼び出すことを検証
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # and_wrap_original を使って呼び出し回数をカウントする（複数インスタンスに安全）
+      call_count = 0
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        call_count += 1
+        m.call(*args)
+      end
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -282,6 +295,9 @@ RSpec.describe 'V1::Novels', type: :request do
       json_response = JSON.parse(response.body)
       expect(json_response['viewCount']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
       expect(json_response['readerCount']).to eq(2) # 同じユーザーが閲覧したため、読者数は2のまま
+
+      # user_display_info が少なくとも1回呼ばれていることを検証
+      expect(call_count).to be >= 1
     end
   end
 end

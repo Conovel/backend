@@ -12,7 +12,7 @@ module V1
   # SentencesController
   class SentencesController < ApplicationController
     include TimeHelper
-    include ErrorResponseHelper
+    include ErrorResponseConcern
     include EvaluationHelper
     include UserHelper
 

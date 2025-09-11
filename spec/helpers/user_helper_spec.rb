@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe UserHelper, type: :helper do
   describe '#user_display_info' do
-    let(:anonymous) { helper.send(:anonymous_display) }
+    let(:anonymous) { UserDisplayInfoService.anonymous_display }
 
     context 'when user is nil' do
       it 'returns anonymous pen name and empty profile' do

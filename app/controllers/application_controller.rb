@@ -3,7 +3,7 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
-  include ErrorResponseHelper
+  include ErrorResponseConcern
   include ActionController::Cookies
 
   # authenticate_requestをスキップ

@@ -11,7 +11,7 @@
 module V1
   # UsersUpdateController
   class UsersUpdateController < ApplicationController
-    include ErrorResponseHelper
+    include ErrorResponseConcern
 
     # rubocop:disable Metrics/AbcSize
     def update_user_by_me
