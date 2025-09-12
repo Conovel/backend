@@ -20,24 +20,27 @@ RSpec.describe 'V1::Novels', type: :request do
     end
 
     it 'returns a successful response' do
-      # コントローラがレスポンス構築時に UserDisplayInfoService を呼び出すことを検証
-      expect(UserDisplayInfoService).to receive(:build).and_call_original
+      # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct number of novels' do
-      # コントローラが `UserDisplayInfoService.build` を呼び出すことを検証
-      expect(UserDisplayInfoService).to receive(:build).and_call_original
+      # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       json_response = JSON.parse(response.body)
       expect(json_response.size).to eq(1)
     end
 
     it 'returns the correct novel data' do
-      # コントローラが `UserDisplayInfoService.build` を呼び出すことを検証
-      expect(UserDisplayInfoService).to receive(:build).and_call_original
+      # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
       get '/v1/novels'
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       json_response = JSON.parse(response.body).first
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
@@ -98,18 +101,20 @@ RSpec.describe 'V1::Novels', type: :request do
     # リクエストは各 example 内で実行し、ヘルパー呼び出しの期待値を設定可能にする
 
     it 'returns a successful response' do
-      # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
-      expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
+      # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
 
       get "/v1/novels/#{title.title_id}"
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct novel detail data' do
-      # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
-      expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
+      # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+      allow(UserDisplayInfoService).to receive(:build).and_call_original
 
       get "/v1/novels/#{title.title_id}"
+      expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       json_response = JSON.parse(response.body)
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)

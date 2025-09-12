@@ -55,9 +55,8 @@ RSpec.describe 'Sentences', type: :request do
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
-        # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
-        # サービスは main/parent/children/parallels の各ユーザーで複数回呼ばれるため、少なくとも1回の呼び出しを許容する
-        expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
+        # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+        allow(UserDisplayInfoService).to receive(:build).and_call_original
 
         get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
@@ -73,6 +72,8 @@ RSpec.describe 'Sentences', type: :request do
         expect(json_response).to have_key('parallels')
         expect(json_response['parallels'][0]).not_to be_nil
         expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
+        # 呼び出しが行われたことを検証
+        expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       end
 
       it 'returns a 420 error when viewed_sentence save fails' do
@@ -106,9 +107,8 @@ RSpec.describe 'Sentences', type: :request do
   describe 'POST /v1/sentences' do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
-        # コントローラがレスポンス構築時に `UserDisplayInfoService.build` を呼び出すことを検証
-        # サービスはレスポンス構築時に複数回呼ばれる可能性があるため少なくとも1回の呼び出しを許容する
-        expect(UserDisplayInfoService).to receive(:build).at_least(:once).and_call_original
+        # Spy: 実装をそのまま実行しつつ呼び出しを観測する
+        allow(UserDisplayInfoService).to receive(:build).and_call_original
 
         expect do
           post v1_sentences_path, params: valid_attributes
@@ -116,6 +116,8 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
+        # 呼び出しが行われたことを検証
+        expect(UserDisplayInfoService).to have_received(:build).at_least(:once)
       end
     end
 
