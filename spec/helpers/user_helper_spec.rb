@@ -4,49 +4,19 @@ require 'rails_helper'
 
 RSpec.describe UserHelper, type: :helper do
   describe '#user_display_info' do
-    let(:anonymous) { UserDisplayInfoService.anonymous_display }
+    it 'delegates to UserDisplayInfoService.build and returns its result' do
+      user = build_stubbed(:user)
+      fake_result = { pen_name: 'stubbed', profile_icon_image: 'stub.png' }
+      expect(UserDisplayInfoService).to receive(:build).with(user).and_return(fake_result)
 
-    context 'when user is nil' do
-      it 'returns anonymous pen name and empty profile' do
-        expect(helper.user_display_info(nil)).to eq({ pen_name: anonymous, profile_icon_image: '' })
-      end
+      expect(helper.user_display_info(user)).to eq(fake_result)
     end
 
-    context 'when user is anonymous' do
-      let(:user) { build_stubbed(:user, is_anonymous: true) }
+    it 'delegates nil to UserDisplayInfoService.build' do
+      fake_result = { pen_name: UserDisplayInfoService.anonymous_display, profile_icon_image: '' }
+      expect(UserDisplayInfoService).to receive(:build).with(nil).and_return(fake_result)
 
-      it 'returns anonymous pen name and empty profile' do
-        expect(helper.user_display_info(user)).to eq({ pen_name: anonymous, profile_icon_image: '' })
-      end
-    end
-
-    context 'when user is logically deleted (deleted_at present)' do
-      let(:user) do
-        build_stubbed(:user, pen_name: 'ShouldBeMasked', profile_icon_image: 'icon.png', deleted_at: Time.current,
-                             is_anonymous: true)
-      end
-
-      # 論理削除ユーザーはis_anonymousがtrueになる想定だが、念のため論理削除ユーザー単体もテスト実行
-      it 'returns anonymous pen name and empty profile' do
-        expect(helper.user_display_info(user)).to eq({ pen_name: anonymous, profile_icon_image: '' })
-      end
-    end
-
-    context 'when user has empty pen_name' do
-      let(:user) { build_stubbed(:user, pen_name: '', profile_icon_image: 'icon.png') }
-
-      # pen_nameはnull: falseになる想定だが、念のためpen_nameが空文字のケースもテスト実行
-      it 'falls back to anonymous for pen_name and preserves profile (or empty if blank)' do
-        expect(helper.user_display_info(user)).to eq({ pen_name: anonymous, profile_icon_image: 'icon.png' })
-      end
-    end
-
-    context 'when user is normal' do
-      let(:user) { build_stubbed(:user, pen_name: 'Alice', profile_icon_image: 'alice.png') }
-
-      it 'returns actual pen_name and profile_icon_image' do
-        expect(helper.user_display_info(user)).to eq({ pen_name: 'Alice', profile_icon_image: 'alice.png' })
-      end
+      expect(helper.user_display_info(nil)).to eq(fake_result)
     end
   end
 end
