@@ -12,7 +12,7 @@ RSpec.describe UserHelper, type: :helper do
 
     it 'returns display info for a user' do
       user = build_stubbed(:user)
-      # We don't assert on exact internals here, just that it returns a Hash with expected keys
+      # 内部の厳密な構造まではアサートせず、期待するキーを含むハッシュを返すことだけ検証する
       result = helper.user_display_info(user)
       expect(result).to include(:pen_name, :profile_icon_image)
     end
