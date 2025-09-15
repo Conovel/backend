@@ -20,23 +20,36 @@ RSpec.describe 'V1::Novels', type: :request do
     end
 
     it 'returns a successful response' do
-      # Spy the controller helper implementation instead of the removed service
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # Spy the controller helper implementation and count per-example
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        counter.tick
+        m.call(*args)
+      end
+
       get '/v1/novels'
       expect(response).to have_http_status(:success)
     end
 
     it 'returns the correct number of novels' do
-      # Spy the controller helper implementation instead of the removed service
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # Spy the controller helper implementation and count per-example
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        counter.tick
+        m.call(*args)
+      end
       get '/v1/novels'
       json_response = JSON.parse(response.body)
       expect(json_response.size).to eq(1)
     end
 
     it 'returns the correct novel data' do
-      # Spy the controller helper implementation instead of the removed service
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # Spy the controller helper implementation and count per-example
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        counter.tick
+        m.call(*args)
+      end
       get '/v1/novels'
       json_response = JSON.parse(response.body).first
       expect(json_response['titleId']).to eq(title.title_id)
@@ -98,8 +111,12 @@ RSpec.describe 'V1::Novels', type: :request do
     # リクエストは各 example 内で実行し、ヘルパー呼び出しの期待値を設定可能にする
 
     it 'returns a successful response' do
-      # Spy the controller helper implementation instead of the removed service
-      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_call_original
+      # Spy the controller helper implementation and count per-example
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
+        counter.tick
+        m.call(*args)
+      end
 
       get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:success)
@@ -107,14 +124,14 @@ RSpec.describe 'V1::Novels', type: :request do
 
     it 'returns the correct novel detail data' do
       # Spy the controller helper and count invocations (have_received with any_instance is unsupported)
-      called_count = { n: 0 }
+      counter = CallCounter.new
       allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-        called_count[:n] += 1
+        counter.tick
         m.call(*args)
       end
 
       get "/v1/novels/#{title.title_id}"
-      expect(called_count[:n]).to be >= 1
+      expect(counter.count).to be >= 1
       json_response = JSON.parse(response.body)
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
@@ -230,9 +247,9 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['readerCount']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
 
       # ヘルパー呼び出しが行われていることを検証
-      called_count = { n: 0 }
+      counter = CallCounter.new
       allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-        called_count[:n] += 1
+        counter.tick
         m.call(*args)
       end
     end
@@ -296,14 +313,14 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['readerCount']).to eq(2) # 同じユーザーが閲覧したため、読者数は2のまま
 
       # ヘルパー呼び出しが行われていることを検証
-      called_count = { n: 0 }
+      counter = CallCounter.new
       allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-        called_count[:n] += 1
+        counter.tick
         m.call(*args)
       end
 
       # at the end of the flows assert it was called
-      expect(called_count[:n]).to be >= 0
+      expect(counter.count).to be >= 0
     end
   end
 end

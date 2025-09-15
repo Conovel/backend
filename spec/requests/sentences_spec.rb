@@ -73,12 +73,12 @@ RSpec.describe 'Sentences', type: :request do
         expect(json_response['parallels'][0]).not_to be_nil
         expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
         # 呼び出しが行われたことを検証（旧 service 参照をヘルパー呼び出しのカウントに置換）
-        called_count = { n: 0 }
+        counter = CallCounter.new
         allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-          called_count[:n] += 1
+          counter.tick
           m.call(*args)
         end
-        expect(called_count[:n]).to be >= 0
+        expect(counter.count).to be >= 0
       end
 
       it 'returns a 420 error when viewed_sentence save fails' do
@@ -122,12 +122,12 @@ RSpec.describe 'Sentences', type: :request do
         json_response = JSON.parse(response.body)
         expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
         # 呼び出しが行われたことを検証（旧 service 参照をヘルパー呼び出しのカウントに置換）
-        called_count = { n: 0 }
+        counter = CallCounter.new
         allow_any_instance_of(V1::NovelsController).to receive(:user_display_info).and_wrap_original do |m, *args|
-          called_count[:n] += 1
+          counter.tick
           m.call(*args)
         end
-        expect(called_count[:n]).to be >= 0
+        expect(counter.count).to be >= 0
       end
     end
 
