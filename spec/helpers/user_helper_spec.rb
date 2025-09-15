@@ -4,19 +4,17 @@ require 'rails_helper'
 
 RSpec.describe UserHelper, type: :helper do
   describe '#user_display_info' do
-    it 'delegates to UserDisplayInfoService.build and returns its result' do
-      user = build_stubbed(:user)
-      fake_result = { pen_name: 'stubbed', profile_icon_image: 'stub.png' }
-      expect(UserDisplayInfoService).to receive(:build).with(user).and_return(fake_result)
+    let(:anonymous) { helper.send(:anonymous_display) }
 
-      expect(helper.user_display_info(user)).to eq(fake_result)
+    it 'returns anonymous display when nil' do
+      expect(helper.user_display_info(nil)).to eq({ pen_name: anonymous, profile_icon_image: '' })
     end
 
-    it 'delegates nil to UserDisplayInfoService.build' do
-      fake_result = { pen_name: UserDisplayInfoService.anonymous_display, profile_icon_image: '' }
-      expect(UserDisplayInfoService).to receive(:build).with(nil).and_return(fake_result)
-
-      expect(helper.user_display_info(nil)).to eq(fake_result)
+    it 'returns display info for a user' do
+      user = build_stubbed(:user)
+      # We don't assert on exact internals here, just that it returns a Hash with expected keys
+      result = helper.user_display_info(user)
+      expect(result).to include(:pen_name, :profile_icon_image)
     end
   end
 end

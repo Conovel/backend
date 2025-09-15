@@ -3,7 +3,10 @@
 # ApplicationController
 # 全てのコントローラーの基底クラス
 class ApplicationController < ActionController::API
-  include ErrorResponseConcern
+  # ErrorResponseHelper is defined in `app/helpers/error_response_helper.rb`.
+  # Include the top-level helper module so controllers can call
+  # `render_error_response` and `check_required_keys`.
+  include ::ErrorResponseHelper
   include ActionController::Cookies
 
   # authenticate_requestをスキップ
