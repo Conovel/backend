@@ -14,6 +14,7 @@ module V1
     include TimeHelper
     include ErrorResponseHelper
     include EvaluationHelper
+    include UserHelper
 
     # GET /v1/sentences/:sentenceId
     # rubocop:disable Metrics/AbcSize
@@ -90,13 +91,14 @@ module V1
 
       user = sentence.user
       evaluation_counts = fetch_evaluation_counts(sentence)
+      user_info = user_display_info(user)
 
       {
         sentenceId: sentence.sentence_id,
         sentence: sentence.sentence,
         sentenceUserId: sentence.sentence_user_id,
-        sentencePenName: user.pen_name,
-        profileIconImage: user.profile_icon_image,
+        sentencePenName: user_info[:pen_name],
+        profileIconImage: user_info[:profile_icon_image],
         evaluationGoodCount: evaluation_counts[:good],
         evaluationStayCount: evaluation_counts[:stay],
         createdAt: sentence.created_at,

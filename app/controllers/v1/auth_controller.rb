@@ -58,10 +58,13 @@ module V1
           profile_icon_image_url = user_info['image'] # Googleのアイコン画像URL
           profile_icon_image = fetch_image_as_base64(profile_icon_image_url) # アイコン画像をBASE64に変換
 
+          # ペンネーム・ニックネームの重複チェック＆サフィックス付与
+          unique_name = User.generate_unique_user_name(account_name)
+
           # 新しいユーザーを作成
           user = User.new(
-            pen_name: account_name, # 仮のペンネーム
-            nick_name: account_name, # 仮のニックネーム
+            pen_name: unique_name, # 仮のペンネーム
+            nick_name: unique_name, # 仮のニックネーム
             birth_ym:, # 仮の誕生年月
             agreed_terms_version: 0, # 未同意状態
             is_anonymous: true, # 匿名ユーザー（初期状態）

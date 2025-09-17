@@ -143,8 +143,9 @@ class InitTables < ActiveRecord::Migration
       t.integer :evaluation_good_count
       t.datetime :created_at
       t.datetime :updated_at
-      t.string :birth_year_and_month
+      t.string :birth_ym
       t.boolean :is_anonymous
+      t.integer :agreed_terms_version
 
       t.timestamps
     end
