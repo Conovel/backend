@@ -33,7 +33,7 @@ RSpec.describe 'V1::UsersUpdateController', type: :request do
         profileIconImage: '' # null許容
       }
     end
-    let(:miissing_params) do
+    let(:missing_params) do
       {
         penName: 'コノベル新太郎',
         nickName: 'ジロさん',
@@ -86,9 +86,9 @@ RSpec.describe 'V1::UsersUpdateController', type: :request do
       end
     end
 
-    context 'with miissing parameters' do
+    context 'with missing parameters' do
       it 'It updates the user, omitting any non-existent parameters, and returns a success response.' do
-        post('/v1/users/me/update', params: miissing_params)
+        post('/v1/users/me/update', params: missing_params)
 
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
