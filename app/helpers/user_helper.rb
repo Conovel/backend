@@ -35,16 +35,8 @@ module UserHelper
   # - deleted_at が存在する（論理削除）場合は true
   def masked_user?(user)
     return true if user.nil?
-
-    is_anon = if user.respond_to?(:is_anonymous?)
-                user.is_anonymous?
-              elsif user.respond_to?(:is_anonymous)
-                user.is_anonymous
-              else
-                false
-              end
-
-    return true if is_anon
+    return true if user.try(:is_anonymous?)
+    return true if user.try(:is_anonymous)
     return true if user.respond_to?(:deleted_at) && user.deleted_at.present?
 
     false
