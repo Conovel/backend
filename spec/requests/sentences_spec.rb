@@ -56,13 +56,7 @@ RSpec.describe 'Sentences', type: :request do
       it 'returns the sentence' do
         main_sentence
         # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
-        counter = CallCounter.new
-        allow_any_instance_of(V1::SentencesController)
-          .to receive(:user_display_info)
-          .and_wrap_original do |original, *args, &block|
-          counter.tick
-          original.call(*args, &block)
-        end
+        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
@@ -120,13 +114,7 @@ RSpec.describe 'Sentences', type: :request do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
         # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
-        counter = CallCounter.new
-        allow_any_instance_of(V1::SentencesController)
-          .to receive(:user_display_info)
-          .and_wrap_original do |original, *args, &block|
-          counter.tick
-          original.call(*args, &block)
-        end
+        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         expect do
           post v1_sentences_path, params: valid_attributes
