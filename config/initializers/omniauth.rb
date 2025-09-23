@@ -15,6 +15,8 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   OmniAuth.config.allowed_request_methods = %i[post get]
 end
 
+OmniAuth.config.path_prefix = "/v1/auth"
+
 # OmniAuth のエラー処理をカスタマイズ
 OmniAuth.config.on_failure = proc do |env|
   V1::AuthController.action(:auth_failure).call(env)

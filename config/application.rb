@@ -39,6 +39,16 @@ module Backend
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Add session middleware
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil), secure: Rails.env.production?
+
+    # 必要ならホスト制限
+    config.hosts << "conovel.jp"
+
+    # 本番は SSL を強制（X-Forwarded-Proto が正しく来る前提）
+    config.force_ssl = true if Rails.env.production?
+
     # original url setting
     config.origin_url = if Rails.env.production?
                           ENV.fetch('PRODUCTION_ORIGIN_URL', 'https://conovel.jp')
@@ -61,9 +71,6 @@ module Backend
     # Add custom error directory to autoload and eager load paths
     config.paths.add 'app/errors', eager_load: true
 
-    # Add session middleware
-    config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil), secure: Rails.env.production?
   end
 end
 
