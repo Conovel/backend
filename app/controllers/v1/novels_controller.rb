@@ -21,10 +21,10 @@ module V1
     def index
       novels = Title.eager_load(title_genres: :genre, sentences: :evaluations).all
       # 論理削除ユーザーも含めて1クエリで作者を取得し、N+1を回避
-      # authors_map はこのコントローラ内で作者オブジェクトを取り出すためのローカルマップとして利用する
+      # authors_by_id は user_id をキーにしたローカルな Hash
       # （ヘルパーは user オブジェクトのみ受け取る設計なのでインスタンス変数化は不要）
       author_ids = novels.map(&:author_user_id).compact.uniq
-      authors_map = User.with_deleted.where(user_id: author_ids).index_by(&:user_id)
+      authors_by_id = User.with_deleted.where(user_id: author_ids).index_by(&:user_id)
 
       famous_sentences_records = Sentence
                                  .joins(:evaluations)
@@ -43,8 +43,8 @@ module V1
       total_good_counts = total_good_counts_records.transform_values { |value| value || 0 }
 
       novel_data = novels.map do |novel|
-        # ローカルの authors_map を参照し、nil の場合は空ハッシュで安全にアクセス
-        author = (authors_map || {})[novel.author_user_id]
+        # authors_by_id は user_id をキーにした Hash、safe navigation で nil 安全にアクセス
+        author = authors_by_id&.[](novel.author_user_id)
         build_novel_data(novel,
                          famous_sentences[novel.title_id] || '',
                          total_good_counts[novel.title_id] || 0,
