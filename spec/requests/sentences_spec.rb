@@ -34,10 +34,6 @@ RSpec.describe 'Sentences', type: :request do
     create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
                                               parent_sentence:, hierarchy: 2)
   end
-  let!(:parallel_sentence2) do
-    create(:sentence, :with_specific_content, user: users[3], title:, content: 'ききききき',
-                                              parent_sentence:, hierarchy: 2)
-  end
   let(:not_exist_sentence_id) { 1000 }
 
   # createのデータ
@@ -59,6 +55,8 @@ RSpec.describe 'Sentences', type: :request do
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
+        # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         get("/v1/sentences/#{main_sentence.sentence_id}")
         expect(response).to have_http_status(:ok)
@@ -74,6 +72,14 @@ RSpec.describe 'Sentences', type: :request do
         expect(json_response).to have_key('parallels')
         expect(json_response['parallels'][0]).not_to be_nil
         expect(json_response['parallels'][0]['sentence']).to eq('かかかかか')
+
+        # 呼び出しが行われたことを検証
+        # - main: 対象となる投稿本体（`main_sentence`）: 1回
+        # - parent: その親投稿（`parent_sentence`）: 1回
+        # - parallels: 同じ親を持つ並列投稿（`parallel_sentence1`, `parallel_sentence2`）: 2回
+        # - children: main の子投稿群（`children_sentence1〜3`）: 3回
+        # 合計 = 1 (main) + 1 (parent) + 2 (parallels) + 3 (children) = 7 回
+        expect(counter.count).to eq(7)
       end
 
       it 'returns a 420 error when viewed_sentence save fails' do
@@ -107,12 +113,23 @@ RSpec.describe 'Sentences', type: :request do
   describe 'POST /v1/sentences' do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
+        # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
+
         expect do
           post v1_sentences_path, params: valid_attributes
         end.to change(Sentence, :count).by(1)
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
+
+        # 呼び出しが行われたことを検証
+        # - main: POST によって作成された投稿本体: 1回
+        # - parent: 指定した親投稿（`parent_sentence`）: 1回
+        # - parallels: 同じ親を持つ既存の並列投稿（このケースでは `main_sentence`, `parallel_sentence1`, `parallel_sentence2` の3件）: 3回
+        # - children: 作成された main の子投稿群（このケースでは無し）: 0回
+        # 合計 = 1 (main) + 1 (parent) + 3 (parallels) = 5 回
+        expect(counter.count).to eq(5)
       end
     end
 

@@ -14,6 +14,7 @@ module V1
     include TimeHelper
     include ErrorResponseHelper
     include EvaluationHelper
+    include UserHelper
 
     # GET /v1/sentences/:sentenceId
     # rubocop:disable Metrics/AbcSize
@@ -36,6 +37,10 @@ module V1
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
     def create
+      # パラメータの存在チェック
+      required_keys = %w[parentSentenceId parentUpdatedAt sentence]
+      return unless check_required_keys(params, required_keys)
+
       sentence = nil
       ActiveRecord::Base.transaction do
         parent_sentence_id = sentence_params[:parentSentenceId]
@@ -86,13 +91,14 @@ module V1
 
       user = sentence.user
       evaluation_counts = fetch_evaluation_counts(sentence)
+      user_info = user_display_info(user)
 
       {
         sentenceId: sentence.sentence_id,
         sentence: sentence.sentence,
         sentenceUserId: sentence.sentence_user_id,
-        sentenceUserName: user.pen_name,
-        profileIconImage: user.profile_icon_image,
+        sentencePenName: user_info[:pen_name],
+        profileIconImage: user_info[:profile_icon_image],
         evaluationGoodCount: evaluation_counts[:good],
         evaluationStayCount: evaluation_counts[:stay],
         createdAt: sentence.created_at,

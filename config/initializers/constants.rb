@@ -6,6 +6,9 @@ DEFAULT_MAX_SENTENCE_LENGTH = 100
 # 新しいと見なされる期間（日数）
 NEW_PERIOD_DAYS = 30 # 仮番号
 
+# 表示用の匿名文字列（複数箇所で使うためここで一元定義）
+ANONYMOUS_DISPLAY = '匿名'
+
 # 評価が有名と見なされるための最小件数
 FAMOUS_EVALUATION_THRESHOLD = 5 # 仮番号
 
@@ -20,3 +23,6 @@ JWT_EXPIRATION_HOURS = 1
 
 # リフレッシュトークンの有効期間（日数）
 REFRESH_TOKEN_EXPIRATION_DAYS = 30
+
+# 利用規約の最新バージョン
+LATEST_TERMS_VERSION = 1 # 必要に応じて更新

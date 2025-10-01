@@ -12,7 +12,12 @@ module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
     # POST /v1/evaluations
+    # rubocop:disable Metrics/AbcSize
     def create
+      # パラメータの存在チェック
+      required_keys = %w[sentenceId evaluation]
+      return unless check_required_keys(params, required_keys)
+
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentenceId],
                                                     evaluator_user_id: current_user_id)
       evaluation.evaluation = evaluation_params[:evaluation]
@@ -23,6 +28,7 @@ module V1
 
       render json: build_response(evaluation_params, evaluation_counts), status: :created
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 

@@ -19,30 +19,41 @@ RSpec.describe 'V1::Novels', type: :request do
       login_as(user)
     end
 
-    before do
-      get '/v1/novels'
-    end
-
     it 'returns a successful response' do
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = install_method_call_counter(controller: V1::NovelsController, method: :user_display_info)
+
+      get '/v1/novels'
       expect(response).to have_http_status(:success)
+      expect(counter.count).to eq(1)
     end
 
     it 'returns the correct number of novels' do
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = install_method_call_counter(controller: V1::NovelsController, method: :user_display_info)
+
+      get '/v1/novels'
       json_response = JSON.parse(response.body)
       expect(json_response.size).to eq(1)
+      expect(counter.count).to eq(1)
     end
 
     it 'returns the correct novel data' do
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = install_method_call_counter(controller: V1::NovelsController, method: :user_display_info)
+
+      get '/v1/novels'
       json_response = JSON.parse(response.body).first
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
       expect(json_response['authorUserId']).to eq(user.user_id)
-      expect(json_response['authorUserName']).to eq(user.pen_name)
+      expect(json_response['authorPenName']).to eq(user.pen_name)
       expect(json_response['profileIconImage']).to eq(user.profile_icon_image)
       expect(json_response['isNew']).to be_truthy
       expect(json_response['isFamous']).to be_truthy
       expect(json_response['viewCount']).to eq(0)
       expect(json_response['evaluationGoodCount']).to eq(FAMOUS_EVALUATION_THRESHOLD)
+      expect(counter.count).to eq(1)
     end
 
     context 'when there are no novels' do
@@ -90,20 +101,27 @@ RSpec.describe 'V1::Novels', type: :request do
       login_as(user2)
     end
 
-    before do
-      get "/v1/novels/#{title.title_id}"
-    end
+    # リクエストは各 example 内で実行し、ヘルパー呼び出しの期待値を設定可能にする
 
     it 'returns a successful response' do
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = install_method_call_counter(controller: V1::NovelsController, method: :user_display_info)
+
+      get "/v1/novels/#{title.title_id}"
       expect(response).to have_http_status(:success)
+      expect(counter.count).to eq(1)
     end
 
     it 'returns the correct novel detail data' do
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = install_method_call_counter(controller: V1::NovelsController, method: :user_display_info)
+
+      get "/v1/novels/#{title.title_id}"
       json_response = JSON.parse(response.body)
       expect(json_response['titleId']).to eq(title.title_id)
       expect(json_response['title']).to eq(title.title)
       expect(json_response['authorUserId']).to eq(user1.user_id)
-      expect(json_response['authorUserName']).to eq(user1.pen_name)
+      expect(json_response['authorPenName']).to eq(user1.pen_name)
       expect(json_response['profileIconImage']).to eq(user1.profile_icon_image)
       expect(json_response['isNew']).to be_truthy
       expect(json_response['isFamous']).to be_truthy
@@ -114,6 +132,7 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(json_response['sentenceHierarchyCount']).to eq(3)
       expect(json_response['readerCount']).to eq(1) # 読者数は1
       expect(json_response['overview']).to eq(title.overview)
+      expect(counter.count).to eq(1)
     end
 
     context 'when the novel does not exist' do
@@ -165,6 +184,15 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(viewed_sentence).not_to be_nil
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController)
+        .to receive(:user_display_info)
+        .and_wrap_original do |original, *args, &block|
+        counter.tick
+        original.call(*args, &block)
+      end
+
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -210,6 +238,10 @@ RSpec.describe 'V1::Novels', type: :request do
       json_response = JSON.parse(response.body)
       expect(json_response['viewCount']).to eq(2) # 異なる投稿を閲覧したため投稿閲覧数は2になる
       expect(json_response['readerCount']).to eq(1) # 同じユーザーが閲覧したため、読者数は1のまま
+
+      # ヘルパー呼び出しが行われたことを検証
+      # (index -> show の組み合わせが3回行われており、各組み合わせで helper は2回呼ばれるため合計6回)
+      expect(counter.count).to eq(6)
     end
 
     # 別のユーザーが閲覧した時のview_countとreader_countの更新のテスト
@@ -219,6 +251,15 @@ RSpec.describe 'V1::Novels', type: :request do
       expect(response).to have_http_status(:ok)
 
       # novels_controllerでview_countとreader_countが更新されているか確認-1
+      # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+      counter = CallCounter.new
+      allow_any_instance_of(V1::NovelsController)
+        .to receive(:user_display_info)
+        .and_wrap_original do |original, *args, &block|
+        counter.tick
+        original.call(*args, &block)
+      end
+
       # indexのテスト
       get("/v1/novels/#{title.title_id}")
       expect(response).to have_http_status(:ok)
@@ -267,6 +308,10 @@ RSpec.describe 'V1::Novels', type: :request do
       json_response = JSON.parse(response.body)
       expect(json_response['viewCount']).to eq(3) # 異なる投稿を閲覧したため投稿閲覧数は3になる
       expect(json_response['readerCount']).to eq(2) # 同じユーザーが閲覧したため、読者数は2のまま
+
+      # ヘルパー呼び出しが行われたことを検証
+      # (index -> show の組み合わせが3回行われており、各組み合わせで helper は2回呼ばれるため合計6回)
+      expect(counter.count).to eq(6)
     end
   end
 end

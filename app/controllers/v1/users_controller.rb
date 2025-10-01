@@ -52,14 +52,15 @@ module V1
 
           render json: {
             userId: user.user_id,
-            userName: user.pen_name,
+            penName: user.pen_name,
             nickName: user.nick_name,
             profileIconImage: user.profile_icon_image,
             evaluationGoodCount: good_count,
             createdAt: user.created_at,
             updatedAt: user.updated_at,
-            birthYearAndMonth: user.birth_ym,
-            isAnonymous: user.is_anonymous
+            birthYm: user.birth_ym,
+            isAnonymous: user.is_anonymous,
+            agreedTermsVersion: user.agreed_terms_version
           }, status: :ok
         else
           render_error_response(404, 'ユーザーが見つかりません')
@@ -72,13 +73,6 @@ module V1
 
     # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
-    #   # Your code here
-
-    #   render json: {"message" => "yes, it worked"}
-    # end
-
-    # 自分自身のユーザーアカウント情報を更新
-    # def update_user_by_me
     #   # Your code here
 
     #   render json: {"message" => "yes, it worked"}

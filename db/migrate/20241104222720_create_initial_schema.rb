@@ -74,7 +74,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     table.string 'birth_ym', limit: 6, null: false # dateだと8桁（YYYYMMDD）になるためstringの6桁（YYYYMM）にする
     table.integer 'agreed_terms_version', null: false, unsigned: true
     table.boolean 'is_anonymous', null: false
-    table.text 'profile_icon_image', null: false
+    table.text 'profile_icon_image'
     table.string 'email', limit: 255, null: false # uniqueのindexを設定するために文字数制限が必要
     table.string 'google_sub', limit: 128, null: false
     table.text 'remarks'
@@ -167,6 +167,7 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
   end
 
   # インデックスを追加
+  # rubocop:disable Metrics/AbcSize
   def add_indexes
     add_index :sentences, :deleted_at
     add_index :sentences, :parent_sentence_id
@@ -178,10 +179,14 @@ class CreateInitialSchema < ActiveRecord::Migration[7.0]
     add_index :users, :google_sub, unique: true
     add_index :users, :refresh_token, unique: true
     add_index :users, :deleted_at
+    add_index :users, %i[pen_name deleted_at], unique: true
+    add_index :users, %i[nick_name deleted_at], unique: true
     add_index :evaluations, %i[sentence_id evaluator_user_id], unique: true
     add_index :evaluations, :deleted_at
+    add_index :evaluations, :sentence_id, name: 'index_evaluations_on_sentence_id'
     add_index :title_genres, %i[title_id genre_id], unique: true
     add_index :viewed_sentences, %i[viewed_sentence_id viewed_user_id], unique: true
     add_index :viewed_sentences, :deleted_at
   end
+  # rubocop:enable Metrics/AbcSize
 end
