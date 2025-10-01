@@ -32,7 +32,7 @@ RSpec.describe 'V1::UsersDeleteController', type: :request do
         user.destroy
         post('/v1/users/me/delete', headers:)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:not_found)
         json = JSON.parse(response.body)
         expect(json['error']['message']).to eq('ユーザーが見つかりません。')
       end

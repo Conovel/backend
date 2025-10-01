@@ -19,7 +19,7 @@ module V1
 
       user = User.find_by(user_id: @current_user_id)
       if user.nil?
-        render_error_response(422, 'ユーザーが見つかりません。')
+        render_error_response(404, 'ユーザーが見つかりません。')
         return
       end
 
