@@ -25,6 +25,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.index ['evaluator_user_id'], name: 'fk_rails_62490f0cce'
     t.index %w[sentence_id evaluator_user_id], name: 'index_evaluations_on_sentence_id_and_evaluator_user_id',
                                                unique: true
+    t.index ['sentence_id'], name: 'index_evaluations_on_sentence_id'
   end
 
   create_table 'genres', primary_key: 'genre_id', charset: 'utf8mb4', collation: 'utf8mb4_general_ci',
@@ -85,7 +86,7 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.string 'birth_ym', limit: 6, null: false
     t.integer 'agreed_terms_version', null: false, unsigned: true
     t.boolean 'is_anonymous', null: false
-    t.text 'profile_icon_image', null: false
+    t.text 'profile_icon_image'
     t.string 'email', null: false
     t.string 'google_sub', limit: 128, null: false
     t.text 'remarks'
@@ -97,6 +98,8 @@ ActiveRecord::Schema[7.0].define(version: 20_241_104_222_720) do
     t.index ['deleted_at'], name: 'index_users_on_deleted_at'
     t.index ['email'], name: 'index_users_on_email', unique: true
     t.index ['google_sub'], name: 'index_users_on_google_sub', unique: true
+    t.index %w[nick_name deleted_at], name: 'index_users_on_nick_name_and_deleted_at', unique: true
+    t.index %w[pen_name deleted_at], name: 'index_users_on_pen_name_and_deleted_at', unique: true
     t.index ['refresh_token'], name: 'index_users_on_refresh_token', unique: true
   end
 
