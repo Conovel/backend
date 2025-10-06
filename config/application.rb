@@ -41,10 +41,11 @@ module Backend
 
     # Add session middleware
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil), secure: Rails.env.production?
+    config.middleware.use ActionDispatch::Session::CookieStore, key: ENV.fetch('SESSION_KEY', nil),
+                                                                secure: Rails.env.production?
 
     # 必要ならホスト制限
-    config.hosts << "conovel.jp"
+    config.hosts << 'conovel.jp'
 
     # 本番は SSL を強制（X-Forwarded-Proto が正しく来る前提）
     config.force_ssl = true if Rails.env.production?
@@ -70,6 +71,5 @@ module Backend
 
     # Add custom error directory to autoload and eager load paths
     config.paths.add 'app/errors', eager_load: true
-
   end
 end
