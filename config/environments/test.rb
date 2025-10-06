@@ -63,4 +63,9 @@ Rails.application.configure do
   # ログレベルをデバッグに設定(デバッグ時のみ有効にする)
   # config.log_level = :debug
   config.require_master_key = false
+
+  # テスト環境でデフォルトホスト(www.example.com)を許可
+  # Railsの統合テスト（Integration Test）やリクエストスペック（RSpecなど）で使われるデフォルトホスト
+  # 参考: https://api.rubyonrails.org/v7.0/classes/ActionDispatch/Integration/Session.html
+  config.hosts << 'www.example.com'
 end
