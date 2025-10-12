@@ -31,7 +31,9 @@ module V1
         # OmniAuth から認証情報を取得
         user_data = request.env['omniauth.auth']
         if user_data.nil?
-          Rails.logger.error('[ERROR] omniauth.auth が存在しません')
+          Rails.logger.error("[ERROR] 認証情報が取得できませんでした。エラータイプ: #{error_type}")
+          # ログイン画面にリダイレクト
+          redirect_to "#{FRONTEND_URL}/login?message=認証情報が取得できませんでした&messageLevel=error", allow_other_host: true
           return
         end
         Rails.logger.debug("[DEBUG] user_data: #{user_data.to_json}")
@@ -80,6 +82,8 @@ module V1
           rescue ActiveRecord::RecordInvalid => e
             delete_tokens
             Rails.logger.error("[ERROR] ユーザーの保存に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+            # ログイン画面にリダイレクト
+            redirect_to "#{FRONTEND_URL}/login?message=ユーザーの保存に失敗しました&messageLevel=error", allow_other_host: true
             return
           end
         else
@@ -99,10 +103,14 @@ module V1
         # 保存に失敗した場合の処理
         delete_tokens
         Rails.logger.error("[ERROR] ユーザー作成に失敗しました: #{e.record.errors.full_messages.join(', ')}")
+        # ログイン画面にリダイレクト
+        redirect_to "#{FRONTEND_URL}/login?message=ユーザー作成に失敗しました&messageLevel=error", allow_other_host: true
       rescue StandardError => e
         # その他のエラー処理
         delete_tokens
         Rails.logger.error("[ERROR] サーバーエラーが発生しました: #{e.message}")
+        # ログイン画面にリダイレクト
+        redirect_to "#{FRONTEND_URL}/login?message=サーバーエラーが発生しました&messageLevel=error", allow_other_host: true
       end
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
@@ -152,9 +160,9 @@ module V1
     def auth_failure
       delete_tokens
       error_message = request.env['omniauth.error.type'] || 'Unknown error'
+      Rails.logger.error("[ERROR] 認証エラーが発生しました: #{error_message}")
       # ログイン画面にリダイレクト
-      redirect_to "#{FRONTEND_URL}/login", allow_other_host: true
-      Rails.logger.error("[ERROR] 認証エラーが発生しました。再度お試しください。: #{error_message}")
+      redirect_to "#{FRONTEND_URL}/login?message=認証エラーが発生しました&messageLevel=error", allow_other_host: true
     end
 
     # ログアウト機能

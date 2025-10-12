@@ -24,4 +24,15 @@ module RequestSpecHelper
     end
     counter
   end
+
+  # レスポンスの location クエリをパースしてハッシュで返す（UTF-8 安全）
+  def parsed_location_params(response)
+    _, query = response.location.split('?', 2)
+    (query || '').split('&').each_with_object({}) do |pair, h|
+      k, v = pair.split('=', 2)
+      next unless k
+
+      h[CGI.unescape(k)] = v.nil? ? '' : CGI.unescape(v)
+    end
+  end
 end

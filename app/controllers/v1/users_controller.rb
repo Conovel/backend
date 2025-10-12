@@ -11,17 +11,9 @@
 module V1
   # UsersController
   class UsersController < ApplicationController
+    include ErrorResponseHelper
     # authenticate_requestをスキップ
     # skip_before_action :authenticate_request, only: %i[get_novels_by_user_id show]
-
-    # TODO: 以下のアクションを実装する
-
-    # 自分自身のユーザーアカウントを削除（論理削除）
-    # def delete_user_by_me
-    #   # Your code here
-
-    #   render json: {"message" => "yes, it worked"}
-    # end
 
     # ユーザーが投稿している小説リストを取得
     # def get_novels_by_user_id
