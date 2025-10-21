@@ -12,6 +12,12 @@ RSpec.describe 'Evaluations', type: :request do
     before do
       # クッキーにJWTトークンを設定
       login_as(user)
+      # 閲覧済みレコードを追加
+      ViewedSentence.create!(
+        viewed_sentence_id: sentence.sentence_id,
+        viewed_user_id: user.user_id,
+        viewed_at: Time.current
+      )
     end
 
     context 'when the request is valid (good)' do
@@ -61,7 +67,7 @@ RSpec.describe 'Evaluations', type: :request do
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to include('投稿の評価に失敗しました。')
+        expect(json_response['error']['message']).to include('指定された投稿が存在しません。')
       end
     end
 
@@ -71,7 +77,7 @@ RSpec.describe 'Evaluations', type: :request do
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to include('投稿の評価に失敗しました。')
+        expect(json_response['error']['message']).to include('指定された投稿が存在しません。')
       end
     end
 
@@ -81,7 +87,7 @@ RSpec.describe 'Evaluations', type: :request do
         json_response = JSON.parse(response.body)
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response['error']['code']).to eq(422)
-        expect(json_response['error']['message']).to include('投稿の評価に失敗しました。')
+        expect(json_response['error']['message']).to include('指定された投稿が存在しません。')
       end
     end
 
