@@ -125,6 +125,22 @@ RSpec.describe 'Evaluations', type: :request do
       end
     end
 
+    context 'when the user has not viewed the sentence' do
+      let(:other_user) { create(:user) }
+
+      before do
+        login_as(other_user)
+      end
+
+      it 'returns a forbidden error' do
+        post('/v1/evaluations', params: { sentenceId: sentence.sentence_id, evaluation: 'good' })
+        json_response = JSON.parse(response.body)
+        expect(response).to have_http_status(:forbidden)
+        expect(json_response['error']['code']).to eq(403)
+        expect(json_response['error']['message']).to include('この投稿を閲覧していないため評価できません。')
+      end
+    end
+
     context 'When evaluation is disabled' do
       it 'returns a validation failure message' do
         post('/v1/evaluations', params: valid_attributes.merge(evaluation: 'aaa'))
