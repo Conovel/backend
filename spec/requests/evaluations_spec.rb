@@ -61,6 +61,40 @@ RSpec.describe 'Evaluations', type: :request do
       end
     end
 
+    context 'when sentenceId is missing' do
+      it 'returns a required parameter error' do
+        post('/v1/evaluations', params: { evaluation: 'good' }) # sentenceIdなし
+        json_response = JSON.parse(response.body)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']['code']).to eq(422)
+        expect(json_response['error']['message']).to include('必須項目が不足しています')
+        expect(json_response['error']['message']).to include('sentenceId')
+      end
+    end
+
+    context 'when evaluation is missing' do
+      it 'returns a required parameter error' do
+        post('/v1/evaluations', params: { sentenceId: sentence.sentence_id }) # evaluationなし
+        json_response = JSON.parse(response.body)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']['code']).to eq(422)
+        expect(json_response['error']['message']).to include('必須項目が不足しています')
+        expect(json_response['error']['message']).to include('evaluation')
+      end
+    end
+
+    context 'when both sentenceId and evaluation are missing' do
+      it 'returns a required parameter error for both' do
+        post('/v1/evaluations', params: {}) # 両方なし
+        json_response = JSON.parse(response.body)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']['code']).to eq(422)
+        expect(json_response['error']['message']).to include('必須項目が不足しています')
+        expect(json_response['error']['message']).to include('sentenceId')
+        expect(json_response['error']['message']).to include('evaluation')
+      end
+    end
+
     context 'When sentenceId does not exist' do
       it 'returns a validation failure message' do
         post('/v1/evaluations', params: valid_attributes.merge(sentenceId: 1000))
