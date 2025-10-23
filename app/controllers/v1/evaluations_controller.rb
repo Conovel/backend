@@ -11,12 +11,29 @@
 module V1
   # EvaluationsController
   class EvaluationsController < ApplicationController
+    include ErrorResponseHelper
+
     # POST /v1/evaluations
     # rubocop:disable Metrics/AbcSize
     def create
       # パラメータの存在チェック
       required_keys = %w[sentenceId evaluation]
       return unless check_required_keys(params, required_keys)
+
+      # sentenceIdの値が実際に存在するかチェック
+      unless Sentence.exists?(sentence_id: evaluation_params[:sentenceId])
+        render_error_response(422, '指定された投稿が存在しません。')
+        return
+      end
+
+      # 投稿を閲覧済みかチェック
+      unless ViewedSentence.exists?(viewed_sentence_id: evaluation_params[:sentenceId], viewed_user_id: current_user_id)
+        Rails.logger.error(
+          "[ERROR] この投稿を閲覧していないため評価できません。 - sentenceId: #{evaluation_params[:sentenceId]}, userId: #{current_user_id}"
+        )
+        render_error_response(403, 'この投稿を閲覧していないため評価できません。')
+        return
+      end
 
       evaluation = Evaluation.find_or_initialize_by(sentence_id: evaluation_params[:sentenceId],
                                                     evaluator_user_id: current_user_id)
