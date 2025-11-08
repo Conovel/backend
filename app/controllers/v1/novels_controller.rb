@@ -155,7 +155,8 @@ module V1
         sentenceUserCount: sentence_user_count || 0,
         sentenceHierarchyCount: sentence_hierarchy_count || 0,
         readerCount: reader_count || 0,
-        overview: novel.overview
+        overview: novel.overview,
+        firstSentenceId: novel.sentences.order(:created_at).first&.sentence_id || nil
       }
     end
   end

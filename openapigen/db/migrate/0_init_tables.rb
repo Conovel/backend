@@ -59,6 +59,7 @@ class InitTables < ActiveRecord::Migration
       t.integer :sentence_hierarchy_count
       t.integer :reader_count
       t.string :overview
+      t.integer :first_sentence_id
 
       t.timestamps
     end
