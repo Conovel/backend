@@ -101,6 +101,7 @@ module V1
         profileIconImage: user_info[:profile_icon_image],
         evaluationGoodCount: evaluation_counts[:good],
         evaluationStayCount: evaluation_counts[:stay],
+        userEvaluation: fetch_user_evaluation(sentence, current_user_id),
         createdAt: sentence.created_at,
         updatedAt: sentence.updated_at
       }
@@ -123,6 +124,16 @@ module V1
         parallels: build_sentence_responses(data[:parallels]),
         children: build_sentence_responses(data[:children])
       }
+    end
+
+    # 投稿に対するログインユーザーの評価状態を取得
+    def fetch_user_evaluation(sentence, user_id)
+      return nil if user_id.nil?
+
+      evaluation = sentence.evaluations.find { |eval| eval.evaluator_user_id == user_id }
+      return nil if evaluation.nil?
+
+      evaluation.evaluation
     end
 
     # createの補助メソッド

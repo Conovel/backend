@@ -98,6 +98,7 @@ class InitTables < ActiveRecord::Migration
       t.string :profile_icon_image
       t.integer :evaluation_good_count
       t.integer :evaluation_stay_count
+      t.string :user_evaluation
       t.datetime :created_at
       t.datetime :updated_at
 
