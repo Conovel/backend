@@ -59,7 +59,8 @@ module V1
       {
         sentenceId: evaluation_params[:sentenceId],
         evaluationGoodCount: evaluation_counts['good'],
-        evaluationStayCount: evaluation_counts['stay']
+        evaluationStayCount: evaluation_counts['stay'],
+        userEvaluation: evaluation_params[:evaluation]
       }
     end
 
