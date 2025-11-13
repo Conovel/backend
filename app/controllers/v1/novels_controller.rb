@@ -62,7 +62,7 @@ module V1
     # GET /v1/novels/{titleId}
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def show
-      novel = Title.includes(title_genres: :genre).find(params[:titleId])
+      novel = Title.includes(:sentences, title_genres: :genre).find(params[:titleId])
       # 論理削除ユーザーも含めて取得
       author = User.with_deleted.find_by(user_id: novel.author_user_id)
       # author を単体でロードしているのでそのままヘルパーに渡す
