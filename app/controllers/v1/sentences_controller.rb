@@ -13,18 +13,30 @@ module V1
   class SentencesController < ApplicationController
     include TimeHelper
     include ErrorResponseHelper
-    include EvaluationHelper
     include UserHelper
 
     # GET /v1/sentences/:sentenceId
     # rubocop:disable Metrics/AbcSize
     def show
-      sentence = Sentence.includes(:user, :evaluations).find_by(sentence_id: params[:sentenceId])
+      sentence = Sentence.includes(:user, :parent, :parallels, :children).find_by(sentence_id: params[:sentenceId])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
+
+      # すべてのsentence_idを集める
+      all_sentence_ids = collect_related_sentence_ids(sentence)
+
+      # ユーザー評価をまとめて取得（複合PKなので1投稿1レコードのみ）
+      user_evaluations = Evaluation.where(sentence_id: all_sentence_ids, evaluator_user_id: current_user_id)
+                                   .index_by(&:sentence_id)
+
+      # 評価数を一括で取得
+      raw_counts = Evaluation.where(sentence_id: all_sentence_ids)
+                             .group(:sentence_id, :evaluation)
+                             .count
+      evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
         process_viewed_sentence(sentence)
-        render json: build_response(sentence), status: params[:status] || :ok
+        render json: build_response(sentence, user_evaluations, evaluation_counts), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
         raise CustomError.new('投稿の取得に失敗しました。', 420)
@@ -59,7 +71,7 @@ module V1
       end
 
       process_viewed_sentence(sentence)
-      render json: build_response(sentence), status: :created
+      render json: build_response(sentence, {}, {}), status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -86,12 +98,14 @@ module V1
     end
 
     # 投稿レスポンスを構築
-    def build_sentence_response(sentence)
+    # rubocop:disable Metrics/AbcSize
+    def build_sentence_response(sentence, user_evaluations, evaluation_counts)
       return nil if sentence.nil?
 
       user = sentence.user
-      evaluation_counts = fetch_evaluation_counts(sentence)
       user_info = user_display_info(user)
+      evaluation = user_evaluations[sentence.sentence_id]
+      evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
       {
         sentenceId: sentence.sentence_id,
@@ -101,28 +115,50 @@ module V1
         profileIconImage: user_info[:profile_icon_image],
         evaluationGoodCount: evaluation_counts[:good],
         evaluationStayCount: evaluation_counts[:stay],
+        userEvaluation: evaluation&.evaluation,
         createdAt: sentence.created_at,
         updatedAt: sentence.updated_at
       }
     end
+    # rubocop:enable Metrics/AbcSize
 
     # 複数の投稿レスポンスを構築
-    def build_sentence_responses(sentences)
+    def build_sentence_responses(sentences, user_evaluations, evaluation_counts)
       sentences.map do |sentence|
-        build_sentence_response(sentence)
+        build_sentence_response(sentence, user_evaluations, evaluation_counts)
       end
     end
 
     # レスポンスを構築
-    def build_response(sentence)
+    def build_response(sentence, user_evaluations, evaluation_counts)
       data = build_response_data(sentence)
 
+      evaluation_counts ||= {}
+
       {
-        main: build_sentence_response(data[:sentence]),
-        parent: build_sentence_response(data[:parent]),
-        parallels: build_sentence_responses(data[:parallels]),
-        children: build_sentence_responses(data[:children])
+        main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts),
+        parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts),
+        parallels: build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts),
+        children: build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
       }
+    end
+
+    # 関連する全てのsentence_idを配列で返す
+    def collect_related_sentence_ids(sentence)
+      ids = [sentence.sentence_id]
+      ids << sentence.parent.sentence_id if sentence.parent
+      ids += sentence.parallels.map(&:sentence_id)
+      ids += sentence.children.map(&:sentence_id)
+      ids
+    end
+
+    # { [sentence_id, "good"] => n, ... } を { sentence_id => {good: n, stay: n} } に変換
+    def build_evaluation_counts(raw_counts)
+      evaluation_counts = Hash.new { |h, k| h[k] = { good: 0, stay: 0 } }
+      raw_counts.each do |(sid, eval), cnt|
+        evaluation_counts[sid][eval.to_sym] = cnt
+      end
+      evaluation_counts
     end
 
     # createの補助メソッド
@@ -138,7 +174,7 @@ module V1
       parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
-      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence))
+      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence, {}, {}))
     end
 
     # 連続投稿の確認

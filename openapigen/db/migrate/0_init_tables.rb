@@ -59,6 +59,7 @@ class InitTables < ActiveRecord::Migration
       t.integer :sentence_hierarchy_count
       t.integer :reader_count
       t.string :overview
+      t.integer :first_sentence_id
 
       t.timestamps
     end
@@ -97,6 +98,7 @@ class InitTables < ActiveRecord::Migration
       t.string :profile_icon_image
       t.integer :evaluation_good_count
       t.integer :evaluation_stay_count
+      t.string :user_evaluation
       t.datetime :created_at
       t.datetime :updated_at
 
@@ -131,6 +133,7 @@ class InitTables < ActiveRecord::Migration
       t.integer :sentence_id
       t.integer :evaluation_good_count
       t.integer :evaluation_stay_count
+      t.string :user_evaluation
 
       t.timestamps
     end
