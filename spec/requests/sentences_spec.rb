@@ -39,9 +39,10 @@ RSpec.describe 'Sentences', type: :request do
   # createのデータ
   let(:valid_attributes) do
     {
-      parentSentenceId: parent_sentence.sentence_id,
+      # POST後は元のmain投稿がparentになる
+      parentSentenceId: main_sentence.sentence_id,
       sentence: '投稿追加テストです。',
-      parentUpdatedAt: parent_sentence.updated_at
+      parentUpdatedAt: main_sentence.updated_at
     }
   end
 
@@ -55,6 +56,8 @@ RSpec.describe 'Sentences', type: :request do
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
+        # GETの前に親投稿を評価した状態
+        create(:evaluation, sentence: parent_sentence, evaluator_user: users[2], evaluation: :good)
         # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
         counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
@@ -62,6 +65,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
 
+        # 親投稿を評価していればmainは短縮されていないこと
         expect(json_response['main']['sentence']).to eq('いいいいい')
         expect(json_response).to have_key('parent')
         expect(json_response['parent']).not_to be_nil
@@ -113,7 +117,8 @@ RSpec.describe 'Sentences', type: :request do
   describe 'POST /v1/sentences' do
     context 'with valid parameters' do
       it 'creates a new Sentence' do
-        # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
+        # POSTの前にmain（投稿後はparentになる）を評価
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         expect do
@@ -121,14 +126,11 @@ RSpec.describe 'Sentences', type: :request do
         end.to change(Sentence, :count).by(1)
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
+
+        # 親投稿を評価していれば新規投稿（main）は短縮されていないこと
         expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
 
         # 呼び出しが行われたことを検証
-        # - main: POST によって作成された投稿本体: 1回
-        # - parent: 指定した親投稿（`parent_sentence`）: 1回
-        # - parallels: 同じ親を持つ既存の並列投稿（このケースでは `main_sentence`, `parallel_sentence1`, `parallel_sentence2` の3件）: 3回
-        # - children: 作成された main の子投稿群（このケースでは無し）: 0回
-        # 合計 = 1 (main) + 1 (parent) + 3 (parallels) = 5 回
         expect(counter.count).to eq(5)
       end
     end

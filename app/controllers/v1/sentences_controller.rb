@@ -70,8 +70,17 @@ module V1
         sentence.save!
       end
 
+      # showアクション同様にuser_evaluationsとevaluation_countsを取得
+      all_sentence_ids = collect_related_sentence_ids(sentence)
+      user_evaluations = Evaluation.where(sentence_id: all_sentence_ids, evaluator_user_id: current_user_id)
+                                   .index_by(&:sentence_id)
+      raw_counts = Evaluation.where(sentence_id: all_sentence_ids)
+                             .group(:sentence_id, :evaluation)
+                             .count
+      evaluation_counts = build_evaluation_counts(raw_counts)
+
       process_viewed_sentence(sentence)
-      render json: build_response(sentence, {}, {}), status: :created
+      render json: build_response(sentence, user_evaluations, evaluation_counts), status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -98,8 +107,9 @@ module V1
     end
 
     # 投稿レスポンスを構築
-    # rubocop:disable Metrics/AbcSize
-    def build_sentence_response(sentence, user_evaluations, evaluation_counts)
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+    def build_sentence_response(sentence, user_evaluations, evaluation_counts, parent_user_evaluation: nil,
+                                is_main: false)
       return nil if sentence.nil?
 
       user = sentence.user
@@ -107,9 +117,15 @@ module V1
       evaluation = user_evaluations[sentence.sentence_id]
       evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
+      # mainかつparentが存在し、かつparentのuserEvaluationがnullの場合に短縮
+      sentence_text = sentence.sentence
+      if is_main && !sentence.parent.nil? && parent_user_evaluation.nil?
+        sentence_text = truncated_main_sentence(sentence_text, sentence.sentence)
+      end
+
       {
         sentenceId: sentence.sentence_id,
-        sentence: sentence.sentence,
+        sentence: sentence_text,
         sentenceUserId: sentence.sentence_user_id,
         sentencePenName: user_info[:pen_name],
         profileIconImage: user_info[:profile_icon_image],
@@ -119,6 +135,14 @@ module V1
         createdAt: sentence.created_at,
         updatedAt: sentence.updated_at
       }
+    end
+
+    # main sentence短縮処理をprivateメソッドに切り出し
+    def truncated_main_sentence(sentence_text, original_sentence)
+      truncated_length = (sentence_text.length * MAIN_SENTENCE_TRUNCATE_RATIO).floor
+      result = sentence_text[0...truncated_length]
+      result += MAIN_SENTENCE_OMISSION_SUFFIX if result.length < original_sentence.length
+      result
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -135,8 +159,11 @@ module V1
 
       evaluation_counts ||= {}
 
+      parent_evaluation = data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
+
       {
-        main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts),
+        main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
+                                      parent_user_evaluation: parent_evaluation, is_main: true),
         parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts),
         parallels: build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts),
         children: build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
@@ -235,6 +262,6 @@ module V1
 
       viewed_sentence.save! # 新規・更新共通処理
     end
-    # rubocop:enable Metrics/AbcSize, Layout/LineLength
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Layout/LineLength
   end
 end
