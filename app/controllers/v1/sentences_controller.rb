@@ -154,21 +154,38 @@ module V1
     end
 
     # レスポンスを構築
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def build_response(sentence, user_evaluations, evaluation_counts)
       data = build_response_data(sentence)
-
       evaluation_counts ||= {}
-
       parent_evaluation = data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
+
+      # children/parallelsを空にする条件：
+      # parentが存在し、かつparentのuserEvaluationがnull
+      hide_children_and_parallels = !data[:sentence].parent.nil? && parent_evaluation.nil?
+
+      parallels = if hide_children_and_parallels
+                    []
+                  else
+                    build_sentence_responses(data[:parallels], user_evaluations,
+                                             evaluation_counts)
+                  end
+      children  = if hide_children_and_parallels
+                    []
+                  else
+                    build_sentence_responses(data[:children], user_evaluations,
+                                             evaluation_counts)
+                  end
 
       {
         main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
                                       parent_user_evaluation: parent_evaluation, is_main: true),
         parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts),
-        parallels: build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts),
-        children: build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
+        parallels:,
+        children:
       }
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity
 
     # 関連する全てのsentence_idを配列で返す
     def collect_related_sentence_ids(sentence)
