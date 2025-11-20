@@ -11,6 +11,7 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    skip_before_action :authenticate_request, only: %i[show]
     include TimeHelper
     include ErrorResponseHelper
     include UserHelper
@@ -35,7 +36,7 @@ module V1
       evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
-        process_viewed_sentence(sentence)
+        process_viewed_sentence(sentence) unless current_user_id.nil?
         render json: build_response(sentence, user_evaluations, evaluation_counts), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
@@ -107,7 +108,7 @@ module V1
     end
 
     # 投稿レスポンスを構築
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def build_sentence_response(sentence, user_evaluations, evaluation_counts, parent_user_evaluation: nil,
                                 is_main: false)
       return nil if sentence.nil?
@@ -117,9 +118,10 @@ module V1
       evaluation = user_evaluations[sentence.sentence_id]
       evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
-      # mainかつparentが存在し、かつparentのuserEvaluationがnullの場合に短縮
+      # mainのテキスト短縮条件：
+      # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
-      if is_main && !sentence.parent.nil? && parent_user_evaluation.nil?
+      if is_main && (current_user_id.nil? || (!sentence.parent.nil? && parent_user_evaluation.nil?))
         sentence_text = truncated_main_sentence(sentence_text, sentence.sentence)
       end
 
@@ -144,7 +146,7 @@ module V1
       result += MAIN_SENTENCE_OMISSION_SUFFIX if result.length < original_sentence.length
       result
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences, user_evaluations, evaluation_counts)
@@ -154,15 +156,15 @@ module V1
     end
 
     # レスポンスを構築
-    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def build_response(sentence, user_evaluations, evaluation_counts)
       data = build_response_data(sentence)
       evaluation_counts ||= {}
       parent_evaluation = data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
 
-      # children/parallelsを空にする条件：
-      # parentが存在し、かつparentのuserEvaluationがnull
-      hide_children_and_parallels = !data[:sentence].parent.nil? && parent_evaluation.nil?
+      # children/parallelsが空の条件：
+      # 未ログイン時は常に空、ログイン時は親があり未評価のみ空
+      hide_children_and_parallels = current_user_id.nil? || (!data[:sentence].parent.nil? && parent_evaluation.nil?)
 
       parallels = if hide_children_and_parallels
                     []
@@ -185,7 +187,7 @@ module V1
         children:
       }
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
     # 関連する全てのsentence_idを配列で返す
     def collect_related_sentence_ids(sentence)
@@ -279,6 +281,6 @@ module V1
 
       viewed_sentence.save! # 新規・更新共通処理
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Layout/LineLength
+    # rubocop:enable Metrics/AbcSize, Layout/LineLength
   end
 end

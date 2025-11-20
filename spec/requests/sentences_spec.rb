@@ -49,6 +49,8 @@ RSpec.describe 'Sentences', type: :request do
   before do
     # クッキーにJWTトークンを設定
     login_as(users[2])
+    # showアクションでもcurrent_user_idがusers[2].idになるようスタブ
+    allow_any_instance_of(V1::SentencesController).to receive(:current_user_id).and_return(users[2].id)
   end
 
   # showのテスト
