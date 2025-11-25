@@ -121,7 +121,7 @@ module V1
       # mainのテキスト短縮条件：
       # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
-      if is_main && (current_user_id.nil? || (!sentence.parent.nil? && parent_user_evaluation.nil?))
+      if is_main && !sentence.parent.nil? && (current_user_id.nil? || parent_user_evaluation.nil?)
         sentence_text = truncated_main_sentence(sentence_text, sentence.sentence)
       end
 
