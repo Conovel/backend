@@ -49,10 +49,16 @@ class ApplicationController < ActionController::API
 
     @current_user_id = nil
     Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+    return if use_custom_auth_error_response?
 
     render_error_response(401, '認証に失敗しました')
   end
   # rubocop:enable Metrics/AbcSize
+
+  # 未ログイン時の独自レスポンスを送るかどうか
+  def use_custom_auth_error_response?
+    false
+  end
 
   # 標準的な例外の処理
   def handle_standard_error(exception)

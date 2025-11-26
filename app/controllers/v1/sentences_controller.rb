@@ -11,7 +11,6 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
-    skip_before_action :authenticate_request, only: %i[show]
     include TimeHelper
     include ErrorResponseHelper
     include UserHelper
@@ -95,6 +94,11 @@ module V1
 
     # showの補助メソッド
 
+    # 未ログイン時に独自レスポンス送る
+    def use_custom_auth_error_response?
+      action_name == 'show'
+    end
+
     # レスポンスデータを構築
     def build_response_data(sentence)
       {
@@ -121,7 +125,7 @@ module V1
       # mainのテキスト短縮条件：
       # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
-      if is_main && !sentence.parent.nil? && (current_user_id.nil? || parent_user_evaluation.nil?)
+      if is_main && (current_user_id.nil? || (!sentence.parent.nil? && parent_user_evaluation.nil?))
         sentence_text = truncated_main_sentence(sentence_text, sentence.sentence)
       end
 
