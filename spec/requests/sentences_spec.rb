@@ -117,6 +117,20 @@ RSpec.describe 'Sentences', type: :request do
 
   # createのテスト
   describe 'POST /v1/sentences' do
+    context 'when parent sentence is not evaluated' do
+      it 'returns an error for unevaluated parent' do
+        unevaluated_parent = create(:sentence, user: users[1], title:)
+        post v1_sentences_path, params: {
+          parentSentenceId: unevaluated_parent.sentence_id,
+          sentence: 'テスト投稿',
+          parentUpdatedAt: unevaluated_parent.updated_at
+        }
+        expect(response).to have_http_status(:unprocessable_entity)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['message']).to eq('親投稿が未評価のため、投稿できません。')
+      end
+    end
+
     context 'with valid parameters' do
       it 'creates a new Sentence' do
         # POSTの前にmain（投稿後はparentになる）を評価
@@ -139,6 +153,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when required parameters are missing' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(sentence: ''))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -149,6 +164,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when parent_sentence_id does not exist' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: 100))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -159,6 +175,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'with invalid parameters' do
       it 'returns a conflict status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(parentUpdatedAt: '2024-01-01T01:01:09.292+09:00'))
         expect(response).to have_http_status(:conflict)
         json_response = JSON.parse(response.body)
@@ -169,6 +186,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when consecutive self post is detected' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post_user_id = users[2].id # 連続投稿のユーザーID
         post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: post_user_id))
         expect(response).to have_http_status(:unprocessable_entity)
@@ -180,6 +198,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when sentence length exceeds the limit' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         long_sentence = 'a' * 101
         post(v1_sentences_path, params: valid_attributes.merge(sentence: long_sentence))
         expect(response).to have_http_status(:unprocessable_entity)
