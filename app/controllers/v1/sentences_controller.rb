@@ -66,6 +66,11 @@ module V1
         check_parent_sentence_updated(parent_sentence)
         check_consecutive_self_post(parent_sentence)
 
+        # 親投稿が未評価の場合は投稿不可
+        parent_evaluation = Evaluation.find_by(sentence_id: parent_sentence.sentence_id,
+                                               evaluator_user_id: current_user_id)
+        raise CustomError.new('親投稿が未評価のため、投稿できません。', 422) if parent_evaluation.nil?
+
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!
       end
