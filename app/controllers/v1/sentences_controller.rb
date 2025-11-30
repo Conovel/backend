@@ -130,9 +130,9 @@ module V1
       # mainのテキスト短縮条件：
       # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
-      if is_main && (current_user_id.nil? || (!sentence.parent.nil? && parent_user_evaluation.nil?))
-        sentence_text = truncated_main_sentence(sentence_text)
-      end
+      has_parent = !sentence.parent.nil?
+      parent_unrated = has_parent && parent_user_evaluation.nil?
+      sentence_text = truncated_main_sentence(sentence_text) if is_main && (current_user_id.nil? || parent_unrated)
 
       {
         sentenceId: sentence.sentence_id,
@@ -173,7 +173,9 @@ module V1
 
       # children/parallelsが空の条件：
       # 未ログイン時は常に空、ログイン時は親があり未評価のみ空
-      hide_children_and_parallels = current_user_id.nil? || (!data[:sentence].parent.nil? && parent_evaluation.nil?)
+      has_parent = !data[:parent].nil?
+      parent_unrated = has_parent && parent_evaluation.nil?
+      hide_children_and_parallels = current_user_id.nil? || parent_unrated
 
       parallels = if hide_children_and_parallels
                     []
