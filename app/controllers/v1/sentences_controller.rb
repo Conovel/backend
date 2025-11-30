@@ -131,7 +131,7 @@ module V1
       # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
       if is_main && (current_user_id.nil? || (!sentence.parent.nil? && parent_user_evaluation.nil?))
-        sentence_text = truncated_main_sentence(sentence_text, sentence.sentence)
+        sentence_text = truncated_main_sentence(sentence_text)
       end
 
       {
@@ -149,10 +149,10 @@ module V1
     end
 
     # main sentence短縮処理をprivateメソッドに切り出し
-    def truncated_main_sentence(sentence_text, original_sentence)
+    def truncated_main_sentence(sentence_text)
       truncated_length = (sentence_text.length * MAIN_SENTENCE_TRUNCATE_RATIO).floor
       result = sentence_text[0...truncated_length]
-      result += MAIN_SENTENCE_OMISSION_SUFFIX if result.length < original_sentence.length
+      result += MAIN_SENTENCE_OMISSION_SUFFIX
       result
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
