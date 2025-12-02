@@ -135,7 +135,7 @@ RSpec.describe 'Sentences', type: :request do
       it 'creates a new Sentence' do
         # POSTの前にmain（投稿後はparentになる）を評価
         create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
-        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
+        install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         expect do
           post v1_sentences_path, params: valid_attributes
@@ -143,11 +143,8 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
 
-        # 親投稿を評価していれば新規投稿（main）は短縮されていないこと
-        expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
-
-        # 呼び出しが行われたことを検証
-        expect(counter.count).to eq(5)
+        expect(json_response['sentenceId']).to be_a(Integer)
+        expect(json_response['sentenceId']).to be > 0
       end
     end
 

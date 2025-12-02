@@ -75,17 +75,8 @@ module V1
         sentence.save!
       end
 
-      # showアクション同様にuser_evaluationsとevaluation_countsを取得
-      all_sentence_ids = collect_related_sentence_ids(sentence)
-      user_evaluations = Evaluation.where(sentence_id: all_sentence_ids, evaluator_user_id: current_user_id)
-                                   .index_by(&:sentence_id)
-      raw_counts = Evaluation.where(sentence_id: all_sentence_ids)
-                             .group(:sentence_id, :evaluation)
-                             .count
-      evaluation_counts = build_evaluation_counts(raw_counts)
-
       process_viewed_sentence(sentence)
-      render json: build_response(sentence, user_evaluations, evaluation_counts), status: :created
+      render json: { sentenceId: sentence.sentence_id }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -231,7 +222,11 @@ module V1
       parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
-      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence, {}, {}))
+      raise CustomError.new(
+        '投稿編集の途中で親投稿が編集されたため、投稿を保留しています。',
+        409,
+        { sentenceId: parent_sentence.sentence_id }
+      )
     end
 
     # 連続投稿の確認
