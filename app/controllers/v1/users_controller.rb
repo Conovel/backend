@@ -63,6 +63,13 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
+    # 小説の中で自分自身が最後に閲覧した投稿のIDを取得
+    def get_viewed_last_sentence_by_me
+      # Your code here
+
+      render json: { 'message' => 'yes, it worked' }
+    end
+
     # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
     #   # Your code here

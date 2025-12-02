@@ -12,10 +12,7 @@ class InitTables < ActiveRecord::Migration
   def change
     create_table "conflict_sentence".pluralize.to_sym, id: false do |t|
       t.string :error
-      t.string :main
-      t.string :parent
-      t.string :parallels
-      t.string :children
+      t.integer :sentence_id
 
       t.timestamps
     end
@@ -101,6 +98,12 @@ class InitTables < ActiveRecord::Migration
       t.string :user_evaluation
       t.datetime :created_at
       t.datetime :updated_at
+
+      t.timestamps
+    end
+
+    create_table "sentence_id_only".pluralize.to_sym, id: false do |t|
+      t.integer :sentence_id
 
       t.timestamps
     end
