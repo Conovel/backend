@@ -28,7 +28,7 @@ Rails.application.routes.draw do
     # add_openapi_route 'GET', '/users/{userId}/posted_novels', controller_name: 'users', action_name: 'get_novels_by_user_id'
     # add_openapi_route 'GET', '/users/{userId}', controller_name: 'users', action_name: 'show'
     add_openapi_route 'GET', '/users/me', controller_name: 'users', action_name: 'get_user_by_me'
-    add_openapi_route 'GET', '/v1/users/me/viewedLastSentence/{titleId}', controller_name: 'users', action_name: 'get_viewed_last_sentence_by_me'
+    add_openapi_route 'GET', '/users/me/viewedLastSentence/{titleId}', controller_name: 'users', action_name: 'get_viewed_last_sentence_by_me'
     # add_openapi_route 'GET', '/users/me/viewedNovels', controller_name: 'users', action_name: 'get_viewed_novels_by_me'
     add_openapi_route 'POST', '/users/me/update', controller_name: 'users_update', action_name: 'update_user_by_me'
   end
