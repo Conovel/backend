@@ -90,6 +90,7 @@ RSpec.describe 'Sentences', type: :request do
 
       it 'returns a 420 error when viewed_sentence save fails' do
         main_sentence
+        create(:evaluation, sentence: parent_sentence, evaluator_user: users[2], evaluation: :good)
         viewed_sentence_double = instance_double('ViewedSentence', save!: nil, new_record?: true,
                                                                    viewed_at: Time.current)
         allow(viewed_sentence_double).to receive(:viewed_at=)

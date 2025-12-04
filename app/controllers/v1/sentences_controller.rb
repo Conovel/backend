@@ -16,7 +16,7 @@ module V1
     include UserHelper
 
     # GET /v1/sentences/:sentenceId
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def show
       sentence = Sentence.includes(:user, :parent, :parallels, :children).find_by(sentence_id: params[:sentenceId])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
@@ -35,7 +35,20 @@ module V1
       evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
-        process_viewed_sentence(sentence) unless current_user_id.nil?
+        has_parent = !sentence.parent.nil?
+        parent_evaluation = if has_parent
+                              Evaluation.find_by(sentence_id: sentence.parent.sentence_id,
+                                                 evaluator_user_id: current_user_id)
+                            end
+        parent_unrated = has_parent && parent_evaluation.nil?
+        # 未ログイン時は登録しない、ログイン時は親があり未評価の場合のみ登録しない
+        if current_user_id.present? && !(has_parent && parent_unrated)
+          process_viewed_sentence(sentence)
+        else
+          # rubocop:disable Layout/LineLength
+          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, has_parent: #{has_parent}, parent_unrated: #{parent_unrated}")
+          # rubocop:enable Layout/LineLength
+        end
         render json: build_response(sentence, user_evaluations, evaluation_counts), status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
@@ -44,7 +57,7 @@ module V1
     rescue CustomError => e
       render_error_response(e.code, e.message)
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
@@ -75,7 +88,6 @@ module V1
         sentence.save!
       end
 
-      process_viewed_sentence(sentence)
       render json: { sentenceId: sentence.sentence_id }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
