@@ -16,7 +16,7 @@ module V1
     include UserHelper
 
     # GET /v1/sentences/:sentenceId
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize
     def show
       sentence = Sentence.includes(:user, :parent, :parallels, :children).find_by(sentence_id: params[:sentenceId])
       raise CustomError.new('投稿が見つかりません。', 404) if sentence.nil?
@@ -35,21 +35,17 @@ module V1
       evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
-        has_parent = !sentence.parent.nil?
-        parent_evaluation = if has_parent
-                              Evaluation.find_by(sentence_id: sentence.parent.sentence_id,
-                                                 evaluator_user_id: current_user_id)
-                            end
-        parent_unrated = has_parent && parent_evaluation.nil?
+        login_or_parent_unevaluated = login_or_parent_unevaluated?(sentence, current_user_id)
         # 未ログイン時は登録しない、ログイン時は親があり未評価の場合のみ登録しない
-        if current_user_id.present? && !(has_parent && parent_unrated)
+        if current_user_id.present? && !login_or_parent_unevaluated
           process_viewed_sentence(sentence)
         else
           # rubocop:disable Layout/LineLength
-          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, has_parent: #{has_parent}, parent_unrated: #{parent_unrated}")
+          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, login_or_parent_unevaluated: #{login_or_parent_unevaluated}")
           # rubocop:enable Layout/LineLength
         end
-        render json: build_response(sentence, user_evaluations, evaluation_counts), status: params[:status] || :ok
+        render json: build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated),
+               status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
         raise CustomError.new('投稿の取得に失敗しました。', 420)
@@ -57,7 +53,7 @@ module V1
     rescue CustomError => e
       render_error_response(e.code, e.message)
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize
 
     # POST /v1/sentences
     # rubocop:disable Metrics/AbcSize
@@ -134,8 +130,8 @@ module V1
       # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
       sentence_text = sentence.sentence
       has_parent = !sentence.parent.nil?
-      parent_unrated = has_parent && parent_user_evaluation.nil?
-      sentence_text = truncated_main_sentence(sentence_text) if is_main && (current_user_id.nil? || parent_unrated)
+      parent_unevaluated = has_parent && parent_user_evaluation.nil?
+      sentence_text = truncated_main_sentence(sentence_text) if is_main && (current_user_id.nil? || parent_unevaluated)
 
       {
         sentenceId: sentence.sentence_id,
@@ -168,29 +164,20 @@ module V1
     end
 
     # レスポンスを構築
-    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-    def build_response(sentence, user_evaluations, evaluation_counts)
+    def build_response(sentence, user_evaluations, evaluation_counts, hide_children_and_parallels)
       data = build_response_data(sentence)
       evaluation_counts ||= {}
       parent_evaluation = data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
 
-      # children/parallelsが空の条件：
-      # 未ログイン時は常に空、ログイン時は親があり未評価のみ空
-      has_parent = !data[:parent].nil?
-      parent_unrated = has_parent && parent_evaluation.nil?
-      hide_children_and_parallels = current_user_id.nil? || parent_unrated
-
       parallels = if hide_children_and_parallels
                     []
                   else
-                    build_sentence_responses(data[:parallels], user_evaluations,
-                                             evaluation_counts)
+                    build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts)
                   end
       children  = if hide_children_and_parallels
                     []
                   else
-                    build_sentence_responses(data[:children], user_evaluations,
-                                             evaluation_counts)
+                    build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
                   end
 
       {
@@ -201,7 +188,6 @@ module V1
         children:
       }
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
     # 関連する全てのsentence_idを配列で返す
     def collect_related_sentence_ids(sentence)
@@ -219,6 +205,17 @@ module V1
         evaluation_counts[sid][eval.to_sym] = cnt
       end
       evaluation_counts
+    end
+
+    # 未ログイン or 親があり未評価の判定
+    def login_or_parent_unevaluated?(sentence, user_id)
+      has_parent = !sentence.parent.nil?
+      parent_evaluation = if has_parent
+                            Evaluation.find_by(sentence_id: sentence.parent.sentence_id,
+                                               evaluator_user_id: user_id)
+                          end
+      parent_unevaluated = has_parent && parent_evaluation.nil?
+      user_id.nil? || parent_unevaluated
     end
 
     # createの補助メソッド
