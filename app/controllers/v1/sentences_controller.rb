@@ -116,9 +116,9 @@ module V1
     end
 
     # 投稿レスポンスを構築
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def build_sentence_response(sentence, user_evaluations, evaluation_counts, parent_user_evaluation: nil,
-                                is_main: false)
+    # rubocop:disable Metrics/AbcSize
+    def build_sentence_response(sentence, user_evaluations, evaluation_counts,
+                                is_main: false, login_or_parent_unevaluated: false)
       return nil if sentence.nil?
 
       user = sentence.user
@@ -127,11 +127,9 @@ module V1
       evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
       # mainのテキスト短縮条件：
-      # 未ログイン時は常に短縮、ログイン時は親があり未評価のみ短縮
+      # 未ログイン or 親があり未評価の判定は引数で一元化
       sentence_text = sentence.sentence
-      has_parent = !sentence.parent.nil?
-      parent_unevaluated = has_parent && parent_user_evaluation.nil?
-      sentence_text = truncated_main_sentence(sentence_text) if is_main && (current_user_id.nil? || parent_unevaluated)
+      sentence_text = truncated_main_sentence(sentence_text) if is_main && login_or_parent_unevaluated
 
       {
         sentenceId: sentence.sentence_id,
@@ -154,12 +152,12 @@ module V1
       result += MAIN_SENTENCE_OMISSION_SUFFIX
       result
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize
 
     # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences, user_evaluations, evaluation_counts)
       sentences.map do |sentence|
-        build_sentence_response(sentence, user_evaluations, evaluation_counts)
+        build_sentence_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated: false)
       end
     end
 
@@ -167,7 +165,7 @@ module V1
     def build_response(sentence, user_evaluations, evaluation_counts, hide_children_and_parallels)
       data = build_response_data(sentence)
       evaluation_counts ||= {}
-      parent_evaluation = data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
+      data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
 
       parallels = if hide_children_and_parallels
                     []
@@ -182,8 +180,10 @@ module V1
 
       {
         main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
-                                      parent_user_evaluation: parent_evaluation, is_main: true),
-        parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts),
+                                      is_main: true,
+                                      login_or_parent_unevaluated: hide_children_and_parallels),
+        parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts,
+                                        login_or_parent_unevaluated: false),
         parallels:,
         children:
       }
