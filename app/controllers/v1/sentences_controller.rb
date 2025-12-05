@@ -36,7 +36,7 @@ module V1
 
       begin
         login_or_parent_unevaluated = login_or_parent_unevaluated?(sentence, current_user_id)
-        # 未ログイン時は登録しない、ログイン時は親があり未評価の場合のみ登録しない
+        # 未ログイン時 or ログイン時は親があり未評価の場合は閲覧履歴を登録しない
         if current_user_id.present? && !login_or_parent_unevaluated
           process_viewed_sentence(sentence)
         else
@@ -75,7 +75,7 @@ module V1
         check_parent_sentence_updated(parent_sentence)
         check_consecutive_self_post(parent_sentence)
 
-        # 親投稿が未評価の場合は投稿不可
+        # 親投稿があり未評価の場合は投稿不可
         parent_evaluation = Evaluation.find_by(sentence_id: parent_sentence.sentence_id,
                                                evaluator_user_id: current_user_id)
         raise CustomError.new('親投稿が未評価のため、投稿できません。', 422) if parent_evaluation.nil?
@@ -126,8 +126,7 @@ module V1
       evaluation = user_evaluations[sentence.sentence_id]
       evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
-      # mainのテキスト短縮条件：
-      # 未ログイン or 親があり未評価の判定は引数で一元化
+      # mainのテキスト短縮条件： 未ログイン or 親投稿があり未評価
       sentence_text = sentence.sentence
       sentence_text = truncated_main_sentence(sentence_text) if is_main && login_or_parent_unevaluated
 
@@ -145,7 +144,7 @@ module V1
       }
     end
 
-    # main sentence短縮処理をprivateメソッドに切り出し
+    # main sentence短縮処理
     def truncated_main_sentence(sentence_text)
       truncated_length = (sentence_text.length * MAIN_SENTENCE_TRUNCATE_RATIO).floor
       result = sentence_text[0...truncated_length]
@@ -162,17 +161,18 @@ module V1
     end
 
     # レスポンスを構築
-    def build_response(sentence, user_evaluations, evaluation_counts, hide_children_and_parallels)
+    def build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated)
       data = build_response_data(sentence)
       evaluation_counts ||= {}
       data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
 
-      parallels = if hide_children_and_parallels
+      # 未ログイン or 親があり未評価の場合はchildren, parallelsを非表示
+      parallels = if login_or_parent_unevaluated
                     []
                   else
                     build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts)
                   end
-      children  = if hide_children_and_parallels
+      children  = if login_or_parent_unevaluated
                     []
                   else
                     build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
@@ -181,7 +181,7 @@ module V1
       {
         main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
                                       is_main: true,
-                                      login_or_parent_unevaluated: hide_children_and_parallels),
+                                      login_or_parent_unevaluated:),
         parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts,
                                         login_or_parent_unevaluated: false),
         parallels:,
