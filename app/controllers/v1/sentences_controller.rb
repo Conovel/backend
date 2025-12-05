@@ -78,7 +78,7 @@ module V1
         # 親投稿があり未評価の場合は投稿不可
         parent_evaluation = Evaluation.find_by(sentence_id: parent_sentence.sentence_id,
                                                evaluator_user_id: current_user_id)
-        raise CustomError.new('親投稿が未評価のため、投稿できません。', 422) if parent_evaluation.nil?
+        raise CustomError.new('メインパネルが未評価のため、投稿できません。', 422) if parent_evaluation.nil?
 
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!

@@ -128,7 +128,7 @@ RSpec.describe 'Sentences', type: :request do
         }
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
-        expect(json_response['error']['message']).to eq('親投稿が未評価のため、投稿できません。')
+        expect(json_response['error']['message']).to eq('メインパネルが未評価のため、投稿できません。')
       end
     end
 
