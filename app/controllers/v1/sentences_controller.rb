@@ -11,6 +11,9 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    # showアクションは認証任意（未ログインでもOK、current_user_idで分岐）
+    skip_before_action :authenticate_request, only: [:show]
+    before_action :try_authenticate_request, only: [:show]
     include TimeHelper
     include ErrorResponseHelper
     include UserHelper
@@ -97,11 +100,6 @@ module V1
     private
 
     # showの補助メソッド
-
-    # 未ログイン時に独自レスポンス送る
-    def use_custom_auth_error_response?
-      action_name == 'show'
-    end
 
     # レスポンスデータを構築
     def build_response_data(sentence)
