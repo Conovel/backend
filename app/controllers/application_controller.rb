@@ -20,39 +20,55 @@ class ApplicationController < ActionController::API
 
   private
 
-  # リクエストの認証
-  # rubocop:disable Metrics/AbcSize
+  # 必須認証（失敗したら401を返す）
   def authenticate_request
-    # クッキーからJWTトークンを取得
+    set_current_user_id_from_jwt
+    return if @current_user_id
+
+    reset_jwt_auth_state
+    render_error_response(401, '認証に失敗しました')
+    Rails.logger.debug('[DEBUG] authenticate_request: 必須認証を実行')
+  end
+
+  # 任意認証（失敗しても401にしない）
+  def try_authenticate_request
+    set_current_user_id_from_jwt
+    return if @current_user_id
+
+    reset_jwt_auth_state
+    Rails.logger.debug('[DEBUG] try_authenticate_request: 任意認証を実行')
+  end
+
+  # クッキーからJWTトークンを取得
+  # rubocop:disable Metrics/AbcSize
+  def set_current_user_id_from_jwt
     jwt_token = cookies[:jwt_token]
     Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json(処理前): #{cookies[:jwt_token].to_json}")
-    if jwt_token.present?
-      begin
-        @decoded = JwtService.decode(jwt_token)
-        Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
-        Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
+    return unless jwt_token.present?
 
-        @current_user_id = @decoded['user_id']
-        Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
-        return
-      rescue JWT::ExpiredSignature
-        Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
-      rescue JWT::DecodeError => e
-        Rails.logger.error("[ERROR] JWTデコードエラー - e.message: #{e.message}")
-      end
+    begin
+      @decoded = JwtService.decode(jwt_token)
+      Rails.logger.debug("[DEBUG] トークン - token: #{jwt_token}")
+      Rails.logger.debug("[DEBUG] デコード - decoded: #{@decoded}")
+      @current_user_id = @decoded['user_id']
+      Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
+      nil
+    rescue JWT::ExpiredSignature
+      Rails.logger.warn('[WARN] JWTトークンの有効期限が切れています')
+    rescue JWT::DecodeError => e
+      Rails.logger.error("[ERROR] JWTデコードエラー - e.message: #{e.message}")
     end
+  end
+  # rubocop:enable Metrics/AbcSize
 
-    # JWTトークンを保存しているクッキーを削除
+  # JWTトークンを保存しているクッキーを削除
+  def reset_jwt_auth_state
     cookies.delete(:jwt_token)
     Rails.logger.info('[INFO] JWTトークンがクッキーから削除されました')
     Rails.logger.debug("[DEBUG] cookies[:jwt_token].to_json: #{cookies[:jwt_token].to_json}")
-
     @current_user_id = nil
     Rails.logger.debug("[DEBUG] カレントユーザー - @current_user_id: #{@current_user_id.to_json}")
-
-    render_error_response(401, '認証に失敗しました')
   end
-  # rubocop:enable Metrics/AbcSize
 
   # 標準的な例外の処理
   def handle_standard_error(exception)

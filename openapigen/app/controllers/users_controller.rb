@@ -33,6 +33,12 @@ class UsersController < ApplicationController
     render json: {"message" => "yes, it worked"}
   end
 
+  def get_viewed_last_sentence_by_me
+    # Your code here
+
+    render json: {"message" => "yes, it worked"}
+  end
+
   def get_viewed_novels_by_me
     # Your code here
 

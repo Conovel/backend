@@ -21,6 +21,7 @@ app/models/novel_detail.rb
 app/models/novel_list_item.rb
 app/models/post_sentence.rb
 app/models/sentence.rb
+app/models/sentence_id_only.rb
 app/models/update_user.rb
 app/models/user.rb
 app/models/view_evaluation.rb

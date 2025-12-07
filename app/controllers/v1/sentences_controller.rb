@@ -11,6 +11,9 @@
 module V1
   # SentencesController
   class SentencesController < ApplicationController
+    # showアクションは認証任意（未ログインでもOK、current_user_idで分岐）
+    skip_before_action :authenticate_request, only: [:show]
+    before_action :try_authenticate_request, only: [:show]
     include TimeHelper
     include ErrorResponseHelper
     include UserHelper
@@ -35,8 +38,17 @@ module V1
       evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
-        process_viewed_sentence(sentence)
-        render json: build_response(sentence, user_evaluations, evaluation_counts), status: params[:status] || :ok
+        login_or_parent_unevaluated = login_or_parent_unevaluated?(sentence, current_user_id)
+        # 未ログイン時 or ログイン時は親があり未評価の場合は閲覧履歴を登録しない
+        if current_user_id.present? && !login_or_parent_unevaluated
+          process_viewed_sentence(sentence)
+        else
+          # rubocop:disable Layout/LineLength
+          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, login_or_parent_unevaluated: #{login_or_parent_unevaluated}")
+          # rubocop:enable Layout/LineLength
+        end
+        render json: build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated),
+               status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
         raise CustomError.new('投稿の取得に失敗しました。', 420)
@@ -66,12 +78,16 @@ module V1
         check_parent_sentence_updated(parent_sentence)
         check_consecutive_self_post(parent_sentence)
 
+        # 親投稿があり未評価の場合は投稿不可
+        parent_evaluation = Evaluation.find_by(sentence_id: parent_sentence.sentence_id,
+                                               evaluator_user_id: current_user_id)
+        raise CustomError.new('メインパネルが未評価のため、投稿できません。', 422) if parent_evaluation.nil?
+
         sentence = build_sentence(parent_sentence, sentence_text)
         sentence.save!
       end
 
-      process_viewed_sentence(sentence)
-      render json: build_response(sentence, {}, {}), status: :created
+      render json: { sentenceId: sentence.sentence_id }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_error_response(422, "投稿の追加に失敗しました。: #{e.record.errors.attribute_names.join(', ')}")
     rescue CustomError => e
@@ -99,7 +115,8 @@ module V1
 
     # 投稿レスポンスを構築
     # rubocop:disable Metrics/AbcSize
-    def build_sentence_response(sentence, user_evaluations, evaluation_counts)
+    def build_sentence_response(sentence, user_evaluations, evaluation_counts,
+                                is_main: false, login_or_parent_unevaluated: false)
       return nil if sentence.nil?
 
       user = sentence.user
@@ -107,9 +124,13 @@ module V1
       evaluation = user_evaluations[sentence.sentence_id]
       evaluation_counts = (evaluation_counts && evaluation_counts[sentence.sentence_id]) || { good: 0, stay: 0 }
 
+      # mainのテキスト短縮条件： 未ログイン or 親投稿があり未評価
+      sentence_text = sentence.sentence
+      sentence_text = truncated_main_sentence(sentence_text) if is_main && login_or_parent_unevaluated
+
       {
         sentenceId: sentence.sentence_id,
-        sentence: sentence.sentence,
+        sentence: sentence_text,
         sentenceUserId: sentence.sentence_user_id,
         sentencePenName: user_info[:pen_name],
         profileIconImage: user_info[:profile_icon_image],
@@ -120,26 +141,49 @@ module V1
         updatedAt: sentence.updated_at
       }
     end
+
+    # main sentence短縮処理
+    def truncated_main_sentence(sentence_text)
+      truncated_length = (sentence_text.length * MAIN_SENTENCE_TRUNCATE_RATIO).floor
+      result = sentence_text[0...truncated_length]
+      result += MAIN_SENTENCE_OMISSION_SUFFIX
+      result
+    end
     # rubocop:enable Metrics/AbcSize
 
     # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences, user_evaluations, evaluation_counts)
       sentences.map do |sentence|
-        build_sentence_response(sentence, user_evaluations, evaluation_counts)
+        build_sentence_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated: false)
       end
     end
 
     # レスポンスを構築
-    def build_response(sentence, user_evaluations, evaluation_counts)
+    def build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated)
       data = build_response_data(sentence)
-
       evaluation_counts ||= {}
+      data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
+
+      # 未ログイン or 親があり未評価の場合はchildren, parallelsを非表示
+      parallels = if login_or_parent_unevaluated
+                    []
+                  else
+                    build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts)
+                  end
+      children  = if login_or_parent_unevaluated
+                    []
+                  else
+                    build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
+                  end
 
       {
-        main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts),
-        parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts),
-        parallels: build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts),
-        children: build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
+        main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
+                                      is_main: true,
+                                      login_or_parent_unevaluated:),
+        parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts,
+                                        login_or_parent_unevaluated: false),
+        parallels:,
+        children:
       }
     end
 
@@ -161,6 +205,17 @@ module V1
       evaluation_counts
     end
 
+    # 未ログイン or 親があり未評価の判定
+    def login_or_parent_unevaluated?(sentence, user_id)
+      has_parent = !sentence.parent.nil?
+      parent_evaluation = if has_parent
+                            Evaluation.find_by(sentence_id: sentence.parent.sentence_id,
+                                               evaluator_user_id: user_id)
+                          end
+      parent_unevaluated = has_parent && parent_evaluation.nil?
+      user_id.nil? || parent_unevaluated
+    end
+
     # createの補助メソッド
 
     # 投稿のパラメータを取得
@@ -174,7 +229,11 @@ module V1
       parent_sentence_updated_at = time_with_strftime(parent_sentence.updated_at)
       return if parent_sentence_updated_at == parent_updated_at
 
-      raise CustomError.new('投稿編集の途中で親投稿が編集されたため、投稿を保留しています。', 409, build_response(parent_sentence, {}, {}))
+      raise CustomError.new(
+        '投稿編集の途中で親投稿が編集されたため、投稿を保留しています。',
+        409,
+        { sentenceId: parent_sentence.sentence_id }
+      )
     end
 
     # 連続投稿の確認

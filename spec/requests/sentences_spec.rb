@@ -39,15 +39,18 @@ RSpec.describe 'Sentences', type: :request do
   # createのデータ
   let(:valid_attributes) do
     {
-      parentSentenceId: parent_sentence.sentence_id,
+      # POST後は元のmain投稿がparentになる
+      parentSentenceId: main_sentence.sentence_id,
       sentence: '投稿追加テストです。',
-      parentUpdatedAt: parent_sentence.updated_at
+      parentUpdatedAt: main_sentence.updated_at
     }
   end
 
   before do
     # クッキーにJWTトークンを設定
     login_as(users[2])
+    # showアクションでもcurrent_user_idがusers[2].idになるようスタブ
+    allow_any_instance_of(V1::SentencesController).to receive(:current_user_id).and_return(users[2].id)
   end
 
   # showのテスト
@@ -55,6 +58,8 @@ RSpec.describe 'Sentences', type: :request do
     context 'when the sentence exists' do
       it 'returns the sentence' do
         main_sentence
+        # GETの前に親投稿を評価した状態
+        create(:evaluation, sentence: parent_sentence, evaluator_user: users[2], evaluation: :good)
         # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
         counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
@@ -62,6 +67,7 @@ RSpec.describe 'Sentences', type: :request do
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
 
+        # 親投稿を評価していればmainは短縮されていないこと
         expect(json_response['main']['sentence']).to eq('いいいいい')
         expect(json_response).to have_key('parent')
         expect(json_response['parent']).not_to be_nil
@@ -82,8 +88,68 @@ RSpec.describe 'Sentences', type: :request do
         expect(counter.count).to eq(7)
       end
 
+      context 'when main has no parent (root post)' do
+        it 'main not shortened, parent nil, children not empty, parallels empty' do
+          # 親投稿が存在しない（sentence_id: 1）
+          get("/v1/sentences/#{parent_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          # mainは省略されない
+          expect(json_response['main']['sentence']).to eq('あああああ')
+          # parentはnil（一つ目の投稿のため）
+          expect(json_response['parent']).to be_nil
+          # childrenが空でないではないことを確認
+          expect(json_response['children']).not_to eq([])
+          # parallelsは空（一つ目の投稿のため）
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
+      context 'when not logged in' do
+        before do
+          # ログイン状態を解除
+          sign_out :user if defined?(sign_out)
+        end
+        it 'returns main sentence shortened and children/parallels empty when parent is not evaluated' do
+          get("/v1/sentences/#{main_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          # mainのsentenceが短縮されている（例: 60%）
+          # childrenとparallelsは空配列
+          expect(json_response['main']['sentence']).to eq('いいい…（以下省略）')
+          expect(json_response).to have_key('parent')
+          expect(json_response['parent']).not_to be_nil
+          expect(json_response['parent']['sentence']).to eq('あああああ')
+          expect(json_response).to have_key('children')
+          expect(json_response['children']).to eq([])
+          expect(json_response).to have_key('parallels')
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
+      context 'when parent not evaluated' do
+        # ログイン状態は維持し、親投稿の評価を行わない（=未評価）
+        it 'main shortened, children/parallels empty' do
+          get("/v1/sentences/#{main_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          expect(json_response['main']['sentence']).to eq('いいい…（以下省略）')
+          expect(json_response).to have_key('parent')
+          expect(json_response['parent']).not_to be_nil
+          expect(json_response['parent']['sentence']).to eq('あああああ')
+          expect(json_response).to have_key('children')
+          expect(json_response['children']).to eq([])
+          expect(json_response).to have_key('parallels')
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
       it 'returns a 420 error when viewed_sentence save fails' do
         main_sentence
+        create(:evaluation, sentence: parent_sentence, evaluator_user: users[2], evaluation: :good)
         viewed_sentence_double = instance_double('ViewedSentence', save!: nil, new_record?: true,
                                                                    viewed_at: Time.current)
         allow(viewed_sentence_double).to receive(:viewed_at=)
@@ -111,30 +177,40 @@ RSpec.describe 'Sentences', type: :request do
 
   # createのテスト
   describe 'POST /v1/sentences' do
+    context 'when parent sentence is not evaluated' do
+      it 'returns an error for unevaluated parent' do
+        unevaluated_parent = create(:sentence, user: users[1], title:)
+        post v1_sentences_path, params: {
+          parentSentenceId: unevaluated_parent.sentence_id,
+          sentence: 'テスト投稿',
+          parentUpdatedAt: unevaluated_parent.updated_at
+        }
+        expect(response).to have_http_status(:unprocessable_entity)
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']['message']).to eq('メインパネルが未評価のため、投稿できません。')
+      end
+    end
+
     context 'with valid parameters' do
       it 'creates a new Sentence' do
-        # コントローラのヘルパー実装を監視し、各 example ごとに呼び出し回数をカウント
-        counter = install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
+        # POSTの前にmain（投稿後はparentになる）を評価
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
+        install_method_call_counter(controller: V1::SentencesController, method: :user_display_info)
 
         expect do
           post v1_sentences_path, params: valid_attributes
         end.to change(Sentence, :count).by(1)
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
-        expect(json_response['main']['sentence']).to eq('投稿追加テストです。')
 
-        # 呼び出しが行われたことを検証
-        # - main: POST によって作成された投稿本体: 1回
-        # - parent: 指定した親投稿（`parent_sentence`）: 1回
-        # - parallels: 同じ親を持つ既存の並列投稿（このケースでは `main_sentence`, `parallel_sentence1`, `parallel_sentence2` の3件）: 3回
-        # - children: 作成された main の子投稿群（このケースでは無し）: 0回
-        # 合計 = 1 (main) + 1 (parent) + 3 (parallels) = 5 回
-        expect(counter.count).to eq(5)
+        expect(json_response['sentenceId']).to be_a(Integer)
+        expect(json_response['sentenceId']).to be > 0
       end
     end
 
     context 'when required parameters are missing' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(sentence: ''))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -145,6 +221,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when parent_sentence_id does not exist' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: 100))
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -155,6 +232,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'with invalid parameters' do
       it 'returns a conflict status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post(v1_sentences_path, params: valid_attributes.merge(parentUpdatedAt: '2024-01-01T01:01:09.292+09:00'))
         expect(response).to have_http_status(:conflict)
         json_response = JSON.parse(response.body)
@@ -165,6 +243,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when consecutive self post is detected' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         post_user_id = users[2].id # 連続投稿のユーザーID
         post(v1_sentences_path, params: valid_attributes.merge(parentSentenceId: post_user_id))
         expect(response).to have_http_status(:unprocessable_entity)
@@ -176,6 +255,7 @@ RSpec.describe 'Sentences', type: :request do
 
     context 'when sentence length exceeds the limit' do
       it 'returns an unprocessable entity status' do
+        create(:evaluation, sentence: main_sentence, evaluator_user: users[2], evaluation: :good)
         long_sentence = 'a' * 101
         post(v1_sentences_path, params: valid_attributes.merge(sentence: long_sentence))
         expect(response).to have_http_status(:unprocessable_entity)

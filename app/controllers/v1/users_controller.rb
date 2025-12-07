@@ -63,6 +63,24 @@ module V1
     end
     # rubocop:enable Metrics/AbcSize
 
+    # 小説の中で自分自身が最後に閲覧した投稿のIDを取得
+    def get_viewed_last_sentence_by_me
+      title_id = params[:titleId]
+      user_id = @current_user_id
+      render_error_response(401, 'カレントユーザーのid取得に失敗しました') and return unless user_id.present?
+
+      # titleIdに紐づく投稿ID一覧を取得
+      sentence_ids = Sentence.where(title_id:).pluck(:sentence_id)
+      # viewed_sentencesから最新のものを取得
+      last_viewed = ViewedSentence.where(viewed_user_id: user_id, viewed_sentence_id: sentence_ids)
+                                  .order(viewed_at: :desc).first
+      if last_viewed
+        render json: { sentenceId: last_viewed.viewed_sentence_id }, status: :ok
+      else
+        render json: { sentenceId: nil }, status: :ok
+      end
+    end
+
     # 自分自身が閲覧している小説リストを取得
     # def get_viewed_novels_by_me
     #   # Your code here
