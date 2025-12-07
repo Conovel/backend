@@ -88,6 +88,65 @@ RSpec.describe 'Sentences', type: :request do
         expect(counter.count).to eq(7)
       end
 
+      context 'when main has no parent (root post)' do
+        it 'main not shortened, parent nil, children not empty, parallels empty' do
+          # 親投稿が存在しない（sentence_id: 1）
+          get("/v1/sentences/#{parent_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          # mainは省略されない
+          expect(json_response['main']['sentence']).to eq('あああああ')
+          # parentはnil（一つ目の投稿のため）
+          expect(json_response['parent']).to be_nil
+          # childrenが空でないではないことを確認
+          expect(json_response['children']).not_to eq([])
+          # parallelsは空（一つ目の投稿のため）
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
+      context 'when not logged in' do
+        before do
+          # ログイン状態を解除
+          sign_out :user if defined?(sign_out)
+        end
+        it 'returns main sentence shortened and children/parallels empty when parent is not evaluated' do
+          get("/v1/sentences/#{main_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          # mainのsentenceが短縮されている（例: 60%）
+          # childrenとparallelsは空配列
+          expect(json_response['main']['sentence']).to eq('いいい…（以下省略）')
+          expect(json_response).to have_key('parent')
+          expect(json_response['parent']).not_to be_nil
+          expect(json_response['parent']['sentence']).to eq('あああああ')
+          expect(json_response).to have_key('children')
+          expect(json_response['children']).to eq([])
+          expect(json_response).to have_key('parallels')
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
+      context 'when parent not evaluated' do
+        # ログイン状態は維持し、親投稿の評価を行わない（=未評価）
+        it 'main shortened, children/parallels empty' do
+          get("/v1/sentences/#{main_sentence.sentence_id}")
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+
+          expect(json_response['main']['sentence']).to eq('いいい…（以下省略）')
+          expect(json_response).to have_key('parent')
+          expect(json_response['parent']).not_to be_nil
+          expect(json_response['parent']['sentence']).to eq('あああああ')
+          expect(json_response).to have_key('children')
+          expect(json_response['children']).to eq([])
+          expect(json_response).to have_key('parallels')
+          expect(json_response['parallels']).to eq([])
+        end
+      end
+
       it 'returns a 420 error when viewed_sentence save fails' do
         main_sentence
         create(:evaluation, sentence: parent_sentence, evaluator_user: users[2], evaluation: :good)
