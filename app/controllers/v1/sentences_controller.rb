@@ -38,16 +38,16 @@ module V1
       evaluation_counts = build_evaluation_counts(raw_counts)
 
       begin
-        login_or_parent_unevaluated = login_or_parent_unevaluated?(sentence, current_user_id)
+        restricted = restricted?(sentence, current_user_id)
         # 未ログイン時 or ログイン時は親があり未評価の場合は閲覧履歴を登録しない
-        if current_user_id.present? && !login_or_parent_unevaluated
+        if current_user_id.present? && !restricted
           process_viewed_sentence(sentence)
         else
           # rubocop:disable Layout/LineLength
-          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, login_or_parent_unevaluated: #{login_or_parent_unevaluated}")
+          Rails.logger.debug("[DEBUG]viewed_sentence(スキップ) - 条件未達: sentence.sentence_id: #{sentence.sentence_id}, user_id: #{current_user_id}, restricted: #{restricted}")
           # rubocop:enable Layout/LineLength
         end
-        render json: build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated),
+        render json: build_response(sentence, user_evaluations, evaluation_counts, restricted),
                status: params[:status] || :ok
       rescue StandardError => e
         Rails.logger.error("Failed to create or update viewed_sentence record: #{e.message}")
@@ -116,7 +116,7 @@ module V1
     # 投稿レスポンスを構築
     # rubocop:disable Metrics/AbcSize
     def build_sentence_response(sentence, user_evaluations, evaluation_counts,
-                                is_main: false, login_or_parent_unevaluated: false)
+                                is_main: false, restricted: false)
       return nil if sentence.nil?
 
       user = sentence.user
@@ -126,7 +126,7 @@ module V1
 
       # mainのテキスト短縮条件： 未ログイン or 親投稿があり未評価
       sentence_text = sentence.sentence
-      sentence_text = truncated_main_sentence(sentence_text) if is_main && login_or_parent_unevaluated
+      sentence_text = truncated_main_sentence(sentence_text) if is_main && restricted
 
       {
         sentenceId: sentence.sentence_id,
@@ -154,23 +154,23 @@ module V1
     # 複数の投稿レスポンスを構築
     def build_sentence_responses(sentences, user_evaluations, evaluation_counts)
       sentences.map do |sentence|
-        build_sentence_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated: false)
+        build_sentence_response(sentence, user_evaluations, evaluation_counts, restricted: false)
       end
     end
 
     # レスポンスを構築
-    def build_response(sentence, user_evaluations, evaluation_counts, login_or_parent_unevaluated)
+    def build_response(sentence, user_evaluations, evaluation_counts, restricted)
       data = build_response_data(sentence)
       evaluation_counts ||= {}
       data[:parent] ? user_evaluations[data[:parent].sentence_id]&.evaluation : nil
 
       # 未ログイン or 親があり未評価の場合はchildren, parallelsを非表示
-      parallels = if login_or_parent_unevaluated
+      parallels = if restricted
                     []
                   else
                     build_sentence_responses(data[:parallels], user_evaluations, evaluation_counts)
                   end
-      children  = if login_or_parent_unevaluated
+      children  = if restricted
                     []
                   else
                     build_sentence_responses(data[:children], user_evaluations, evaluation_counts)
@@ -179,9 +179,9 @@ module V1
       {
         main: build_sentence_response(data[:sentence], user_evaluations, evaluation_counts,
                                       is_main: true,
-                                      login_or_parent_unevaluated:),
+                                      restricted:),
         parent: build_sentence_response(data[:parent], user_evaluations, evaluation_counts,
-                                        login_or_parent_unevaluated: false),
+                                        restricted: false),
         parallels:,
         children:
       }
@@ -206,7 +206,7 @@ module V1
     end
 
     # 未ログイン or 親があり未評価の判定
-    def login_or_parent_unevaluated?(sentence, user_id)
+    def restricted?(sentence, user_id)
       has_parent = !sentence.parent.nil?
       parent_evaluation = if has_parent
                             Evaluation.find_by(sentence_id: sentence.parent.sentence_id,
